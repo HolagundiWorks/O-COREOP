@@ -1828,6 +1828,7 @@ public sealed partial class ElementPage : Page
                     cb.GotFocus += SheetEditor_GotFocusActivate;
                     WireSheetKeyboard(cb);
                     content = cb;
+                    AutomationProperties.SetName(cb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 else
                 {
@@ -1852,6 +1853,7 @@ public sealed partial class ElementPage : Page
                         WireSheetKeyboard(tb);
                     }
                     content = tb;
+                    AutomationProperties.SetName(tb, $"{field?.Label ?? key}, row {r + 1}");
                 }
 
                 var border = new Border
@@ -1955,6 +1957,7 @@ public sealed partial class ElementPage : Page
                     _sheetComboFillBusy = false;
                     cb.SelectionChanged += OpeningCombo_SelectionChanged;
                     content = cb;
+                    AutomationProperties.SetName(cb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 else
                 {
@@ -1971,6 +1974,7 @@ public sealed partial class ElementPage : Page
                     };
                     tb.LostFocus += OpeningText_LostFocus;
                     content = tb;
+                    AutomationProperties.SetName(tb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 var border = new Border
                 {

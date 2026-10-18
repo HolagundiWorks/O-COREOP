@@ -83,7 +83,7 @@
                                     ToolTipService.ToolTip="Snap two points on a known size, then enter mm"/>
                             <TextBlock x:Name="ScaleLabel" VerticalAlignment="Center"
                                        Style="{StaticResource CaptionSecondaryStyle}" Margin="4,0,0,0"/>
-                            <ComboBox x:Name="LevelCombo" MinWidth="140" PlaceholderText="Floor / Level"
+                            <ComboBox x:Name="LevelCombo" MinWidth="140" PlaceholderText="Floor / Level" AutomationProperties.Name="Floor or level"
                                       SelectionChanged="Level_Changed" VerticalAlignment="Center"/>
                             <StackPanel x:Name="ViewExtrasPanel" Orientation="Horizontal" Spacing="6"
                                         VerticalAlignment="Center">
@@ -169,7 +169,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="LayerCollapseBtn" Click="LayerManagerCollapse_Click"
+                            <Button x:Name="LayerCollapseBtn" Click="LayerManagerCollapse_Click" AutomationProperties.Name="Layers, show or hide the list"
                                     Background="Transparent" BorderThickness="0" Padding="2,2"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">

@@ -590,6 +590,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
                     ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 16, Height = 16 },
                     _ => new FontIcon { Glyph = "\uE7C3", FontSize = 16, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
                 };
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
                 AppNav.MenuItems.Add(new NavigationViewItem { Content = cmd.Label, Tag = cmd.Tag, MinHeight = 32, FontSize = 13, Icon = icon });
             }
         }

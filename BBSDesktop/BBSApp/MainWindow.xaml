@@ -116,7 +116,7 @@
 
                 <!-- Page line: the page, and whose letterhead the project is set up for -->
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="24,12,24,4">
-                    <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" FontSize="16" FontWeight="SemiBold"
+                    <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" AutomationProperties.HeadingLevel="Level1" FontSize="16" FontWeight="SemiBold"
                                FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"
                                VerticalAlignment="Center"/>
                     <TextBlock x:Name="PersonaPageSep" Text="·" Foreground="{StaticResource HcwMutedBrush}" VerticalAlignment="Center"/>
@@ -142,7 +142,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Button x:Name="NavCalcBtn" Style="{StaticResource HcwGhostButton}" MinWidth="40"
+                        <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
                                 Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE1D0;" FontSize="16" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                         </Button>

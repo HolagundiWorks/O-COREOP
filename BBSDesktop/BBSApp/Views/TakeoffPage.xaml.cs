@@ -560,8 +560,8 @@ public sealed partial class TakeoffPage : Page
 
             var eye = new ToggleButton
             {
-                Width = 26,
-                Height = 26,
+                Width = 28,
+                Height = 28,
                 Padding = new Thickness(0),
                 IsChecked = true,
                 Tag = layer.Id,
@@ -569,6 +569,7 @@ public sealed partial class TakeoffPage : Page
                 CornerRadius = new CornerRadius(2)
             };
             ToolTipService.SetToolTip(eye, $"Toggle {layer.Name}");
+            AutomationProperties.SetName(eye, $"Show layer {layer.Name}");
             eye.Click += LayerEye_Click;
             _layerEyeButtons[layer.Id] = eye;
             Grid.SetColumn(eye, 0);
