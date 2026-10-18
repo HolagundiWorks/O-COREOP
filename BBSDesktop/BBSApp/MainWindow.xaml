@@ -5,11 +5,11 @@
     Title="AQC Core">
 
     <!--
-      Staff geography:
+      Shell, the same structure as AOS:
       Caption (OS drag) — document title only
       MenuBar row — File · Edit · Help
-      Ribbon 56 — brand once · page · Local AI
-      Stage · ActionDock · Taskbar · Clock
+      Left navigation pane — the sections, grouped by job
+      Work area — page line, page, status strip, floating widgets
     -->
     <Grid Background="{StaticResource HcwFogBrush}">
         <Grid.RowDefinitions>
@@ -44,7 +44,6 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -66,6 +65,7 @@
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
                     <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
+                    <MenuFlyoutItem Text="Publish project status" Click="PublishStatus_Click"/>
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
                     <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
@@ -85,175 +85,97 @@
             </MenuBar>
         </Border>
 
-        <!-- TOP RIBBON 56 — brand once · page · Local AI -->
-        <Grid Grid.Row="1" Height="56" Margin="16,8,16,8">
-            <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="6,6,0,0"/>
-            <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,6,6"/>
-            <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}">
-                <Grid Padding="16,0" Height="56">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                        <Border Width="32" Height="32" CornerRadius="8"
-                                Background="{StaticResource HcwWhiteBrush}">
-                            <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="4"
-                                   AutomationProperties.Name="Product logo"/>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center" Spacing="0">
-                            <TextBlock x:Name="BrandTitleText" Text="AQC Core"
-                                       FontSize="16" FontWeight="SemiBold"
-                                       FontFamily="{StaticResource HcwFontFamily}"
-                                       Foreground="{StaticResource HcwInkBrush}"/>
-                            <TextBlock x:Name="BrandSubText" Text="Accelerated Quantity and Costing"
-                                       FontSize="11" Foreground="{StaticResource HcwMutedBrush}"/>
-                        </StackPanel>
+        <!-- Same structure as AOS: a menu bar, then a left navigation pane grouped by job, then the work area -->
+        <NavigationView x:Name="AppNav" Grid.Row="1" PaneDisplayMode="Left" OpenPaneLength="232"
+                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="False"
+                        Background="{StaticResource HcwFogBrush}"
+                        SelectionChanged="AppNav_SelectionChanged"
+                        AutomationProperties.Name="Sections">
+            <NavigationView.PaneHeader>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,4,8,8">
+                    <Border Width="28" Height="28" CornerRadius="6" Background="{StaticResource HcwWhiteBrush}">
+                        <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="3"
+                               AutomationProperties.Name="Product logo"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center" Spacing="0">
+                        <TextBlock x:Name="BrandTitleText" Text="AQC Core" FontSize="14" FontWeight="SemiBold"
+                                   FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"/>
+                        <TextBlock x:Name="BrandSubText" Text="Accelerated Quantity and Costing" FontSize="10"
+                                   Foreground="{StaticResource HcwMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="170"/>
                     </StackPanel>
+                </StackPanel>
+            </NavigationView.PaneHeader>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
-                                VerticalAlignment="Center" Margin="24,0" HorizontalAlignment="Left">
-                        <TextBlock x:Name="PersonaBadgeText" FontSize="12"
-                                   Foreground="{StaticResource HcwMutedBrush}"
-                                   VerticalAlignment="Center"
-                                   ToolTipService.ToolTip="Active persona — Edit → Project settings"/>
-                        <TextBlock x:Name="PersonaPageSep" Text="·"
-                                   Foreground="{StaticResource HcwMutedBrush}" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="RibbonPageLabel" FontSize="13" FontWeight="SemiBold"
-                                   Foreground="{StaticResource HcwInkBrush}"
-                                   VerticalAlignment="Center"
-                                   Text="Dashboard"/>
-                    </StackPanel>
+            <Grid x:Name="WorkArea" Background="{StaticResource HcwFogBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                    <Grid Grid.Column="2" Height="35" VerticalAlignment="Center">
-                        <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="3,3,0,0"/>
-                        <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,3,3"/>
-                        <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="10,0">
-                            <TextBlock Text="Local AI · desktop" VerticalAlignment="Center"
-                                       FontSize="12" Foreground="{StaticResource HcwMutedBrush}"/>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </Border>
-        </Grid>
+                <!-- Page line: the page, and whose letterhead the project is set up for -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="24,12,24,4">
+                    <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" FontSize="16" FontWeight="SemiBold"
+                               FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PersonaPageSep" Text="·" Foreground="{StaticResource HcwMutedBrush}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PersonaBadgeText" FontSize="12" Foreground="{StaticResource HcwMutedBrush}"
+                               VerticalAlignment="Center" ToolTipService.ToolTip="Active persona — Edit → Project settings"/>
+                </StackPanel>
 
-        <!-- STAGE — progressive command strip (current pillar only) + work -->
-        <Grid Grid.Row="2" Background="{StaticResource HcwFogBrush}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+                <Frame x:Name="ContentFrame" Grid.Row="1" Margin="24,0,24,8">
+                    <Frame.ContentTransitions>
+                        <TransitionCollection>
+                            <NavigationThemeTransition/>
+                        </TransitionCollection>
+                    </Frame.ContentTransitions>
+                </Frame>
 
-            <!-- Flat Layer-1 strip — only commands for the active taskbar pillar -->
-            <Border Grid.Row="0" Margin="24,0,24,8" Padding="8,6"
-                    Background="{StaticResource HcwWhiteBrush}"
-                    BorderBrush="{StaticResource HcwEdgeBrush}"
-                    BorderThickness="1" CornerRadius="8"
-                    x:Name="RibbonBody">
-                <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
-                    <StackPanel x:Name="RibbonCommandPanel" Orientation="Horizontal" Spacing="4"/>
-                </ScrollViewer>
-            </Border>
-
-            <!-- Hidden host kept for BuildRibbonTabs API (pillars live in taskbar) -->
-            <StackPanel x:Name="RibbonTabPanel" Visibility="Collapsed"/>
-
-            <Grid Grid.Row="1">
-            <Frame x:Name="ContentFrame" Margin="24,0,24,168">
-                <Frame.ContentTransitions>
-                    <TransitionCollection>
-                        <NavigationThemeTransition/>
-                    </TransitionCollection>
-                </Frame.ContentTransitions>
-            </Frame>
-
-            <!-- ActionDock — LEFT New · CENTER Save · RIGHT Publish (≤3; sync tools in taskbar) -->
-            <Grid x:Name="DockChrome"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Bottom"
-                  Margin="16,0,16,84"
-                  Canvas.ZIndex="50">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="10,8">
-                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="New" Style="{StaticResource HcwDockButton}"
-                                Click="New_Click"
-                                ToolTipService.ToolTip="New project"/>
-                        <Button Content="Save" Style="{StaticResource HcwDockPrimary}"
-                                Click="Save_Click" MinWidth="88"
-                                ToolTipService.ToolTip="Save project (Ctrl+S)"/>
-                        <Button Content="Publish" Style="{StaticResource HcwDockButton}"
-                                Click="PublishStatus_Click"
-                                ToolTipService.ToolTip="Publish project status to hub"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- Taskbar 60 — L tools · C pillars · R sync -->
-            <Grid x:Name="TaskbarChrome" VerticalAlignment="Bottom" Height="60"
-                  Margin="16,0,16,16" Canvas.ZIndex="40">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="6,6,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,6,6"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="12,0">
-                    <Grid Height="60">
+                <!-- Status strip: calculator, the hub tools and the two status chips -->
+                <Border Grid.Row="2" Margin="16,0,16,12" Padding="12,0" Height="44"
+                        Background="{StaticResource HcwWhiteBrush}" BorderBrush="{StaticResource HcwEdgeBrush}"
+                        BorderThickness="1" CornerRadius="8" AutomationProperties.Name="Status">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                            <Button x:Name="NavCalcBtn" Style="{StaticResource HcwGhostButton}" MinWidth="40"
-                                    Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask">
-                                <FontIcon Glyph="&#xE1D0;" FontSize="16"
-                                          FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                            </Button>
-                        </StackPanel>
-                        <ScrollViewer Grid.Column="1" HorizontalScrollMode="Enabled"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled"
-                                      HorizontalAlignment="Stretch">
-                            <StackPanel x:Name="TaskbarPillarPanel" Orientation="Horizontal" Spacing="2"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </ScrollViewer>
+                        <Button x:Name="NavCalcBtn" Style="{StaticResource HcwGhostButton}" MinWidth="40"
+                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE1D0;" FontSize="16" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                        </Button>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                            <Button Content="Bind" Style="{StaticResource HcwGhostButton}"
-                                    Click="BindProject_Click"
+                            <Button Content="Bind" Style="{StaticResource HcwGhostButton}" Click="BindProject_Click"
                                     ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
-                            <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}"
-                                    Click="Flush_Click"
+                            <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
                                     ToolTipService.ToolTip="Flush outbox to hub"/>
-                            <Border x:Name="ConnectBadge" Padding="10,0" Height="35" CornerRadius="8"
-                                    Background="{StaticResource HcwFogBrush}"
-                                    Tapped="ConnectBadge_Tapped"
+                            <Border x:Name="ConnectBadge" Padding="10,0" Height="32" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}" Tapped="ConnectBadge_Tapped"
                                     ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">
-                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center"
-                                           FontSize="12" Foreground="{StaticResource HcwInkBrush}"
-                                           MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
                                            Text="AORMS · signed out"/>
                             </Border>
-                            <Border x:Name="SyncBadge" Padding="10,0" Height="35" CornerRadius="8"
-                                    Background="{StaticResource HcwFogBrush}"
-                                    Tapped="SyncBadge_Tapped"
+                            <Border x:Name="SyncBadge" Padding="10,0" Height="32" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}" Tapped="SyncBadge_Tapped"
                                     ToolTipService.ToolTip="Hub sync status — tap for project settings">
-                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center"
-                                           FontSize="12" Foreground="{StaticResource HcwInkBrush}"
-                                           MaxWidth="140" TextTrimming="CharacterEllipsis"
+                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"
                                            Text="Sync…"/>
                             </Border>
                         </StackPanel>
                     </Grid>
                 </Border>
-            </Grid>
 
+                <!-- Floating widgets, above the status strip -->
+                <Grid Grid.Row="1" Grid.RowSpan="2">
             <!-- Soft toast — clears taskbar + clock -->
             <Grid x:Name="ToastHost"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Bottom"
-                  Margin="16,16,140,92"
+                  Margin="16,16,140,72"
                   MaxWidth="400" MinWidth="280"
                   Visibility="Collapsed"
                   Canvas.ZIndex="200"
@@ -281,7 +203,7 @@
                   Visibility="Collapsed"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Bottom"
-                  Margin="0,0,140,92"
+                  Margin="0,0,140,72"
                   Canvas.ZIndex="100"
                   AutomationProperties.Name="Floating calculator">
                 <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
@@ -336,7 +258,7 @@
             <!-- Analogue clock + Pomodoro — design 100/127; shell ScaleHost 0.8× → face ~80 -->
             <StackPanel x:Name="ClockPomodoroHost"
                         VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                        Margin="0,0,16,92" Spacing="4" IsHitTestVisible="True"
+                        Margin="0,0,16,72" Spacing="4" IsHitTestVisible="True"
                         Canvas.ZIndex="20"
                         AutomationProperties.Name="Clock and Pomodoro">
                 <Viewbox Width="127" Height="127" Stretch="Uniform" HorizontalAlignment="Center">
@@ -398,8 +320,10 @@
                                Foreground="{StaticResource HcwMutedBrush}"/>
                 </Button>
             </StackPanel>
-            </Grid><!-- work -->
-            </Grid><!-- stage -->
+
+                </Grid>
+            </Grid>
+        </NavigationView>
                 </Grid><!-- scale inner -->
             </Grid><!-- ScaleHost -->
         </Grid><!-- ScaleViewport -->

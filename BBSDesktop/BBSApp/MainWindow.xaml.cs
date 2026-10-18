@@ -58,8 +58,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
-        BuildRibbonTabs();
-        SelectTab("project");
+        BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();
         RefreshSyncBadge();
@@ -573,137 +572,43 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         return new ImageIcon { Source = (ImageSource)src, Width = 16, Height = 16 };
     }
 
-    private readonly Dictionary<string, Button> _pillarButtons = new(StringComparer.OrdinalIgnoreCase);
+    private bool _navSyncing;
 
-    private void BuildRibbonTabs()
+    /// <summary>Builds the left navigation pane from the sections: a heading for each, and an item for each page.</summary>
+    private void BuildNavigation()
     {
-        // Pillars live in the taskbar (staff geography) — progressive commands in stage strip.
-        TaskbarPillarPanel.Children.Clear();
-        _pillarButtons.Clear();
-        RibbonTabPanel.Children.Clear();
-
-        var primary = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "project", "rcc", "civil", "outputs" };
-        var moreFlyout = new MenuFlyout();
-
+        AppNav.MenuItems.Clear();
         foreach (var tab in _tabs)
         {
-            if (primary.Contains(tab.Id))
+            AppNav.MenuItems.Add(new NavigationViewItemHeader { Content = tab.Title, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            foreach (var cmd in tab.Commands)
             {
-                var btn = new Button
+                var icon = cmd.Icon switch
                 {
-                    Content = tab.Title,
-                    Tag = tab.Id,
-                    Style = (Style)Application.Current.Resources["HcwGhostButton"],
+                    FontIcon fi => (IconElement)CloneFontIcon(fi, 16),
+                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 16, Height = 16 },
+                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = 16, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
                 };
-                ToolTipService.SetToolTip(btn, $"{tab.Title} — show commands");
-                btn.Click += Pillar_Click;
-                _pillarButtons[tab.Id] = btn;
-                TaskbarPillarPanel.Children.Add(btn);
+                AppNav.MenuItems.Add(new NavigationViewItem { Content = cmd.Label, Tag = cmd.Tag, MinHeight = 32, FontSize = 13, Icon = icon });
             }
-            else
-            {
-                var item = new MenuFlyoutItem { Text = tab.Title, Tag = tab.Id };
-                item.Click += PillarMenu_Click;
-                moreFlyout.Items.Add(item);
-            }
-        }
-
-        if (moreFlyout.Items.Count > 0)
-        {
-            var moreBtn = new Button
-            {
-                Content = "More",
-                Style = (Style)Application.Current.Resources["HcwGhostButton"],
-                Flyout = moreFlyout,
-            };
-            ToolTipService.SetToolTip(moreBtn, "Schedule · Office · Contracts · Accounts · Stores · HR");
-            TaskbarPillarPanel.Children.Add(moreBtn);
         }
     }
 
-    private void Pillar_Click(object sender, RoutedEventArgs e)
+    private void AppNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not string id) return;
-        SelectTab(id);
-        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
-        if (first is not null) Navigate(first.Tag);
-    }
-
-    private void PillarMenu_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string id) return;
-        SelectTab(id);
-        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
-        if (first is not null) Navigate(first.Tag);
+        if (_navSyncing || args.SelectedItem is not NavigationViewItem { Tag: string tag })
+            return;
+        Navigate(tag);
+        // an action such as Pull JM is not a page: put the highlight back on the page being shown
+        RefreshCommandHighlight();
     }
 
     private void SelectTab(string id)
     {
         _activeTab = id;
-        var accent = BrushRes("HcwAccentBrush", Color.FromArgb(255, 0xFF, 0x4F, 0x18));
-        var ink = BrushRes("HcwInkBrush", Color.FromArgb(255, 0x14, 0x15, 0x17));
-        var muted = BrushRes("HcwMutedBrush", Color.FromArgb(255, 0x5C, 0x63, 0x70));
-        var transparent = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        foreach (var kv in _pillarButtons)
-        {
-            bool on = string.Equals(kv.Key, id, StringComparison.OrdinalIgnoreCase);
-            kv.Value.FontWeight = on
-                ? Microsoft.UI.Text.FontWeights.SemiBold
-                : Microsoft.UI.Text.FontWeights.Normal;
-            kv.Value.BorderThickness = on ? new Thickness(0, 0, 0, 2) : new Thickness(0);
-            kv.Value.BorderBrush = on ? accent : transparent;
-            kv.Value.Foreground = on ? ink : muted;
-            kv.Value.Background = transparent;
-        }
-
-        var tab = _tabs.FirstOrDefault(t => t.Id == id) ?? _tabs[0];
-        RibbonCommandPanel.Children.Clear();
-        double captionSize = ResourceDouble("RibbonCommandCaptionSize", 12);
-        double iconSize = ResourceDouble("RibbonCommandIconSize", 22);
-        foreach (var cmd in tab.Commands)
-        {
-            var stack = new StackPanel { Spacing = 6, Width = 88 };
-            FrameworkElement iconEl = cmd.Icon switch
-            {
-                FontIcon fi => CloneFontIcon(fi, iconSize),
-                ImageIcon ii => new ImageIcon { Source = ii.Source, Width = iconSize, Height = iconSize },
-                FrameworkElement fe => CloneFrameworkIcon(fe, iconSize),
-                _ => LetterIcon(LetterForTag(cmd.Tag), iconSize - 2)
-            };
-            iconEl.HorizontalAlignment = HorizontalAlignment.Center;
-            stack.Children.Add(iconEl);
-            stack.Children.Add(new TextBlock
-            {
-                Text = cmd.Label,
-                FontSize = captionSize,
-                Foreground = muted,
-                TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.WrapWholeWords,
-                MaxLines = 2,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-
-            bool active = string.Equals(cmd.Tag, _activeTag, StringComparison.OrdinalIgnoreCase);
-            var btn = new Button
-            {
-                Content = stack,
-                Tag = cmd.Tag,
-                Padding = new Thickness(10, 8, 10, 8),
-                MinWidth = 88,
-                MinHeight = 56,
-                Background = active
-                    ? BrushRes("HcwSoftBrush", Color.FromArgb(255, 0xEC, 0xEE, 0xF2))
-                    : transparent,
-                BorderBrush = active ? accent : transparent,
-                BorderThickness = active ? new Thickness(0, 0, 0, 2) : new Thickness(0),
-                CornerRadius = new CornerRadius(8)
-            };
-            ToolTipService.SetToolTip(btn, cmd.Label);
-            btn.Click += RibbonCommand_Click;
-            RibbonCommandPanel.Children.Add(btn);
-        }
+        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
+        if (first is not null)
+            Navigate(first.Tag);
     }
 
     private static FontIcon CloneFontIcon(FontIcon src, double size = 16) => new()
@@ -736,12 +641,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         if (Application.Current.Resources.TryGetValue(key, out var v) && v is double d)
             return d;
         return fallback;
-    }
-
-    private void RibbonCommand_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string tag) return;
-        Navigate(tag);
     }
 
     // ——— IAppCommandBus: the single external route into navigation ———
@@ -788,12 +687,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         }
 
         _activeTag = tag;
-        // Keep matching tab selected for context; ribbon stays expanded.
         var owner = _tabs.FirstOrDefault(t => t.Commands.Any(c => c.Tag == tag));
-        if (owner is not null && owner.Id != _activeTab)
-            SelectTab(owner.Id);
-        else
-            RefreshCommandHighlight();
+        if (owner is not null)
+            _activeTab = owner.Id;
+        RefreshCommandHighlight();
 
         ContentFrame.Content = tag switch
         {
@@ -1107,20 +1004,17 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         NavigateTo("earthwork");
     }
 
+    /// <summary>Marks the navigation item of the page being shown, without navigating again.</summary>
     private void RefreshCommandHighlight()
     {
-        var accent = BrushRes("HcwAccentBrush", Color.FromArgb(255, 0xFF, 0x4F, 0x18));
-        var selectedBg = BrushRes("HcwSoftBrush", Color.FromArgb(255, 0xEC, 0xEE, 0xF2));
-        var transparent = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        foreach (var child in RibbonCommandPanel.Children)
+        _navSyncing = true;
+        try
         {
-            if (child is not Button btn || btn.Tag is not string tag) continue;
-            bool on = string.Equals(tag, _activeTag, StringComparison.OrdinalIgnoreCase);
-            btn.Background = on ? selectedBg : transparent;
-            btn.BorderBrush = on ? accent : transparent;
-            btn.BorderThickness = on ? new Thickness(0, 0, 0, 2) : new Thickness(0);
-            btn.CornerRadius = new CornerRadius(8);
+            AppNav.SelectedItem = AppNav.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => string.Equals(i.Tag as string, _activeTag, StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            _navSyncing = false;
         }
     }
 

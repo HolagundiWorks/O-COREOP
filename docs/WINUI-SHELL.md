@@ -13,27 +13,26 @@
 | Suite | AORMS technical |
 | Operator | Human Centric Works · Hospet (HCW) |
 
-## Geography (cognitive jobs)
+## Structure (the same as AOS)
 
 ```text
 Caption — document title only (OS drag)
-MenuBar row — File · Edit · Help (dedicated strip)
-Ribbon 56 — “AQC Core” once · persona · page · Local AI
-Stage — flat command strip (active pillar only) + work
-ActionDock ≤3 — New · Save · Publish
-Taskbar 60 — Calc | Project · RCC · Civil · Outputs · More | Bind · Flush · Sync
-Clock BR — Pomodoro
+MenuBar row — File · Edit · Help
+Left navigation pane — the sections, grouped by job; the brand sits at the top of the pane
+Work area — page line (page · persona) · the page · status strip
+Floating widgets — toast, calculator, Pomodoro clock
 ```
 
 | Region | Role |
 | --- | --- |
-| **File** | New · Open · Save · Save as · Exit |
+| **File** | New · Open · Import / Export CAD · Save · Save as · Publish project status · AORMS sign-in · Exit |
 | **Edit** | Project / Engineering / Cost settings · Bind Connect |
 | **Help** | About |
+| **Navigation pane** | One heading per section (Project, RCC steel, Civil BOQ, Schedule, Office, Contracts, Accounts, Stores, HR & resources, Outputs) and one item per page. Ctrl+1 to Ctrl+9 jump to a section's first page |
+| **Status strip** | Calculator · Bind · Flush · AORMS chip · Sync chip |
 | **UI scale** | Shell `ScaleHost` **0.96×** (caption 1×) |
-| Dropdowns | Item / overlay corner radius **0** |
-| Hits | Dock **44** · taskbar **35** · chrome radius **8** |
-| Hub sync | Taskbar Bind/Flush + chip — [`PROJECT-SYNC.md`](PROJECT-SYNC.md) |
+
+AOS (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New, Save and Publish are in the File menu.
 
 Themes: `HcwTheme.xaml` · `HcwFluentBridge.xaml` · `FluentTokens.xaml`.
 
