@@ -58,6 +58,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
+        Hcw.Ui.SuiteNavigation.Apply(AppNav);
         BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();

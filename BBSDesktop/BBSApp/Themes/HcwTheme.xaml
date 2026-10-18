@@ -1,5 +1,5 @@
 <!--
-  HCW-UI-Kit token mirror for WinUI — opaque pure neumorphism.
+  The app's HCW keys, now aliases of the suite colours in Hcw.Ui (Themes/SuiteColors.xaml). Change colours there, not here.
   NEU_RAISED: fill #ECEEF2 · dual shadow 6/6 (no border, no ThemeShadow/blur).
   Heights: ribbon 56 · footer/dock tray 60 · dock hit 44 · taskbar hit 35.
 -->
@@ -7,16 +7,16 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Color x:Key="HcwFogColor">#F2F4F7</Color>
-    <Color x:Key="HcwSoftColor">#ECEEF2</Color>
-    <Color x:Key="HcwWhiteColor">#FFFFFF</Color>
-    <Color x:Key="HcwInkColor">#141517</Color>
-    <Color x:Key="HcwAccentColor">#FF4F18</Color>
-    <Color x:Key="HcwEdgeColor">#D0D4DC</Color>
-    <Color x:Key="HcwMutedColor">#5C6370</Color>
-    <Color x:Key="HcwDangerColor">#C8442E</Color>
-    <Color x:Key="HcwNeuDarkColor">#29141517</Color>
-    <Color x:Key="HcwNeuLightColor">#EBFFFFFF</Color>
+    <StaticResource x:Key="HcwFogColor" ResourceKey="SuiteBackground"/>
+    <StaticResource x:Key="HcwSoftColor" ResourceKey="SuiteSidebar"/>
+    <StaticResource x:Key="HcwWhiteColor" ResourceKey="SuiteSurface"/>
+    <StaticResource x:Key="HcwInkColor" ResourceKey="SuiteInk"/>
+    <StaticResource x:Key="HcwAccentColor" ResourceKey="SuiteAmber"/>
+    <StaticResource x:Key="HcwEdgeColor" ResourceKey="SuiteEdge"/>
+    <StaticResource x:Key="HcwMutedColor" ResourceKey="SuiteInkSoft"/>
+    <StaticResource x:Key="HcwDangerColor" ResourceKey="SuiteDanger"/>
+    <Color x:Key="HcwNeuDarkColor">#00000000</Color>
+    <Color x:Key="HcwNeuLightColor">#00000000</Color>
 
     <SolidColorBrush x:Key="HcwFogBrush" Color="{StaticResource HcwFogColor}"/>
     <SolidColorBrush x:Key="HcwSoftBrush" Color="{StaticResource HcwSoftColor}"/>
@@ -26,7 +26,8 @@
     <SolidColorBrush x:Key="HcwEdgeBrush" Color="{StaticResource HcwEdgeColor}"/>
     <SolidColorBrush x:Key="HcwMutedBrush" Color="{StaticResource HcwMutedColor}"/>
     <SolidColorBrush x:Key="HcwDangerBrush" Color="{StaticResource HcwDangerColor}"/>
-    <SolidColorBrush x:Key="HcwOnAccentBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="HcwOnAccentBrush" Color="{StaticResource SuiteInk}"/>
+    <SolidColorBrush x:Key="HcwAccentTextBrush" Color="{StaticResource SuiteAmberText}"/>
     <SolidColorBrush x:Key="HcwNeuDarkBrush" Color="{StaticResource HcwNeuDarkColor}"/>
     <SolidColorBrush x:Key="HcwNeuLightBrush" Color="{StaticResource HcwNeuLightColor}"/>
 
@@ -120,7 +121,7 @@
     </Style>
 
     <Style x:Key="HcwDockPrimary" TargetType="Button" BasedOn="{StaticResource HcwDockButton}">
-        <Setter Property="Foreground" Value="{StaticResource HcwAccentBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource HcwAccentTextBrush}"/>
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 

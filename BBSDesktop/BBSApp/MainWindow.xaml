@@ -236,7 +236,7 @@
                                  PlaceholderText="Result"
                                  FontSize="13" MinHeight="35"
                                  IsReadOnly="True" AcceptsReturn="False"
-                                 Foreground="{StaticResource HcwAccentBrush}"/>
+                                 Foreground="{StaticResource HcwAccentTextBrush}"/>
                         <Grid x:Name="AssistantReplyHost" Visibility="Collapsed">
                             <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
                                 <TextBlock x:Name="AssistantReply" FontSize="12" TextWrapping="Wrap"
