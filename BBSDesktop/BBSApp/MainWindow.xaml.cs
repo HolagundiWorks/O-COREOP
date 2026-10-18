@@ -1328,7 +1328,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void SetWindowTitle(string text)
     {
         Title = text;
-        // Caption = document name only (avoid repeating "O-Metra").
+        // Caption = document name only (avoid repeating "O-CoreOp").
         if (TitleBarText != null)
         {
             var name = ProjectStore.Current.Name;

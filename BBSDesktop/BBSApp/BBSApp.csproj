@@ -5,14 +5,14 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>BBSApp</RootNamespace>
     <AssemblyName>AQCCore</AssemblyName>
-    <ApplicationTitle>O-Metra</ApplicationTitle>
+    <ApplicationTitle>O-CoreOp</ApplicationTitle>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Version>1.1.0</Version>
     <Company>Human Centric Works</Company>
-    <Product>O-Metra</Product>
+    <Product>O-CoreOp</Product>
     <Authors>Human Centric Works, Hospet</Authors>
-    <Description>O-Metra — quantities, estimates and billing. Part of OSAS, the Open Source Architecture Suit. By Human Centric Works, Hospet.</Description>
+    <Description>O-CoreOp — quantities, estimates and billing. Part of OSAS, the Open Source Architecture Suit. By Human Centric Works, Hospet.</Description>
     <Copyright>Copyright © 2026 Human Centric Works, Hospet</Copyright>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>

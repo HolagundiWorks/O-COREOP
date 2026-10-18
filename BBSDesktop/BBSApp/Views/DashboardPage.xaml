@@ -23,7 +23,7 @@
                                 Background="{StaticResource HcwWhiteBrush}"
                                 VerticalAlignment="Top">
                             <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="5"
-                                   AutomationProperties.Name="O-Metra logo"/>
+                                   AutomationProperties.Name="O-CoreOp logo"/>
                         </Border>
                         <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                             <TextBlock x:Name="BrandNameText" Style="{StaticResource PageTitleStyle}"/>

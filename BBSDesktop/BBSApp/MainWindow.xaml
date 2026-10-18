@@ -2,7 +2,7 @@
     x:Class="BBSApp.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="O-Metra">
+    Title="O-CoreOp">
 
     <!--
       Shell, the same structure as AOS:
@@ -99,7 +99,7 @@
                                AutomationProperties.Name="Product logo"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center" Spacing="0">
-                        <TextBlock x:Name="BrandTitleText" Text="O-Metra" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock x:Name="BrandTitleText" Text="O-CoreOp" FontSize="14" FontWeight="SemiBold"
                                    FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"/>
                         <TextBlock x:Name="BrandSubText" Text="Quantities, estimates and billing" FontSize="10"
                                    Foreground="{StaticResource HcwMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="170"/>
