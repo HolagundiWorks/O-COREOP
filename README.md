@@ -1,4 +1,6 @@
-# AQC-Core
+# O-Metra
+
+**O-Metra** (formerly AQC-Core) is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The repository, the executable `AQCCore.exe` and the project file extension `.bbsproj` keep their old names for now.
 
 **AQC-Core** (*Accelerated Quantity and Costing Core*) — quantity take-off and costing by **Human Centric Works, Hospet**.
 

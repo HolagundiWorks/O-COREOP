@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
-        Hcw.Ui.SuiteNavigation.Apply(AppNav);
+        Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
         BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();
@@ -1319,7 +1319,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void SetWindowTitle(string text)
     {
         Title = text;
-        // Caption = document name only (avoid repeating "AQC Core").
+        // Caption = document name only (avoid repeating "O-Metra").
         if (TitleBarText != null)
         {
             var name = ProjectStore.Current.Name;

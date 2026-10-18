@@ -8,6 +8,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteColors.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteAccent.Blue.xaml"/>
                 <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteStyles.xaml"/>
                 <ResourceDictionary Source="ms-appx:///Themes/HcwTheme.xaml"/>
                 <ResourceDictionary Source="ms-appx:///Themes/HcwFluentBridge.xaml"/>
@@ -16,7 +17,7 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteLight.xaml"/>
+                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteLight.Blue.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">

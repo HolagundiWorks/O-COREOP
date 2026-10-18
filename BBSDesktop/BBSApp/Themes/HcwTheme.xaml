@@ -11,7 +11,7 @@
     <StaticResource x:Key="HcwSoftColor" ResourceKey="SuiteSidebar"/>
     <StaticResource x:Key="HcwWhiteColor" ResourceKey="SuiteSurface"/>
     <StaticResource x:Key="HcwInkColor" ResourceKey="SuiteInk"/>
-    <StaticResource x:Key="HcwAccentColor" ResourceKey="SuiteAmber"/>
+    <StaticResource x:Key="HcwAccentColor" ResourceKey="SuiteAccent"/>
     <StaticResource x:Key="HcwEdgeColor" ResourceKey="SuiteEdge"/>
     <StaticResource x:Key="HcwMutedColor" ResourceKey="SuiteInkSoft"/>
     <StaticResource x:Key="HcwDangerColor" ResourceKey="SuiteDanger"/>
@@ -26,8 +26,8 @@
     <SolidColorBrush x:Key="HcwEdgeBrush" Color="{StaticResource HcwEdgeColor}"/>
     <SolidColorBrush x:Key="HcwMutedBrush" Color="{StaticResource HcwMutedColor}"/>
     <SolidColorBrush x:Key="HcwDangerBrush" Color="{StaticResource HcwDangerColor}"/>
-    <SolidColorBrush x:Key="HcwOnAccentBrush" Color="{StaticResource SuiteInk}"/>
-    <SolidColorBrush x:Key="HcwAccentTextBrush" Color="{StaticResource SuiteAmberText}"/>
+    <SolidColorBrush x:Key="HcwOnAccentBrush" Color="{StaticResource SuiteOnAccent}"/>
+    <SolidColorBrush x:Key="HcwAccentTextBrush" Color="{StaticResource SuiteAccentText}"/>
     <SolidColorBrush x:Key="HcwNeuDarkBrush" Color="{StaticResource HcwNeuDarkColor}"/>
     <SolidColorBrush x:Key="HcwNeuLightBrush" Color="{StaticResource HcwNeuLightColor}"/>
 

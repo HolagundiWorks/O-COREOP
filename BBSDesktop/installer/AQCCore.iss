@@ -1,11 +1,11 @@
-; AQC-Core — Inno Setup script (per-user, no admin)
+; O-Metra (formerly AQC-Core) — Inno Setup script (per-user, no admin)
 ; Build via: powershell -File build-installer.ps1
 
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
 
-#define MyAppName "AQC-Core"
+#define MyAppName "O-Metra"
 #define MyAppPublisher "Human Centric Works"
 #define MyAppPublisherUrl "https://humancentic.works"
 #define MyAppExeName "AQCCore.exe"
@@ -26,7 +26,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\artifacts\installer
-OutputBaseFilename=AQCCore-Setup-{#AppVersion}
+OutputBaseFilename=O-Metra-Setup-{#AppVersion}
 SetupIconFile=..\BBSApp\Assets\app.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma2

@@ -1,4 +1,4 @@
-# AQC Core WinUI shell (HCW soft neu)
+# O-Metra WinUI shell (OSAS)
 
 **Status:** HCW neumorphic · staff geography · **Updated:** 2026-08-10  
 **App:** `BBSDesktop/BBSApp` (assembly `AQCCore` · display **AQC Core**)  
@@ -8,9 +8,9 @@
 
 | Field | Value |
 | --- | --- |
-| App name | **AQC Core** |
+| App name | **O-Metra** (formerly AQC Core) |
 | Expansion | Accelerated Quantity and Costing |
-| Suite | AORMS technical |
+| Suite | OSAS, the Open Source Architecture Suit |
 | Operator | Human Centric Works · Hospet (HCW) |
 
 ## Structure (the same as AOS)
