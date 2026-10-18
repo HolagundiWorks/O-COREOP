@@ -1717,6 +1717,12 @@ public sealed partial class ElementPage : Page
             SheetWide.Height = SheetHScroll.ActualHeight;
     }
 
+    // Below about 700 px the section sketch gives its column back to the sheet.
+    private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        SketchColumn.Width = e.NewSize.Width < 700 ? new GridLength(0) : new GridLength(240);
+    }
+
     private void SheetHScroll_SizeChanged(object sender, SizeChangedEventArgs e)
         => ApplySheetWideSize();
 

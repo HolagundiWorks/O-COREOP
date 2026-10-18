@@ -1,8 +1,10 @@
 <Page
     x:Class="BBSApp.Views.ElementPage"
+    SizeChanged="Page_SizeChanged"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BBSApp.Controls"
+    xmlns:hcw="using:Hcw.Ui.Controls"
     Background="Transparent">
 
     <Grid Style="{StaticResource PageRootStyle}"
@@ -15,12 +17,16 @@
         </Grid.RowDefinitions>
 
         <!-- H1 page title — flat -->
-        <Grid>
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
             <StackPanel Spacing="2" MaxWidth="720" HorizontalAlignment="Left">
                 <TextBlock x:Name="TitleText" Style="{StaticResource PageTitleStyle}"/>
                 <TextBlock x:Name="SubtitleText" Style="{StaticResource PageSubtitleStyle}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="8"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
                         HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button x:Name="GenerateBtn" Content="Generate BBS" Style="{StaticResource PrimaryButtonStyle}"
                         Click="Generate_Click" AutomationProperties.Name="Generate"/>
@@ -39,7 +45,7 @@
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="240"/>
+                        <ColumnDefinition x:Name="SketchColumn" Width="240"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Sheet toolbar -->
@@ -47,9 +53,13 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <hcw:FlexBar Grid.ColumnSpan="2" VerticalAlignment="Center">
                             <TextBlock x:Name="SheetTitleText" Text="Sheet" Style="{StaticResource SectionHeaderStyle}" Margin="0"
                                        VerticalAlignment="Center"/>
                             <ComboBox x:Name="FloorCombo" MinWidth="140"
@@ -61,15 +71,15 @@
                                        VerticalAlignment="Center" Visibility="Collapsed"/>
                             <TextBlock x:Name="CountText" Style="{StaticResource CaptionSecondaryStyle}"
                                        VerticalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock x:Name="EditHint" Grid.Column="1" VerticalAlignment="Center"
+                        </hcw:FlexBar>
+                        <TextBlock x:Name="EditHint" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Style="{StaticResource MetaTextStyle}"
                                    Text="Click a cell to type · Enter = next column · Enter twice = next row"/>
-                        <TextBlock x:Name="ComputedHint" Grid.Column="1" VerticalAlignment="Center"
+                        <TextBlock x:Name="ComputedHint" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Center" TextWrapping="Wrap"
                                    Style="{StaticResource MetaTextStyle}"
                                    Visibility="Collapsed"
                                    Text="Formwork from RCC — edit Include column, then Save include or Refresh"/>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                        <hcw:FlexBar Grid.Row="2" Grid.ColumnSpan="2">
                             <Button x:Name="NewBtn" Content="Add row" Style="{StaticResource PrimaryButtonStyle}"
                                     Click="New_Click" ToolTipService.ToolTip="Add blank row (Ctrl+N)"/>
                             <Button x:Name="DuplicateBtn" Content="Duplicate row" Style="{StaticResource SecondaryButtonStyle}"
@@ -95,7 +105,7 @@
                                     Style="{StaticResource PrimaryButtonStyle}"
                                     Click="FinalizeFinish_Click" Visibility="Collapsed"
                                     ToolTipService.ToolTip="Write included areas to Plaster + Painting for BOQ"/>
-                        </StackPanel>
+                        </hcw:FlexBar>
                     </Grid>
 
                     <!-- Excel-style sheet: light theme + full grid borders -->

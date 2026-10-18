@@ -596,6 +596,14 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         }
     }
 
+    // In the narrow layout the pane's menu button sits at the top left, so the page line moves clear of it.
+    private void AppNav_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
+    {
+        var minimal = sender.DisplayMode == NavigationViewDisplayMode.Minimal;
+        PageLine.Margin = new Thickness(minimal ? 56 : 24, 12, 24, 4);
+        ClockPomodoroHost.Visibility = sender.DisplayMode == NavigationViewDisplayMode.Expanded ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void AppNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         if (_navSyncing || args.SelectedItem is not NavigationViewItem { Tag: string tag })

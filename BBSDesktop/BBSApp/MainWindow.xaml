@@ -87,10 +87,10 @@
 
 
         <!-- Same structure as AOS: a menu bar, then a left navigation pane grouped by job, then the work area -->
-        <NavigationView x:Name="AppNav" Grid.Row="1" PaneDisplayMode="Left" OpenPaneLength="232"
-                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="False"
+        <NavigationView x:Name="AppNav" Grid.Row="1" PaneDisplayMode="Auto" OpenPaneLength="232" CompactModeThresholdWidth="560" ExpandedModeThresholdWidth="900"
+                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="True"
                         Background="{StaticResource HcwFogBrush}"
-                        SelectionChanged="AppNav_SelectionChanged"
+                        SelectionChanged="AppNav_SelectionChanged" DisplayModeChanged="AppNav_DisplayModeChanged"
                         AutomationProperties.Name="Sections">
             <NavigationView.PaneHeader>
                 <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,4,8,8">
@@ -106,162 +106,13 @@
                     </StackPanel>
                 </StackPanel>
             </NavigationView.PaneHeader>
-
-            <Grid x:Name="WorkArea" Background="{StaticResource HcwFogBrush}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <!-- Page line: the page, and whose letterhead the project is set up for -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="24,12,24,4">
-                    <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" AutomationProperties.HeadingLevel="Level1" FontSize="16" FontWeight="SemiBold"
-                               FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"
-                               VerticalAlignment="Center"/>
-                    <TextBlock x:Name="PersonaPageSep" Text="·" Foreground="{StaticResource HcwMutedBrush}" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="PersonaBadgeText" FontSize="12" Foreground="{StaticResource HcwMutedBrush}"
-                               VerticalAlignment="Center" ToolTipService.ToolTip="Active persona — Edit → Project settings"/>
-                </StackPanel>
-
-                <Frame x:Name="ContentFrame" Grid.Row="1" Margin="24,0,24,8">
-                    <Frame.ContentTransitions>
-                        <TransitionCollection>
-                            <NavigationThemeTransition/>
-                        </TransitionCollection>
-                    </Frame.ContentTransitions>
-                </Frame>
-
-                <!-- Status strip: calculator, the hub tools and the two status chips -->
-                <Border Grid.Row="2" Margin="16,0,16,12" Padding="12,0" Height="44"
-                        Background="{StaticResource HcwWhiteBrush}" BorderBrush="{StaticResource HcwEdgeBrush}"
-                        BorderThickness="1" CornerRadius="8" AutomationProperties.Name="Status">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
-                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
-                            <FontIcon Glyph="&#xE1D0;" FontSize="16" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                        </Button>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                            <Button Content="Bind" Style="{StaticResource HcwGhostButton}" Click="BindProject_Click"
-                                    ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
-                            <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
-                                    ToolTipService.ToolTip="Flush outbox to hub"/>
-                            <Border x:Name="ConnectBadge" Padding="10,0" Height="32" CornerRadius="8"
-                                    Background="{StaticResource HcwFogBrush}" Tapped="ConnectBadge_Tapped"
-                                    ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">
-                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="12"
-                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                           Text="AORMS · signed out"/>
-                            </Border>
-                            <Border x:Name="SyncBadge" Padding="10,0" Height="32" CornerRadius="8"
-                                    Background="{StaticResource HcwFogBrush}" Tapped="SyncBadge_Tapped"
-                                    ToolTipService.ToolTip="Hub sync status — tap for project settings">
-                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="12"
-                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"
-                                           Text="Sync…"/>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Floating widgets, above the status strip -->
-                <Grid Grid.Row="1" Grid.RowSpan="2">
-            <!-- Soft toast — clears taskbar + clock -->
-            <Grid x:Name="ToastHost"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Bottom"
-                  Margin="16,16,140,72"
-                  MaxWidth="400" MinWidth="280"
-                  Visibility="Collapsed"
-                  Canvas.ZIndex="200"
-                  AutomationProperties.Name="Notification">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="4,4,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,4,4"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="4">
-                    <InfoBar x:Name="ToastBar"
-                             IsOpen="False" IsClosable="True"
-                             Background="Transparent" BorderThickness="0"
-                             CloseButtonClick="ToastBar_CloseClick">
-                        <InfoBar.Resources>
-                            <SolidColorBrush x:Key="InfoBarInformationalSeverityBackgroundBrush" Color="Transparent"/>
-                            <SolidColorBrush x:Key="InfoBarSuccessSeverityBackgroundBrush" Color="Transparent"/>
-                            <SolidColorBrush x:Key="InfoBarWarningSeverityBackgroundBrush" Color="Transparent"/>
-                            <SolidColorBrush x:Key="InfoBarErrorSeverityBackgroundBrush" Color="Transparent"/>
-                        </InfoBar.Resources>
-                    </InfoBar>
-                </Border>
-            </Grid>
-
-            <!-- Calculator panel — left of clock, above taskbar -->
-            <Grid x:Name="FloatingCalcPanel"
-                  Width="320"
-                  Visibility="Collapsed"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Bottom"
-                  Margin="0,0,140,72"
-                  Canvas.ZIndex="100"
-                  AutomationProperties.Name="Floating calculator">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="12">
-                    <StackPanel Spacing="8">
-                        <Grid>
-                            <TextBlock Text="Calculator · Ask"
-                                       FontSize="13" FontWeight="SemiBold"
-                                       FontFamily="{StaticResource HcwFontFamily}"
-                                       Foreground="{StaticResource HcwInkBrush}"
-                                       VerticalAlignment="Center"/>
-                            <Button HorizontalAlignment="Right"
-                                    Style="{StaticResource HcwGhostButton}"
-                                    MinWidth="35" Width="35" Padding="0"
-                                    Click="CalcClose_Click"
-                                    ToolTipService.ToolTip="Close">
-                                <FontIcon Glyph="&#xE711;" FontSize="12"
-                                          FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                          Foreground="{StaticResource HcwMutedBrush}"/>
-                            </Button>
-                        </Grid>
-                        <TextBox x:Name="CalcInput"
-                                 PlaceholderText="Calculate or ask a question"
-                                 FontSize="13" MinHeight="35"
-                                 AcceptsReturn="False" TextWrapping="NoWrap"
-                                 KeyDown="CalcInput_KeyDown"
-                                 TextChanged="CalcInput_TextChanged"/>
-                        <TextBox x:Name="CalcResult"
-                                 PlaceholderText="Result"
-                                 FontSize="13" MinHeight="35"
-                                 IsReadOnly="True" AcceptsReturn="False"
-                                 Foreground="{StaticResource HcwAccentTextBrush}"/>
-                        <Grid x:Name="AssistantReplyHost" Visibility="Collapsed">
-                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="AssistantReply" FontSize="12" TextWrapping="Wrap"
-                                           Foreground="{StaticResource HcwInkBrush}"
-                                           IsTextSelectionEnabled="True"/>
-                            </ScrollViewer>
-                            <ProgressRing x:Name="AssistantBusy" IsActive="False" Visibility="Collapsed"
-                                          Width="20" Height="20" HorizontalAlignment="Center"/>
-                        </Grid>
-                        <TextBlock FontSize="11" Foreground="{StaticResource HcwMutedBrush}"
-                                   Text="Enter to run · Esc to clear"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- Hidden FAB peer — code still references CalcFab for focus -->
-            <Button x:Name="CalcFab" Visibility="Collapsed" Click="CalcFab_Click"/>
-
+            <NavigationView.PaneFooter>
             <!-- Analogue clock + Pomodoro — design 100/127; shell ScaleHost 0.8× → face ~80 -->
             <StackPanel x:Name="ClockPomodoroHost"
-                        VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                        Margin="0,0,16,72" Spacing="4" IsHitTestVisible="True"
-                        Canvas.ZIndex="20"
+                        VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                        Margin="0,8,0,8" Spacing="4" IsHitTestVisible="True"
                         AutomationProperties.Name="Clock and Pomodoro">
-                <Viewbox Width="127" Height="127" Stretch="Uniform" HorizontalAlignment="Center">
+                <Viewbox Width="96" Height="96" Stretch="Uniform" HorizontalAlignment="Center">
                     <Grid x:Name="PomodoroDial" Width="127" Height="127"
                           ToolTipService.ToolTip="Pomodoro — click start/pause · double-click reset · drag orange crown to set">
                         <Ellipse x:Name="PomodoroHitPlate" Width="127" Height="127"
@@ -320,8 +171,146 @@
                                Foreground="{StaticResource HcwMutedBrush}"/>
                 </Button>
             </StackPanel>
+            </NavigationView.PaneFooter>
 
-                </Grid>
+            <Grid x:Name="WorkArea" Background="{StaticResource HcwFogBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Page line: the page, and whose letterhead the project is set up for -->
+                <StackPanel x:Name="PageLine" Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="24,12,24,4">
+                    <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" AutomationProperties.HeadingLevel="Level1" FontSize="16" FontWeight="SemiBold"
+                               FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PersonaPageSep" Text="·" Foreground="{StaticResource HcwMutedBrush}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PersonaBadgeText" FontSize="12" Foreground="{StaticResource HcwMutedBrush}"
+                               VerticalAlignment="Center" ToolTipService.ToolTip="Active persona — Edit → Project settings"/>
+                </StackPanel>
+
+                <Frame x:Name="ContentFrame" Grid.Row="2" Margin="24,0,24,8">
+                    <Frame.ContentTransitions>
+                        <TransitionCollection>
+                            <NavigationThemeTransition/>
+                        </TransitionCollection>
+                    </Frame.ContentTransitions>
+                </Frame>
+
+                <!-- Status strip: calculator, the hub tools and the two status chips -->
+                <Border Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="44"
+                        Background="{StaticResource HcwWhiteBrush}" BorderBrush="{StaticResource HcwEdgeBrush}"
+                        BorderThickness="1" CornerRadius="8" AutomationProperties.Name="Status">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
+                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE1D0;" FontSize="16" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                        </Button>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <Button Content="Bind" Style="{StaticResource HcwGhostButton}" Click="BindProject_Click"
+                                    ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
+                            <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
+                                    ToolTipService.ToolTip="Flush outbox to hub"/>
+                            <Border x:Name="ConnectBadge" Padding="10,0" Height="32" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}" Tapped="ConnectBadge_Tapped"
+                                    ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">
+                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                           Text="AORMS · signed out"/>
+                            </Border>
+                            <Border x:Name="SyncBadge" Padding="10,0" Height="32" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}" Tapped="SyncBadge_Tapped"
+                                    ToolTipService.ToolTip="Hub sync status — tap for project settings">
+                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"
+                                           Text="Sync…"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+            <!-- Soft toast — clears taskbar + clock -->
+            <Grid x:Name="ToastHost" Grid.Row="1" Margin="24,0,24,8" HorizontalAlignment="Stretch"
+                  MaxWidth="400" MinWidth="0"
+                  Visibility="Collapsed"
+                  AutomationProperties.Name="Notification">
+                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="4,4,0,0"/>
+                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,4,4"/>
+                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="4">
+                    <InfoBar x:Name="ToastBar"
+                             IsOpen="False" IsClosable="True"
+                             Background="Transparent" BorderThickness="0"
+                             CloseButtonClick="ToastBar_CloseClick">
+                        <InfoBar.Resources>
+                            <SolidColorBrush x:Key="InfoBarInformationalSeverityBackgroundBrush" Color="Transparent"/>
+                            <SolidColorBrush x:Key="InfoBarSuccessSeverityBackgroundBrush" Color="Transparent"/>
+                            <SolidColorBrush x:Key="InfoBarWarningSeverityBackgroundBrush" Color="Transparent"/>
+                            <SolidColorBrush x:Key="InfoBarErrorSeverityBackgroundBrush" Color="Transparent"/>
+                        </InfoBar.Resources>
+                    </InfoBar>
+                </Border>
+            </Grid>
+
+            <!-- Calculator panel — left of clock, above taskbar -->
+            <Grid x:Name="FloatingCalcPanel" Grid.Row="3" Margin="24,0,24,8"
+                  MaxWidth="480" Visibility="Collapsed" HorizontalAlignment="Left"
+                  AutomationProperties.Name="Floating calculator">
+                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
+                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
+                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="12">
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Text="Calculator · Ask"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       FontFamily="{StaticResource HcwFontFamily}"
+                                       Foreground="{StaticResource HcwInkBrush}"
+                                       VerticalAlignment="Center"/>
+                            <Button HorizontalAlignment="Right"
+                                    Style="{StaticResource HcwGhostButton}"
+                                    MinWidth="35" Width="35" Padding="0"
+                                    Click="CalcClose_Click"
+                                    ToolTipService.ToolTip="Close">
+                                <FontIcon Glyph="&#xE711;" FontSize="12"
+                                          FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                          Foreground="{StaticResource HcwMutedBrush}"/>
+                            </Button>
+                        </Grid>
+                        <TextBox x:Name="CalcInput"
+                                 PlaceholderText="Calculate or ask a question"
+                                 FontSize="13" MinHeight="35"
+                                 AcceptsReturn="False" TextWrapping="NoWrap"
+                                 KeyDown="CalcInput_KeyDown"
+                                 TextChanged="CalcInput_TextChanged"/>
+                        <TextBox x:Name="CalcResult"
+                                 PlaceholderText="Result"
+                                 FontSize="13" MinHeight="35"
+                                 IsReadOnly="True" AcceptsReturn="False"
+                                 Foreground="{StaticResource HcwAccentTextBrush}"/>
+                        <Grid x:Name="AssistantReplyHost" Visibility="Collapsed">
+                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="AssistantReply" FontSize="12" TextWrapping="Wrap"
+                                           Foreground="{StaticResource HcwInkBrush}"
+                                           IsTextSelectionEnabled="True"/>
+                            </ScrollViewer>
+                            <ProgressRing x:Name="AssistantBusy" IsActive="False" Visibility="Collapsed"
+                                          Width="20" Height="20" HorizontalAlignment="Center"/>
+                        </Grid>
+                        <TextBlock FontSize="11" Foreground="{StaticResource HcwMutedBrush}"
+                                   Text="Enter to run · Esc to clear"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Hidden FAB peer — code still references CalcFab for focus -->
+            <Button x:Name="CalcFab" Visibility="Collapsed" Click="CalcFab_Click"/>
             </Grid>
         </NavigationView>
                 </Grid><!-- scale inner -->
