@@ -63,6 +63,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         NavigateTo("dashboard");
         UpdatePersonaBadge();
         RefreshSyncBadge();
+        _ = RestoreConnectAsync();
         // Warm Connect session into firm.db for Flush readiness.
         _ = ProjectSyncService.StatusSummary();
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
@@ -949,6 +950,125 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         RefreshSyncBadge();
         if (ok) AppNotify.Success("Publish", message);
         else AppNotify.Warning("Publish", message);
+    }
+
+    // ── AORMS sign-in (Aorms.Connect; shared Credential Manager entry) ─────────────────────────────
+
+    private void RefreshConnectBadge()
+    {
+        if (ConnectBadgeText is null) return;
+        ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText;
+        ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details);
+    }
+
+    private async Task RestoreConnectAsync()
+    {
+        BBSApp.Services.Connect.ConnectService.Changed += () => DispatcherQueue.TryEnqueue(RefreshConnectBadge);
+        await BBSApp.Services.Connect.ConnectService.RestoreAsync().ConfigureAwait(true);
+        RefreshConnectBadge();
+        if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SessionReplaced)
+            await OfferTakeOverAsync();
+    }
+
+    private void ConnectBadge_Tapped(object sender, TappedRoutedEventArgs e) => _ = ConnectFlowAsync();
+    private void ConnectSignIn_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
+
+    private void ConnectSignOut_Click(object sender, RoutedEventArgs e)
+    {
+        BBSApp.Services.Connect.ConnectService.SignOut();
+        RefreshConnectBadge();
+        AppNotify.Info("AORMS", "Signed out. AQC works on its own until you sign in again.");
+    }
+
+    private async Task ConnectFlowAsync()
+    {
+        var cs = BBSApp.Services.Connect.ConnectService.State;
+        if (cs == BBSApp.Services.Connect.ConnectState.SessionReplaced) { await OfferTakeOverAsync(); return; }
+        if (cs == BBSApp.Services.Connect.ConnectState.SignedIn) { await ShowConnectAccountAsync(); return; }
+        await ShowSignInDialogAsync();
+    }
+
+    private async Task ShowConnectAccountAsync()
+    {
+        var dlg = new ContentDialog
+        {
+            Title = "AORMS",
+            Content = new TextBlock { Text = BBSApp.Services.Connect.ConnectService.Details, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true },
+            PrimaryButtonText = "Sign out",
+            CloseButtonText = "Close",
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() == ContentDialogResult.Primary) ConnectSignOut_Click(this, new RoutedEventArgs());
+    }
+
+    private async Task OfferTakeOverAsync()
+    {
+        var dlg = new ContentDialog
+        {
+            Title = "AORMS is in use on another computer",
+            Content = new TextBlock
+            {
+                Text = "You are signed in to AORMS on another computer. Only one computer can use AQC with AORMS at a time. Sign in here instead?",
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = "Sign in here",
+            CloseButtonText = "Not now",
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+        var err = await BBSApp.Services.Connect.ConnectService.TakeOverAsync();
+        RefreshConnectBadge();
+        if (err is null) AppNotify.Success("AORMS", "Signed in on this computer.");
+        else AppNotify.Error("AORMS", err);
+    }
+
+    private async Task ShowSignInDialogAsync()
+    {
+        var email = new TextBox { Header = "Email", Text = BBSApp.Services.Connect.ConnectService.RememberedEmail ?? "", InputScope = new InputScope { Names = { new InputScopeName(InputScopeNameValue.EmailSmtpAddress) } } };
+        var password = new PasswordBox { Header = "Password" };
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Microsoft.UI.Colors.Firebrick), Visibility = Visibility.Collapsed };
+        var dlg = new ContentDialog
+        {
+            Title = "Sign in to AORMS",
+            Content = new StackPanel
+            {
+                Spacing = 10, MinWidth = 320,
+                Children =
+                {
+                    new TextBlock { Text = $"Server: {BBSApp.Services.Connect.ConnectService.BaseUrl}", Opacity = 0.7, FontSize = 12 },
+                    email, password, error,
+                },
+            },
+            PrimaryButtonText = "Sign in",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Content.XamlRoot,
+        };
+        string? notConnected = null;
+        dlg.PrimaryButtonClick += async (_, a) =>
+        {
+            var d = a.GetDeferral();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email.Text) || string.IsNullOrEmpty(password.Password))
+                {
+                    error.Text = "Enter your email and password."; error.Visibility = Visibility.Visible; a.Cancel = true; return;
+                }
+                dlg.IsPrimaryButtonEnabled = false;
+                var err = await BBSApp.Services.Connect.ConnectService.SignInAsync(email.Text, password.Password);
+                dlg.IsPrimaryButtonEnabled = true;
+                if (err is null) return;
+                if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.NotConnected) { notConnected = err; return; }
+                error.Text = err; error.Visibility = Visibility.Visible; password.Password = ""; a.Cancel = true;
+            }
+            finally { d.Complete(); }
+        };
+        await dlg.ShowAsync();
+        password.Password = "";
+        RefreshConnectBadge();
+        if (notConnected is not null) AppNotify.Warning("AORMS", notConnected);
+        else if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SignedIn)
+            AppNotify.Success("AORMS", BBSApp.Services.Connect.ConnectService.Details);
     }
 
     private void SyncBadge_Tapped(object sender, TappedRoutedEventArgs e)

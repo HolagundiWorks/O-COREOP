@@ -19,8 +19,8 @@ Tests: `BBSDesktop/Aorms.Connect.Tests` (80 xunit, fake HTTP). Live walkthrough:
 
 ## NOT built / NOT verified (this is the local agent's job)
 
-1. **No WinUI wiring.** `BBSApp` still uses the old `Aorms.Bridge` (targets the removed hub). Nothing references `Aorms.Connect` yet.
-2. **`IConnectTokenStore` for Windows Credential Manager** is not written (only `InMemoryTokenStore`). Refresh token + sessionId must never go in `firm.db` or a file.
+1. **Sign-in is wired into `BBSApp`** (branch `feat/aorms-signin`): `Services/Connect/ConnectService.cs`, a status badge, File > Sign in to AORMS... / Sign out, restore at start, "Sign in here" take-over prompt. **Not wired:** project sync, online projects, the old `Aorms.Bridge` flow (Bind / Flush) still runs separately.
+2. **Credential Manager stores are written** (`CredentialVault.cs`: shared `AORMS/Connect`, per-app `AORMS/Connect/aqc`); read/write/delete round trip checked in a throwaway console run. Not yet checked: two suite apps refreshing at once, sign-out clearing the shared entry from the UI.
 3. **`IOutboxStore` file-backed implementation** not written (only in-memory). Needed so unsent edits survive restarts.
 4. **Home screen** (sign-in first, *Continue without signing in* → Community; Online projects list, then Local; open from seed; *Push online*). Spec §2, §3, §9.
 5. **ProjectStore integration**: call `Outbox.Upsert/Delete` + `NoteChange()` from `ProjectStore.Notify()`; drive `ProjectSync.TickAsync()` from a ~1 s UI timer; mint `_rid` on take-off rows (use `ProjectMapper.ToSync`).

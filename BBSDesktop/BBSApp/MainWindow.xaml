@@ -67,6 +67,9 @@
                     <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
                     <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
                     <MenuFlyoutSeparator/>
+                    <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
+                    <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
+                    <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>
                 </MenuBarItem>
                 <MenuBarItem Title="Edit" AccessKey="E">
@@ -223,6 +226,15 @@
                             <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}"
                                     Click="Flush_Click"
                                     ToolTipService.ToolTip="Flush outbox to hub"/>
+                            <Border x:Name="ConnectBadge" Padding="10,0" Height="35" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}"
+                                    Tapped="ConnectBadge_Tapped"
+                                    ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">
+                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center"
+                                           FontSize="12" Foreground="{StaticResource HcwInkBrush}"
+                                           MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                           Text="AORMS · signed out"/>
+                            </Border>
                             <Border x:Name="SyncBadge" Padding="10,0" Height="35" CornerRadius="8"
                                     Background="{StaticResource HcwFogBrush}"
                                     Tapped="SyncBadge_Tapped"
