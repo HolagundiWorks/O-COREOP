@@ -82,7 +82,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     }
 
     // Was 0.8; user asked 1.2× of that → 0.96 of design.
-    const double UiScale = 0.96;
+    const double UiScale = 1.0; // the shell follows the system text size and display scale exactly
 
     void ScaleViewport_SizeChanged(object sender, SizeChangedEventArgs e)
     {

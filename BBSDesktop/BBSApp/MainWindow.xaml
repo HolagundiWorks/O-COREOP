@@ -33,13 +33,13 @@
             </StackPanel>
         </Grid>
 
-        <!-- Shell at 0.96× — layout size compensated in ScaleViewport_SizeChanged -->
+        <!-- Shell at 1× (kept so a scale can be applied again) — layout size compensated in ScaleViewport_SizeChanged -->
         <Grid x:Name="ScaleViewport" Grid.Row="1" SizeChanged="ScaleViewport_SizeChanged"
               Background="{StaticResource HcwFogBrush}">
             <Grid x:Name="ScaleHost" HorizontalAlignment="Left" VerticalAlignment="Top"
                   RenderTransformOrigin="0,0">
                 <Grid.RenderTransform>
-                    <ScaleTransform x:Name="UiScaleTransform" ScaleX="0.96" ScaleY="0.96"/>
+                    <ScaleTransform x:Name="UiScaleTransform" ScaleX="1" ScaleY="1"/>
                 </Grid.RenderTransform>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -241,6 +241,7 @@
             <Grid x:Name="ToastHost" Grid.Row="1" Margin="24,0,24,8" HorizontalAlignment="Stretch"
                   MaxWidth="400" MinWidth="0"
                   Visibility="Collapsed"
+                  AutomationProperties.LiveSetting="Polite"
                   AutomationProperties.Name="Notification">
                 <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="4,4,0,0"/>
                 <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,4,4"/>
