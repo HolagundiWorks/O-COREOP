@@ -119,6 +119,27 @@ public static class ConnectService
         catch (Exception e) { return "Could not take over the session: " + e.Message; }
     }
 
+    /// <summary>The studio's AORMS projects (needs a connected sign-in). Throws a ConnectException the caller can show with <see cref="Describe"/>.</summary>
+    public static Task<List<OnlineProject>> ListProjectsAsync() => new ProjectsApi(Client()).ListAsync();
+
+    /// <summary>The newest CAD take-off (AADT's <c>aqcexport</c> file) published for a bound project, as bridge JSON; null when none.</summary>
+    public static async Task<string?> PullCadTakeoffAsync(string aqcId)
+    {
+        var r = await new CadBridgeApi(Client()).DownloadLatestAsync(aqcId).ConfigureAwait(true);
+        return r?.json;
+    }
+
+    /// <summary>A message for any failure from a Connect call.</summary>
+    public static string Describe(Exception e) => e switch
+    {
+        ConnectException c when c.IsNotConnected => NotConnectedMessage(c),
+        ConnectException c when c.IsSessionReplaced => "You are signed in to AORMS on another computer. Use File > Sign in to AORMS to take it over.",
+        ConnectException c => Friendly(c),
+        HttpRequestException => $"Could not reach AORMS at {BaseUrl}. Check your connection.",
+        TaskCanceledException => $"AORMS at {BaseUrl} did not answer in time.",
+        _ => e.Message,
+    };
+
     /// <summary>Signs out of the shared AORMS login (the other suite apps find it empty and ask to sign in).</summary>
     public static void SignOut()
     {

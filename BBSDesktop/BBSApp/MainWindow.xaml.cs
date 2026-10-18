@@ -1437,7 +1437,12 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             AppNotify.Error("Import from CAD", ex.Message);
             return;
         }
+        await ShowCadImportPreviewAsync(prep, "Import from CAD");
+    }
 
+    /// <summary>The preview dialog shared by "Import from CAD" (a file) and "Online projects" (the portal). Nothing is written before Import.</summary>
+    private async Task ShowCadImportPreviewAsync(CadImportService.Prepared prep, string title)
+    {
         var plan = prep.Plan;
         var lines = plan.Items
             .Where(i => i.Action != Aqc.CadImport.PlanAction.Unchanged)
@@ -1448,7 +1453,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             : "\nThis project already holds rows from a different drawing; importing adds this drawing's rows alongside them.\n";
         var dlg = new ContentDialog
         {
-            Title = "Import from CAD",
+            Title = title,
             Content = new ScrollViewer
             {
                 MaxHeight = 420,
@@ -1471,6 +1476,100 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         CadImportService.Apply(prep);
         RefreshWindowTitle();
         AppNotify.Success("Import from CAD", plan.Summary);
+    }
+
+    // ── Online projects (AORMS) ───────────────────────────────────────────────────────────────────
+
+    private void OnlineProjects_Click(object sender, RoutedEventArgs e) => _ = ShowOnlineProjectsAsync();
+
+    private async Task ShowOnlineProjectsAsync()
+    {
+        if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
+        {
+            AppNotify.Info("AORMS", "Sign in to AORMS first (File > Sign in to AORMS).");
+            await ConnectFlowAsync();
+            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn) return;
+        }
+
+        List<Aorms.Connect.OnlineProject> projects;
+        try { projects = await BBSApp.Services.Connect.ConnectService.ListProjectsAsync(); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("Online projects", BBSApp.Services.Connect.ConnectService.Describe(ex));
+            RefreshConnectBadge();
+            return;
+        }
+        if (projects.Count == 0)
+        {
+            AppNotify.Info("Online projects", "Your AORMS studio has no projects yet.");
+            return;
+        }
+
+        var info = ProjectStore.Current.Info;
+        var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 320, MinWidth = 440 };
+        foreach (var p in projects)
+        {
+            var linked = p.ProjectOfficeId == info.AormsProjectOfficeId;
+            list.Items.Add(new ListViewItem
+            {
+                Tag = p,
+                Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}"
+                          + (p.IsBound ? "  ·  has AQC data" : "  ·  not bound yet")
+                          + (linked ? "  ·  linked to this project" : ""),
+            });
+            if (linked) list.SelectedIndex = list.Items.Count - 1;
+        }
+        if (list.SelectedIndex < 0) list.SelectedIndex = 0;
+
+        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75, FontSize = 12,
+            Text = "Link ties the open project to the AORMS project. Import CAD take-off reads the newest measurement published from AADT and shows a preview first." };
+        var dlg = new ContentDialog
+        {
+            Title = "Online projects",
+            Content = new StackPanel { Spacing = 10, Children = { list, status } },
+            PrimaryButtonText = "Import CAD take-off",
+            SecondaryButtonText = "Link to this project",
+            CloseButtonText = "Close",
+            XamlRoot = Content.XamlRoot,
+        };
+        var result = await dlg.ShowAsync();
+        if (list.SelectedItem is not ListViewItem { Tag: Aorms.Connect.OnlineProject sel }) return;
+
+        if (result == ContentDialogResult.Secondary)
+        {
+            info.AormsProjectOfficeId = sel.ProjectOfficeId;
+            info.AormsAqcId = sel.Aqc?.Id ?? "";
+            ProjectStore.Current.Notify();
+            AppNotify.Success("Online projects", $"Linked to {sel.Ref} · {sel.Title}. Save the project to keep the link.");
+            return;
+        }
+        if (result != ContentDialogResult.Primary) return;
+
+        if (sel.Aqc is null)
+        {
+            AppNotify.Info("Online projects", $"{sel.Ref} has no AQC data yet, so no CAD take-off has been published to it.");
+            return;
+        }
+        string? json;
+        try { json = await BBSApp.Services.Connect.ConnectService.PullCadTakeoffAsync(sel.Aqc.Id); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("CAD take-off", BBSApp.Services.Connect.ConnectService.Describe(ex));
+            return;
+        }
+        if (json is null)
+        {
+            AppNotify.Info("CAD take-off", $"No CAD take-off has been published to {sel.Ref} yet. Publish it from AADT first.");
+            return;
+        }
+        CadImportService.Prepared prep;
+        try { prep = CadImportService.PrepareJson(json); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("CAD take-off", "The published take-off could not be read: " + ex.Message);
+            return;
+        }
+        await ShowCadImportPreviewAsync(prep, $"Import CAD take-off from {sel.Ref}");
     }
 
     private async void ExportCad_Click(object sender, RoutedEventArgs e)
