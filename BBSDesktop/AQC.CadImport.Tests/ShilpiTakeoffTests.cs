@@ -13,11 +13,12 @@ public class ShilpiTakeoffTests
 
     /// <summary>What O-Draft is asked to write: a sample bridge file split into one record per row plus a header, in the given drawing slot.</summary>
     internal static List<ShilpiRecord> RecordsFromFixture(string name = "small-house.json", uint? slot = null, string? state = null,
-        string? projectOfficeId = null, JsonObject? extraHeader = null)
+        string? projectOfficeId = null, JsonObject? extraHeader = null, JsonObject? projectRef = null)
     {
         var root = (JsonObject)JsonNode.Parse(Fixture(name))!;
         var source = (JsonObject)root["source"]!.DeepClone();
         if (projectOfficeId is not null) source["project_office_id"] = projectOfficeId;
+        if (projectRef is not null) source["project_ref"] = projectRef.DeepClone();
         var s = slot ?? ShilpiTakeoff.SlotFor((string)source["drawing_id"]!);
         var header = new JsonObject { ["format"] = ShilpiTakeoff.HeaderFormat, ["version"] = 1, ["units"] = "mm", ["state"] = state ?? "complete", ["source"] = source };
         foreach (var k in new[] { "project", "levels", "beam_depths_mm", "opening_schedule" })
@@ -207,6 +208,19 @@ public class ShilpiTakeoffTests
     [Fact]
     public void A_header_without_a_state_counts_as_complete() =>
         Assert.True(Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(extraHeader: new JsonObject { ["state"] = null }))).IsComplete);
+
+    [Fact]
+    public void A_drawing_linked_to_a_project_in_the_company_file_names_it()
+    {
+        var linked = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["v"] = 1, ["company_uuid"] = "u-1", ["project_id"] = 7 })));
+        Assert.Equal(("u-1", 7L), (linked.ProjectRefCompany, linked.ProjectRefId));
+
+        var unlinked = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture()));
+        Assert.Equal((null, null), (unlinked.ProjectRefCompany, unlinked.ProjectRefId));
+
+        var odd = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["company_uuid"] = "u-2", ["project_id"] = "not a number" })));
+        Assert.Equal(("u-2", null), (odd.ProjectRefCompany, odd.ProjectRefId));
+    }
 
     // ---- several drawings, one database ----
 

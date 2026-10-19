@@ -118,9 +118,17 @@ public sealed class TakeoffPage : Page
     {
         var selected = Selected?.Slot;
         var linked = ProjectStore.Current.Info.AormsProjectOfficeId;
+        var shared = ProjectStore.Current.Shared;
+        var companyUuid = BBSApp.Services.Company.CompanyService.Current?.Uuid;
+        // A drawing belongs to the open project when it names it by the AORMS id or by the project in the company file.
+        bool Mine(ShilpiDrawing d) =>
+            (!string.IsNullOrEmpty(linked) && d.ProjectOfficeId == linked)
+            || (shared is not null && d.ProjectRefId == shared.ProjectId && !string.IsNullOrEmpty(companyUuid) && d.ProjectRefCompany == companyUuid);
+        bool Other(ShilpiDrawing d) =>
+            !Mine(d) && ((!string.IsNullOrEmpty(linked) && !string.IsNullOrEmpty(d.ProjectOfficeId)) || (shared is not null && d.ProjectRefId is not null));
         _drawings.Items.Clear();
         // this project's drawings first, then the others
-        foreach (var d in _list.OrderByDescending(d => !string.IsNullOrEmpty(linked) && d.ProjectOfficeId == linked).ThenBy(d => d.Drawing, StringComparer.OrdinalIgnoreCase))
+        foreach (var d in _list.OrderByDescending(Mine).ThenBy(d => d.Drawing, StringComparer.OrdinalIgnoreCase))
         {
             var bits = new List<string> { d.DisplayName };
             if (d.Problem is not null) bits.Add("unreadable: " + d.Problem);
@@ -129,8 +137,8 @@ public sealed class TakeoffPage : Page
                 bits.Add(d.IsComplete ? "complete" : $"being recorded ({d.State})");
                 bits.Add($"{d.Rows} rows");
                 if (d.Annotated is not null) bits.Add("annotated drawing");
-                if (!string.IsNullOrEmpty(linked) && d.ProjectOfficeId == linked) bits.Add("this project");
-                else if (!string.IsNullOrEmpty(linked) && !string.IsNullOrEmpty(d.ProjectOfficeId)) bits.Add("another project");
+                if (Mine(d)) bits.Add("this project");
+                else if (Other(d)) bits.Add("another project");
             }
             var item = new ListViewItem { Tag = d, Content = string.Join("  ·  ", bits) };
             _drawings.Items.Add(item);

@@ -16,7 +16,7 @@ public sealed record ShilpiRecord(ulong Id, double MinX, double MinY, double Max
 /// <summary>One drawing's take-off found in a ShilpiDB: what its header says, without reading its rows.</summary>
 public sealed record ShilpiDrawing(
     uint Slot, string DrawingId, string Drawing, string? ProjectOfficeId, string State, string? Exported, string? RevisionSha256,
-    IReadOnlyDictionary<byte, int> Counts, AnnotatedPdfInfo? Annotated, string? Problem)
+    IReadOnlyDictionary<byte, int> Counts, AnnotatedPdfInfo? Annotated, string? Problem, string? ProjectRefCompany = null, long? ProjectRefId = null)
 {
     public bool IsComplete => State == "complete";
     /// <summary>The drawing's name, or "drawing &lt;slot&gt;" when O-Draft recorded an unsaved drawing that has no name.</summary>
@@ -98,7 +98,7 @@ public static class ShilpiTakeoff
                 list.Add(new ShilpiDrawing(slot, Str(src, "drawing_id"), Str(src, "drawing"), NullIfEmpty(Str(src, "project_office_id")),
                     NullIfEmpty(Str(o, "state")) ?? "complete", NullIfEmpty(Str(src, "exported")), NullIfEmpty(Str(src, "revision_sha256")), c,
                     ann is null ? null : new AnnotatedPdfInfo(Str(ann, "sha256"), Num(ann, "bytes"), (int)Num(ann, "chunks"), (int)Num(ann, "pages"), NullIfEmpty(Str(ann, "generated"))),
-                    null));
+                    null, NullIfEmpty(Str(src?["project_ref"] as JsonObject, "company_uuid")), (src?["project_ref"] as JsonObject)?["project_id"] is JsonValue pid && pid.TryGetValue<long>(out var pidValue) ? pidValue : null));
             }
             catch (BridgeFormatException e)
             {

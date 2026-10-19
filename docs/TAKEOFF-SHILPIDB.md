@@ -74,6 +74,7 @@ The bounding box is the bounds of the measured geometry in the drawing's coordin
   "state": "complete",
   "source": { "app": "O-Draft", "drawing": "small house.dxf", "drawing_id": "<GUID kept in the drawing>",
               "project_office_id": "<AORMS project office id, if the drawing is linked>",
+              "project_ref": { "v": 1, "company_uuid": "<company file id>", "project_id": 0 },
               "exported": "2026-10-19T11:00:00Z", "revision_sha256": "<hash of the saved drawing>" },
   "project":  { "name": "", "client_name": "", "company_name": "", "location": "", "address": "" },
   "levels":   [ { "name": "Ground", "height_mm": 3150, "slab_thickness_mm": 150, "beam_depth_mm": 450 } ],
