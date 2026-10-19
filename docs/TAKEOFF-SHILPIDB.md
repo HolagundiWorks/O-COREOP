@@ -144,7 +144,7 @@ Code: `BBSDesktop/AQC.CadImport/ShilpiTakeoff.cs` (contract, reader, gateway cli
 
 - **Built and run:** everything in section 8; 29 unit tests (`ShilpiTakeoffTests`, fakes plus the two bridge samples); and a check against the **real** `shilpid` and `shilpi-http` on the development machine: two drawings recorded in one database through the `recording` to `complete` protocol, listed with their row counts and projects, one drawing's rows read without the other's, and a 300 000-byte binary PDF written as chunks, listed, fetched and compared byte for byte.
 - **Not built:** anything in O-Draft. The Take-off page and the shared-server launcher have not been used by a person. Nothing has been read from a database O-Draft wrote.
-- **Not built in O-CoreOp:** a check for two drawings that overlap on one floor (section 5); an "O-Draft has re-recorded this drawing since your import" notice (the preview already shows it on the next read). **Built, run in a scratch program but not in the app:** the report appendix (rendered a 3-page PDF, skipped a missing file, produced a 4-page report); not yet seen in a real project report or estimate.
+- **Not built in O-CoreOp:** an "O-Draft has re-recorded this drawing since your import" notice (the preview already shows it on the next read). **Built, run in a scratch program but not in the app:** the report appendix (rendered a 3-page PDF, skipped a missing file, produced a 4-page report); not yet seen in a real project report or estimate.
 - **Open for the owner:** whether the OSAS launcher starts the shared server at logon; whether one drawing may describe several floors (the header's `levels` allows it, and rows name their level); the size limit on annotated PDFs.
 
 ## Versioning

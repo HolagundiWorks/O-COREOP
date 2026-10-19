@@ -92,7 +92,7 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 **Take-off from O-Draft**
 
-7. A check for two drawings that measure the same floor (double counting); who owns it, O-Draft or O-CoreOp, is **owner**'s call ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 5).
+7. ~~A check for two drawings that measure the same floor~~ O-CoreOp now warns in the import preview (`CadImporter.WarnAboutOverlap`, 5 tests); whether O-Draft should also warn when recording is **owner**'s call ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 5).
 8. A notice when O-Draft has re-recorded a drawing since it was imported.
 9. O-Draft side (not in this repository): `takeoff.record`, stable `ref`s, rectangular slab spans, `takeoff.annotate`, PDF underlay and calibration, `aqcexport` ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
 

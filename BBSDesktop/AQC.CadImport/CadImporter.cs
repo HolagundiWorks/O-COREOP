@@ -235,7 +235,33 @@ public static class CadImporter
                     && !(seen.TryGetValue(section, out var set) && set.Contains(sr)))
                     plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.NoLongerInDrawing, Ref = sr, Mark = Get(row, "mark"), Reason = "in AQC but no longer in the drawing; not deleted" });
 
+        WarnAboutOverlap(plan, model, tag);
         return plan;
+    }
+
+    /// <summary>
+    /// Two drawings that both measure the same trade on the same floor would be imported twice. The importer cannot know whether they overlap
+    /// (a plan and a detail sheet of the same wall) or are separate parts, so it says so, once per drawing and floor, and leaves the choice to the user.
+    /// </summary>
+    static void WarnAboutOverlap(ImportPlan plan, ImportModel model, string tag)
+    {
+        var levelNames = model.Levels.ToDictionary(l => l.Id, l => l.Name);
+        var incoming = plan.Items.Where(i => i.Action == PlanAction.Add && i.Row is not null && i.Row.TryGetValue("level", out _)
+                                              && i.Section is Masonry or MOpen or Columns or Lintels or Flooring or Slabs)
+            .GroupBy(i => (i.Section, Level: i.Row!["level"]));
+        var seen = new HashSet<string>();
+        foreach (var g in incoming)
+        {
+            foreach (var other in model.Sheet(g.Key.Section)
+                         .Where(r => Get(r, "level") == g.Key.Level && Get(r, "source") is { Length: > 0 } s && s.StartsWith("hcwcad:", StringComparison.Ordinal) && s != tag)
+                         .Select(r => Get(r, "source")["hcwcad:".Length..]).Distinct())
+            {
+                var floor = levelNames.TryGetValue(g.Key.Level, out var n) && n.Length > 0 ? n : g.Key.Level;
+                if (seen.Add($"{other}|{floor}"))
+                    plan.Warnings.Add($"Drawing {other} already supplies take-off on {floor}, and this drawing adds {g.Count()} more {g.Key.Section.Replace('_', ' ')} row(s) there. "
+                                      + "If the two drawings show the same part of the building, importing both counts it twice.");
+            }
+        }
     }
 
     /// <summary>Applies the plan. The returned action reverses the whole import (one undo step).</summary>

@@ -1452,6 +1452,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         var other = plan.OtherDrawingId is null
             ? ""
             : "\nThis project already holds rows from a different drawing; importing adds this drawing's rows alongside them.\n";
+        if (plan.Warnings.Count > 0)
+            other += "\nCheck before importing:\n - " + string.Join("\n - ", plan.Warnings) + "\n";
         var dlg = new ContentDialog
         {
             Title = title,

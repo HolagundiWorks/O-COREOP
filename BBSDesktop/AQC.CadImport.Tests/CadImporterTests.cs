@@ -172,4 +172,63 @@ public class CadImporterTests
         var json = Fixture("small-house.json").Replace(from, to);
         Assert.Throws<BridgeFormatException>(() => BridgeFile.Parse(json));
     }
+
+    // ---- two drawings measuring the same floor ----
+
+    static BridgeFile HouseAs(string drawingId, string refSuffix = "", string? levelName = null)
+    {
+        var json = Fixture("small-house.json")
+            .Replace("0b7d9c34-1e6f-4f0b-8a13-9b2c7d5e41aa", drawingId);
+        if (refSuffix.Length > 0)
+            foreach (var r in new[] { "W0001", "W0002", "W0003", "2A1", "2A2", "2A3", "2B1", "2B2", "3C1", "3C2", "4D1", "5E1", "5E2", "6F1" })
+                json = json.Replace($"\"{r}\"", $"\"{r}{refSuffix}\"");
+        if (levelName is not null) json = json.Replace("\"Ground\"", $"\"{levelName}\"");
+        return BridgeFile.Parse(json);
+    }
+
+    [Fact]
+    public void A_second_drawing_on_the_same_floor_is_warned_about_not_blocked()
+    {
+        var m = NewModel();
+        Run(House(), m);
+        var plan = CadImporter.Plan(HouseAs("second-drawing", "b"), m);
+        Assert.NotEmpty(plan.Warnings);
+        Assert.Contains(plan.Warnings, w => w.Contains("0b7d9c34-1e6f-4f0b-8a13-9b2c7d5e41aa") && w.Contains("Ground") && w.Contains("twice"));
+        Assert.True(plan.Count(PlanAction.Add) > 0);   // a warning, not a refusal
+    }
+
+    [Fact]
+    public void The_same_drawing_again_has_no_overlap_warning()
+    {
+        var m = NewModel();
+        Run(House(), m);
+        Assert.Empty(CadImporter.Plan(House(), m).Warnings);
+    }
+
+    [Fact]
+    public void A_drawing_on_another_floor_has_no_overlap_warning()
+    {
+        var m = NewModel();
+        Run(House(), m);
+        m.Levels.Add(new LevelRec { Id = "Lvl2", Name = "First", HeightMm = 3000, SlabThicknessMm = 150, BeamDepthMm = 450 });   // levels match by name first
+        Assert.Empty(CadImporter.Plan(HouseAs("second-drawing", "b", levelName: "First"), m).Warnings);
+    }
+
+    [Fact]
+    public void Overlap_is_reported_once_per_drawing_and_floor_not_once_per_trade()
+    {
+        var m = NewModel();
+        Run(House(), m);
+        var plan = CadImporter.Plan(HouseAs("second-drawing", "b"), m);
+        Assert.Single(plan.Warnings);
+    }
+
+    [Fact]
+    public void Levels_only_files_and_empty_projects_never_warn()
+    {
+        Assert.Empty(CadImporter.Plan(House(), NewModel()).Warnings);
+        var m = NewModel();
+        Run(House(), m);
+        Assert.Empty(CadImporter.Plan(BridgeFile.Parse(Fixture("levels-only.json")), m).Warnings);
+    }
 }
