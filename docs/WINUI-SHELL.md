@@ -1,19 +1,19 @@
 # O-CoreOp WinUI shell (OSAS)
 
 **Status:** HCW neumorphic · staff geography · **Updated:** 2026-08-10  
-**App:** `BBSDesktop/BBSApp` (assembly `AQCCore` · display **AQC Core**)  
+**App:** `BBSDesktop/BBSApp` (assembly `AQCCore` · display **O-CoreOp**)  
 **Canon:** esti [`DESKTOP-WINUI-UX.md`](https://github.com/HolagundiWorks/aorms/blob/main/docs/esti/DESKTOP-WINUI-UX.md) · [`HCW-UI-UX-PRINCIPLES.md`](https://github.com/HolagundiWorks/aorms/blob/main/docs/esti/HCW-UI-UX-PRINCIPLES.md)
 
 ## Branding
 
 | Field | Value |
 | --- | --- |
-| App name | **O-CoreOp** (formerly AQC Core) |
-| Expansion | Accelerated Quantity and Costing |
+| App name | **O-CoreOp** |
+| For | Quantities, estimates and billing |
 | Suite | OSAS, the Open Source Architecture Suit |
 | Operator | Human Centric Works · Hospet (HCW) |
 
-## Structure (the same as AOS)
+## Structure (the same as O-Studio)
 
 ```text
 Caption — document title only (OS drag)
@@ -34,7 +34,7 @@ Pane footer — the Pomodoro clock (shown when the pane is fully open)
 | **UI scale** | 1×. The shell follows the system text size and display scale (`UiScale` in `MainWindow.xaml.cs`) |
 | **Narrow windows** | The navigation pane is fully open from 900 px, an icon rail from 560 px, and a menu button below that. The page line moves clear of the button. Page headers and toolbars wrap (`Hcw.Ui` `FlexBar`); the element page's section sketch gives its column back under 700 px. Page titles are level 2 headings and section headers level 3, under the level 1 page line |
 
-AOS (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New, Save and Publish are in the File menu.
+O-Studio (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New, Save and Publish are in the File menu.
 
 Themes: `HcwTheme.xaml` · `HcwFluentBridge.xaml` · `FluentTokens.xaml`.
 
