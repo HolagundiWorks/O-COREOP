@@ -221,7 +221,8 @@ public sealed class TakeoffPage : Page
             var prep = CadImportService.Prepare(result.File);
             _status.Text = $"{result.Records} take-off records read from {d.Drawing}"
                            + (result.Skipped.Count > 0 ? $" ({result.Skipped.Count} could not be used: {string.Join("; ", result.Skipped.Take(3))})" : "")
-                           + ". " + prep.Plan.Summary + ".";
+                           + ". " + prep.Plan.Summary + "."
+                           + (result.Notes is { Count: > 0 } notes ? $" {notes.Count} value(s) were worked out from the drawing's positions or outlines because the take-off did not state them; the preview marks the ones to check." : "");
             _busy = false; UpdateButtons();
             await App.MainWindow!.ShowCadImportPreviewAsync(prep, $"Import take-off: {d.Drawing}");
         }

@@ -35,6 +35,9 @@ public static class CadImporter
 
     public static string SourceTag(string drawingId) => "hcwcad:" + drawingId;
 
+    /// <summary>A ventilator is a window as far as the take-off is concerned (V1 in the standard marks).</summary>
+    static bool IsWindowKind(string kind) => kind.Equals("Window", StringComparison.OrdinalIgnoreCase) || kind.Equals("Ventilator", StringComparison.OrdinalIgnoreCase);
+
     public static ImportPlan Plan(BridgeFile file, ImportModel model, ImportOptions? options = null)
     {
         options ??= new ImportOptions();
@@ -55,11 +58,19 @@ public static class CadImporter
         var wallMarkByRef = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var seen = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
 
+        // a row with no level (O-Draft does not always write one) belongs to the file's floor when the file has only one
+        string LevelName(JsonObject o)
+        {
+            var n = BridgeFile.Str(o, "level");
+            return n.Length == 0 && file.Levels.Count == 1 ? file.Levels[0].Name : n;
+        }
+
         string? Lvl(JsonObject o, string section, string refId, string mark)
         {
-            var name = BridgeFile.Str(o, "level");
+            var name = LevelName(o);
             if (levelMap.TryGetValue(name, out var id)) return id;
-            plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Skipped, Ref = refId, Mark = mark, Reason = $"level '{name}' is not in the file's levels" });
+            plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Skipped, Ref = refId, Mark = mark,
+                Reason = name.Length == 0 ? "the row has no level and the file has several floors" : $"level '{name}' is not in the file's levels" });
             return null;
         }
 
@@ -109,14 +120,17 @@ public static class CadImporter
         {
             var r = BridgeFile.Str(w, "ref");
             var lvl = Lvl(w, Masonry, r, r); if (lvl is null) continue;
-            var thick = BridgeFile.Num(w, "thickness_mm") ?? 230;
+            var thickGiven = BridgeFile.Num(w, "thickness_mm");
+            var thick = thickGiven ?? 230;
             var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["length"] = N(BridgeFile.Num(w, "length_mm")), ["height"] = N(BridgeFile.Num(w, "height_mm")),
                 ["thickness"] = N(thick),
                 ["unit_type"] = BridgeFile.Str(w, "unit_type") is { Length: > 0 } ut ? ut : "Brick",
             };
-            Upsert(Masonry, r, f, lvl, thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : null);
+            Upsert(Masonry, r, f, lvl,
+                thickGiven is null ? "the take-off gives no wall thickness; 230 mm assumed, check it"
+                : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : null);
             wallMarkByRef[r] = plan.Items.Last(i => i.Section == Masonry && i.Ref == r).Mark;
         }
 
@@ -129,26 +143,26 @@ public static class CadImporter
             var kind = BridgeFile.Str(o, "kind");
             var wallRef = BridgeFile.Str(o, "wall_ref");
             string wallMark = "", flag = "";
-            if (wallRef.Length > 0 && wallMarkByRef.TryGetValue(wallRef, out var wm)) wallMark = wm;
+            if (wallRef.Length > 0 && wallMarkByRef.TryGetValue(wallRef, out var wm)) { wallMark = wm; flag = BridgeFile.Str(o, "_note"); }
             else flag = "no wall in the file for this opening; added without a wall, so it will not deduct";
             Upsert(MOpen, r, new(StringComparer.OrdinalIgnoreCase)
             {
                 ["wall_mark"] = wallMark, ["nos"] = "1",
                 ["opening_l"] = N(BridgeFile.Num(o, "width_mm")), ["opening_h"] = N(BridgeFile.Num(o, "height_mm")),
-                ["opening_kind"] = kind.Equals("Window", StringComparison.OrdinalIgnoreCase) ? "Window" : "Door",
+                ["opening_kind"] = IsWindowKind(kind) ? "Window" : "Door",
                 ["takeoff_id"] = tag + "/" + r,
             }, lvl, flag.Length > 0 ? flag : null);
         }
 
         // door / window schedule rows: one per mark and level
         var groups = file.Openings
-            .Select(o => (o, lvl: levelMap.GetValueOrDefault(BridgeFile.Str(o, "level"))))
+            .Select(o => (o, lvl: levelMap.GetValueOrDefault(LevelName(o))))
             .Where(x => x.lvl is not null)
             .GroupBy(x => (kind: BridgeFile.Str(x.o, "kind"), mark: BridgeFile.Str(x.o, "mark"), x.lvl));
         foreach (var g in groups)
         {
             var first = g.First().o;
-            var isWin = g.Key.kind.Equals("Window", StringComparison.OrdinalIgnoreCase);
+            var isWin = IsWindowKind(g.Key.kind);
             var sec = isWin ? Windows : Doors;
             var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -207,7 +221,7 @@ public static class CadImporter
             Upsert(Flooring, r, new(StringComparer.OrdinalIgnoreCase)
             {
                 ["surface_kind"] = "Floor", ["length"] = N(len), ["breadth"] = N(br), ["notes"] = name,
-            }, lvl);
+            }, lvl, BridgeFile.Str(rm, "_note") is { Length: > 0 } rn ? rn : null);
         }
 
         foreach (var s in file.Slabs)

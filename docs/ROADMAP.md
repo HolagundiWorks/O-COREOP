@@ -94,7 +94,7 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 7. ~~A check for two drawings that measure the same floor~~ O-CoreOp now warns in the import preview (`CadImporter.WarnAboutOverlap`, 5 tests); whether O-Draft should also warn when recording is **owner**'s call ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 5).
 8. A notice when O-Draft has re-recorded a drawing since it was imported.
-9. O-Draft side (not in this repository): `takeoff.record`, stable `ref`s, rectangular slab spans, `takeoff.annotate`, PDF underlay and calibration, `aqcexport` ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
+9. O-Draft side (not in this repository): `takeoff.record`, stable `refs`, slab spans and `takeoff.annotate` are built; still to do there: room level, length and breadth, `wall_ref` on openings, wall thickness, a real annotated-PDF run, PDF underlay and calibration, `aqcexport` ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
 
 **Suite joins** (O-STUDIO roadmap numbers): read the shared company file (2.2, started on `main`: shared company file and live sync); `ProjectRef` and `ArtifactRef` with SHA-256 per artifact (2.3); an MCP server around the engine (2.5); estimates and running bills shown in O-Studio (2.4).
 
@@ -149,10 +149,10 @@ Take-off from drawings and PDFs is done in **O-Draft** (earlier AADT), recorded 
 | Bridge contract | `hcw-aqc-bridge` v1 schema, samples and spec in [bridge/](bridge/README.md) | ✅ |
 | Import from CAD | `AQC.CadImport` + File > Import from CAD…, preview, idempotent, one undo | ✅ (app not clicked through) |
 | Export for CAD | File > Export for CAD… (levels, project, beam depths) | ✅ |
-| Take-off from ShilpiDB | Take-off page: the shared server (refreshes every 5 s) or a `.vdb`; several drawings per project; read one into the import preview | ✅ library run against the real `shilpid`; page not clicked through |
+| Take-off from ShilpiDB | Take-off page: the shared server (refreshes every 5 s) or a `.vdb`; several drawings per project; read one into the import preview. **Read against what O-Draft really wrote** (2026-10-19): agrees; four gaps handled and flagged ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10) | ✅ library run against real `shilpid` and O-Draft output; page not clicked through |
 | Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF; embedded in the project report and the estimate PDF | ✅ run in a scratch program; not yet in the app with a real project |
 | AORMS sign-in | Credential Manager stores, status chip, File > Sign in / Sign out, take-over prompt | ✅ built; live sign-in not yet tried |
 | Online projects | File > Online projects…: list, link, import the CAD take-off published to the portal | ✅ built; not yet run |
 | Project sync | `FileOutboxStore`, `RowBaseline`, `ProjectSyncHost`: edits are queued, sent under the edit lease, survive a restart; File > Push project online / Pull latest from AORMS | ✅ 29 library tests; not run against AORMS, dialogs not clicked through |
-| O-Draft writes the take-off | `takeoff.record`, `takeoff.annotate`, `aqcexport`, PDF underlay | 🔭 O-Draft repository |
+| O-Draft writes the take-off | `takeoff.record` and `takeoff.annotate` built in O-Draft (read 2026-10-19; four requests sent back); `aqcexport` and PDF underlay not yet | 🚧 O-Draft repository |
 | Home screen, rate books | see the Backlog | 🔭 |

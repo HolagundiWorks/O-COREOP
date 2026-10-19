@@ -143,9 +143,27 @@ Code: `BBSDesktop/AQC.CadImport/ShilpiTakeoff.cs` (contract, reader, gateway cli
 ## 9. State
 
 - **Built and run:** everything in section 8; 29 unit tests (`ShilpiTakeoffTests`, fakes plus the two bridge samples); and a check against the **real** `shilpid` and `shilpi-http` on the development machine: two drawings recorded in one database through the `recording` to `complete` protocol, listed with their row counts and projects, one drawing's rows read without the other's, and a 300 000-byte binary PDF written as chunks, listed, fetched and compared byte for byte.
-- **Not built:** anything in O-Draft. The Take-off page and the shared-server launcher have not been used by a person. Nothing has been read from a database O-Draft wrote.
+- **O-Draft side (read 2026-10-19):** O-Draft has implemented this contract in its engine (`takeoff.record`, `takeoff.annotate`; see section 10). The Take-off page and the shared-server launcher have not been used by a person.
 - **Not built in O-CoreOp:** an "O-Draft has re-recorded this drawing since your import" notice (the preview already shows it on the next read). **Built, run in a scratch program but not in the app:** the report appendix (rendered a 3-page PDF, skipped a missing file, produced a 4-page report); not yet seen in a real project report or estimate.
 - **Open for the owner:** whether the OSAS launcher starts the shared server at logon; whether one drawing may describe several floors (the header's `levels` allows it, and rows name their level); the size limit on annotated PDFs.
+
+## 10. Reading what O-Draft actually wrote (2026-10-19)
+
+O-Draft's `takeoff.record` was run (its own test, against a real `shilpid`) and the database it left was read with this reader. The records are kept as a regression fixture, `BBSDesktop/AQC.CadImport.Tests/fixtures/odraft-takeoff-records.json`, and `ODraftOutputTests` (10 tests) reads them.
+
+**Agrees with the contract (checked):** the header is `complete`; the id layout and kinds are as written here; the slot O-Draft chose for its drawing id equals the slot this reader computes (two independent implementations of `SlotFor`); one header per drawing; every payload parses; nothing was skipped; the take-off imports and importing it again changes nothing.
+
+**Differences, and what O-CoreOp does about each** (the first three also go to O-Draft as requests, section 8 of its hand-off):
+
+| What O-Draft writes | Effect | What O-CoreOp now does |
+|---|---|---|
+| A room row has `area_m2` and `size` text but **no `level`, no `length_mm`, no `breadth_mm`** | the flooring row was skipped ("level '' is not in the file's levels") | A row with no level goes to the file's floor when the file has exactly one (several floors: skipped, with that reason). Length and breadth come from the record's **box** (the room's drawn outline, millimetres) when the box agrees with `area_m2` to 2%; if not (an L-shaped room) the area is kept exact, the box's shorter side is the breadth, and the row is flagged "approximate" |
+| Openings carry **no `wall_ref`** | they would be imported without a wall and not deduct | The opening is placed in the nearest wall **on the same level whose box, widened by 150 mm, meets the opening's box**; the preview flags it "wall chosen by position; check it". No wall within reach: left without a wall and flagged as before |
+| Walls carry **no `thickness_mm`** (only the layer, for example `MEASURE-FULLBRICK`) | the importer assumed 230 mm silently | Still 230 mm, but the preview now says "no wall thickness; 230 mm assumed, check it" |
+| `opening_schedule` has `"kind": "Ventilator"` | an opening of that kind would have become a door | A ventilator is a window (mark V1) |
+| Header `levels` rows also carry `ceiling_mm` and `lintel_bottom_mm`; `source.drawing` is empty for an unsaved drawing; `project_office_id` is absent for an unlinked drawing | none | Accepted; the Take-off page shows the slot number when the name is empty |
+
+The Take-off page's status line says how many values were worked out from positions or outlines. **Not checked:** the annotated PDF O-Draft records (its tests use a stand-in plotter; this reader's chunk path was checked with its own writer against a real server, not with O-Draft's), a database with several drawings written by O-Draft, `project_office_id`, and a take-off with more than one floor.
 
 ## Versioning
 

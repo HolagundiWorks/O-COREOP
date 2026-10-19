@@ -1,0 +1,66 @@
+[
+  {
+    "id": "122283083331272704",
+    "minX": 0,
+    "minY": 0,
+    "maxX": 0,
+    "maxY": 0,
+    "payload": "{\u0022format\u0022:\u0022hcw-takeoff-shilpi\u0022,\u0022levels\u0022:[{\u0022beam_depth_mm\u0022:450.0,\u0022ceiling_mm\u0022:3000.0,\u0022height_mm\u0022:3150.0,\u0022lintel_bottom_mm\u0022:2100.0,\u0022name\u0022:\u0022Ground\u0022,\u0022slab_thickness_mm\u0022:150.0}],\u0022opening_schedule\u0022:[{\u0022height_mm\u0022:2100.0,\u0022kind\u0022:\u0022Door\u0022,\u0022mark\u0022:\u0022D1\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:0.0,\u0022width_mm\u0022:800.0},{\u0022height_mm\u0022:2100.0,\u0022kind\u0022:\u0022Door\u0022,\u0022mark\u0022:\u0022D2\u0022,\u0022nos\u0022:1,\u0022sill_mm\u0022:0.0,\u0022width_mm\u0022:900.0},{\u0022height_mm\u0022:2100.0,\u0022kind\u0022:\u0022Door\u0022,\u0022mark\u0022:\u0022D3\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:0.0,\u0022width_mm\u0022:1200.0},{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022mark\u0022:\u0022W1\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:600.0},{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022mark\u0022:\u0022W2\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:900.0},{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022mark\u0022:\u0022W3\u0022,\u0022nos\u0022:1,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:1200.0},{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022mark\u0022:\u0022W4\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:1500.0},{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022mark\u0022:\u0022W5\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:2000.0},{\u0022height_mm\u0022:450.0,\u0022kind\u0022:\u0022Ventilator\u0022,\u0022mark\u0022:\u0022V1\u0022,\u0022nos\u0022:0,\u0022sill_mm\u0022:1650.0,\u0022width_mm\u0022:600.0}],\u0022source\u0022:{\u0022app\u0022:\u0022O-Draft\u0022,\u0022drawing_id\u0022:\u0022b6b1e4e2-182e-4447-8115-6e59072b3329\u0022,\u0022exported\u0022:\u00222026-10-19T06:41:01Z\u0022},\u0022state\u0022:\u0022complete\u0022,\u0022units\u0022:\u0022mm\u0022,\u0022version\u0022:1}"
+  },
+  {
+    "id": "266398271407128864",
+    "minX": 0,
+    "minY": 0,
+    "maxX": 9000,
+    "maxY": 0,
+    "payload": "{\u0022height_mm\u0022:3000.0,\u0022layer\u0022:\u0022MEASURE-FULLBRICK\u0022,\u0022length_mm\u0022:9000.0,\u0022level\u0022:\u0022Ground\u0022,\u0022ref\u0022:\u0022W120\u0022}"
+  },
+  {
+    "id": "338455865445056787",
+    "minX": 1550,
+    "minY": -115,
+    "maxX": 2450,
+    "maxY": 1015,
+    "payload": "{\u0022height_mm\u0022:2100.0,\u0022kind\u0022:\u0022Door\u0022,\u0022level\u0022:\u0022Ground\u0022,\u0022mark\u0022:\u0022D2\u0022,\u0022ref\u0022:\u0022O113\u0022,\u0022sill_mm\u0022:0.0,\u0022width_mm\u0022:900.0}"
+  },
+  {
+    "id": "338455865445056799",
+    "minX": 4400,
+    "minY": -115,
+    "maxX": 5600,
+    "maxY": 115,
+    "payload": "{\u0022height_mm\u0022:1200.0,\u0022kind\u0022:\u0022Window\u0022,\u0022level\u0022:\u0022Ground\u0022,\u0022mark\u0022:\u0022W3\u0022,\u0022ref\u0022:\u0022O11F\u0022,\u0022sill_mm\u0022:900.0,\u0022width_mm\u0022:1200.0}"
+  },
+  {
+    "id": "410513459482984738",
+    "minX": 0,
+    "minY": 0,
+    "maxX": 230,
+    "maxY": 450,
+    "payload": "{\u0022depth_mm\u0022:450.0,\u0022level\u0022:\u0022Ground\u0022,\u0022mark\u0022:\u0022C1\u0022,\u0022ref\u0022:\u0022C122\u0022,\u0022width_mm\u0022:230.0}"
+  },
+  {
+    "id": "482571053520912675",
+    "minX": 1550,
+    "minY": 0,
+    "maxX": 2450,
+    "maxY": 0,
+    "payload": "{\u0022bearing_mm\u0022:150.0,\u0022level\u0022:\u0022Ground\u0022,\u0022mark\u0022:\u0022L1\u0022,\u0022opening_mm\u0022:600.0,\u0022ref\u0022:\u0022L123\u0022}"
+  },
+  {
+    "id": "554628647558840614",
+    "minX": 100,
+    "minY": 100,
+    "maxX": 4100,
+    "maxY": 3100,
+    "payload": "{\u0022area_m2\u0022:12.0,\u0022name\u0022:\u0022GF BEDROOM\u0022,\u0022ref\u0022:\u0022R126\u0022,\u0022size\u0022:\u00224.00 m x 3.00 m\u0022}"
+  },
+  {
+    "id": "626686241596768548",
+    "minX": 0,
+    "minY": 0,
+    "maxX": 9000,
+    "maxY": 6000,
+    "payload": "{\u0022area_m2\u0022:54.0,\u0022breadth_mm\u0022:6000.0,\u0022length_mm\u0022:9000.0,\u0022level\u0022:\u0022Ground\u0022,\u0022rectangular\u0022:true,\u0022ref\u0022:\u0022S124\u0022,\u0022thickness_mm\u0022:150.0}"
+  }
+]
