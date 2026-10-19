@@ -19,6 +19,9 @@ public sealed class ProjectStore
         set => Info.Name = value;
     }
     public string? FilePath { get; set; }
+
+    /// <summary>Set when this project lives in the shared company file; saving then writes there. Not part of the project data.</summary>
+    public BBSApp.Services.Company.SharedProjectLink? Shared { get; set; }
     public bool IsDirty { get; set; }
 
     /// <summary>Project identity: client, company, prepared-by, logo.</summary>
@@ -587,6 +590,7 @@ public sealed class ProjectStore
         Markups.Reset();
         Name = Info.Name;
         FilePath = null;
+        Shared = null;
         Columns.Clear(); Beams.Clear(); Pedestals.Clear(); Lintels.Clear();
         Slabs.Clear(); Footings.Clear(); Walls.Clear(); Stairs.Clear();
         MasonryWalls.Clear(); MasonryOpenings.Clear(); Plaster.Clear(); FinishPropose.Clear(); PccBeds.Clear(); Earthwork.Clear(); SizeStone.Clear();

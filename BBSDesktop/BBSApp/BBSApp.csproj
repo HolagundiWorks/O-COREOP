@@ -109,6 +109,16 @@
     <ProjectReference Include="..\..\..\hcw-ui\Hcw.Ui\Hcw.Ui.csproj" />
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
     <ProjectReference Include="..\Aorms.Connect\Aorms.Connect.csproj" />
+    <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- The office engine (office.dll) comes from the O-Studio repository: build office-ffi there in release mode. Without it the
+       company-file menu items say it is missing. Set OfficeDllDir to use a build from another folder. -->
+  <PropertyGroup>
+    <OfficeDllDir Condition="'$(OfficeDllDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\architect-office-desktop\office-ffi\target\release</OfficeDllDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(OfficeDllDir)\office.dll" Condition="Exists('$(OfficeDllDir)\office.dll')" Link="office.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
 

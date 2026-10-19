@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Office.Shared</RootNamespace>
+    <AssemblyName>Office.Shared</AssemblyName>
+    <Description>Opens the office company file that O-Studio and O-CoreOp share, through the office C interface (office.dll).</Description>
+    <Company>Human Centric Works</Company>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>
