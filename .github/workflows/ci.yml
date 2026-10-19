@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, claude/aos-shell]
+  pull_request:
+
+jobs:
+  build-and-test:
+    # hcw-ui is a private repository checked out beside this one; add a read-only token as the secret HCW_UI_TOKEN.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: aqc
+      - uses: actions/checkout@v4
+        with:
+          repository: HolagundiWorks/hcw-ui
+          token: ${{ secrets.HCW_UI_TOKEN }}
+          path: hcw-ui
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Test the import and sign-in libraries
+        working-directory: aqc
+        run: |
+          dotnet test BBSDesktop/AQC.CadImport.Tests
+          dotnet test BBSDesktop/Aorms.Connect.Tests
+      - name: Build O-CoreOp
+        working-directory: aqc
+        run: dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=None

@@ -1717,6 +1717,12 @@ public sealed partial class ElementPage : Page
             SheetWide.Height = SheetHScroll.ActualHeight;
     }
 
+    // Below about 700 px the section sketch gives its column back to the sheet.
+    private void Page_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        SketchColumn.Width = e.NewSize.Width < 700 ? new GridLength(0) : new GridLength(240);
+    }
+
     private void SheetHScroll_SizeChanged(object sender, SizeChangedEventArgs e)
         => ApplySheetWideSize();
 
@@ -1828,6 +1834,7 @@ public sealed partial class ElementPage : Page
                     cb.GotFocus += SheetEditor_GotFocusActivate;
                     WireSheetKeyboard(cb);
                     content = cb;
+                    AutomationProperties.SetName(cb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 else
                 {
@@ -1852,6 +1859,7 @@ public sealed partial class ElementPage : Page
                         WireSheetKeyboard(tb);
                     }
                     content = tb;
+                    AutomationProperties.SetName(tb, $"{field?.Label ?? key}, row {r + 1}");
                 }
 
                 var border = new Border
@@ -1955,6 +1963,7 @@ public sealed partial class ElementPage : Page
                     _sheetComboFillBusy = false;
                     cb.SelectionChanged += OpeningCombo_SelectionChanged;
                     content = cb;
+                    AutomationProperties.SetName(cb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 else
                 {
@@ -1971,6 +1980,7 @@ public sealed partial class ElementPage : Page
                     };
                     tb.LostFocus += OpeningText_LostFocus;
                     content = tb;
+                    AutomationProperties.SetName(tb, $"{field?.Label ?? key}, row {r + 1}");
                 }
                 var border = new Border
                 {

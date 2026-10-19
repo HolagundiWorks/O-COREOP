@@ -4,22 +4,22 @@
 namespace BBSApp;
 
 /// <summary>
-/// Product branding — AQC Core under the AORMS suite (Human Centric Works).
+/// Product branding — O-CoreOp, in OSAS the Open Source Architecture Suit (Human Centric Works). Formerly AQC Core.
 /// Keep display strings aligned with esti product-nomenclature / AORMS-SUITE.
 /// </summary>
 public static class Branding
 {
     /// <summary>Window · tile · about — suite style (space, not hyphen).</summary>
-    public const string AppName = "AQC Core";
+    public const string AppName = "O-CoreOp";
 
     /// <summary>Legacy hyphenated name (files · older docs).</summary>
     public const string LegacyAppName = "AQC-Core";
 
     /// <summary>Short mark for dense chrome.</summary>
-    public const string ShortName = "AQC";
+    public const string ShortName = "O-CoreOp";
 
-    public const string FullName = "Accelerated Quantity and Costing";
-    public const string SuiteLine = "AORMS technical";
+    public const string FullName = "Quantities, estimates and billing";
+    public const string SuiteLine = "OSAS · Open Source Architecture Suit";
     public const string Tagline =
         "Estimation · BBS · BOQ — local engine; publish totals to the firm hub";
     public const string HeroSupport =
@@ -39,7 +39,7 @@ public static class Branding
     public const string AppDataFolder = "AQCCore";
     public const string LegacyAppDataFolder = "BOQCore";
 
-    public const string ProjectFileFilter = "AQC Core Project";
+    public const string ProjectFileFilter = "O-CoreOp Project";
     public const string ProjectExtension = ".bbsproj";
 
     public static string WindowTitle(string? projectName = null, bool dirty = false)

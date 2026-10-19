@@ -111,3 +111,21 @@ local `firm.db` (org_settings � meta_outbox � artifact_outbox) + activate/Flush
 against AORMS HUB-API. See [AORMS-BRIDGE.md](AORMS-BRIDGE.md).
 Open source; SaaS commercial licensing deferred.
 AStudio / AConsulting will consume this package after the smoke.
+
+---
+
+## CAD take-off and AORMS sign-in 🚧 (2026-10-19)
+
+Take-off from drawings is done in AADT, not here ([AADT.md](AADT.md)); AQC imports the measured facts. Everything below is built and its libraries unit-tested; **none of it has been run against the live AORMS server or a real AADT export**.
+
+| Step | What | State |
+|------|------|-------|
+| Bridge contract | `hcw-aqc-bridge` v1 schema, samples and spec in [bridge/](bridge/README.md) | ✅ |
+| Import from CAD | `AQC.CadImport` + File > Import from CAD…, preview, idempotent, one undo | ✅ (20 tests; app not clicked through) |
+| Export for CAD | File > Export for CAD… (levels, project, beam depths) | ✅ |
+| AORMS sign-in | Credential Manager stores, status chip, File > Sign in / Sign out, take-over prompt | ✅ built; live sign-in not yet tried |
+| Online projects | File > Online projects…: list the studio's projects, link one to the open project, **Import CAD take-off** from the portal into the same preview | ✅ built; not yet run |
+| AADT writes the file | `aqcexport` in AADT | 🔭 AADT's last port item |
+| Push online / sync | Bind a local project online, edit lease, outbox, `ProjectStore` hooks (see [AORMS-CONNECT-HANDOFF.md](AORMS-CONNECT-HANDOFF.md) items 4–5) | 🔭 next |
+| Rate books | Map the shared rate books onto `RateBookStore` (library `RateBooksApi` is done) | 🔭 |
+| Retire the PDF take-off canvas | Owner's call | 💤 |

@@ -42,8 +42,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel x:Name="LevelChecks" Orientation="Horizontal" Spacing="8"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
-                        <HyperlinkButton Content="All" Click="SelectAllLevels_Click"/>
-                        <HyperlinkButton Content="None" Click="SelectNoLevels_Click"/>
+                        <HyperlinkButton MinHeight="28" MinWidth="40" Content="All" Click="SelectAllLevels_Click"/>
+                        <HyperlinkButton MinHeight="28" MinWidth="40" Content="None" Click="SelectNoLevels_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>

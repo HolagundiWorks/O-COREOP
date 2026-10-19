@@ -1,4 +1,4 @@
-# AQC Core WinUI shell (HCW soft neu)
+# O-CoreOp WinUI shell (OSAS)
 
 **Status:** HCW neumorphic · staff geography · **Updated:** 2026-08-10  
 **App:** `BBSDesktop/BBSApp` (assembly `AQCCore` · display **AQC Core**)  
@@ -8,32 +8,33 @@
 
 | Field | Value |
 | --- | --- |
-| App name | **AQC Core** |
+| App name | **O-CoreOp** (formerly AQC Core) |
 | Expansion | Accelerated Quantity and Costing |
-| Suite | AORMS technical |
+| Suite | OSAS, the Open Source Architecture Suit |
 | Operator | Human Centric Works · Hospet (HCW) |
 
-## Geography (cognitive jobs)
+## Structure (the same as AOS)
 
 ```text
 Caption — document title only (OS drag)
-MenuBar row — File · Edit · Help (dedicated strip)
-Ribbon 56 — “AQC Core” once · persona · page · Local AI
-Stage — flat command strip (active pillar only) + work
-ActionDock ≤3 — New · Save · Publish
-Taskbar 60 — Calc | Project · RCC · Civil · Outputs · More | Bind · Flush · Sync
-Clock BR — Pomodoro
+MenuBar row — File · Edit · Help
+Left navigation pane — the sections, grouped by job; the brand sits at the top of the pane
+Work area — page line (page · persona) · the page · status strip
+Notice row and calculator row — docked above the status strip, they push the page up rather than cover it
+Pane footer — the Pomodoro clock (shown when the pane is fully open)
 ```
 
 | Region | Role |
 | --- | --- |
-| **File** | New · Open · Save · Save as · Exit |
+| **File** | New · Open · Import / Export CAD · Save · Save as · Publish project status · AORMS sign-in · Exit |
 | **Edit** | Project / Engineering / Cost settings · Bind Connect |
 | **Help** | About |
-| **UI scale** | Shell `ScaleHost` **0.96×** (caption 1×) |
-| Dropdowns | Item / overlay corner radius **0** |
-| Hits | Dock **44** · taskbar **35** · chrome radius **8** |
-| Hub sync | Taskbar Bind/Flush + chip — [`PROJECT-SYNC.md`](PROJECT-SYNC.md) |
+| **Navigation pane** | One heading per section (Project, RCC steel, Civil BOQ, Schedule, Office, Contracts, Accounts, Stores, HR & resources, Outputs) and one item per page. Ctrl+1 to Ctrl+9 jump to a section's first page |
+| **Status strip** | Calculator · Bind · Flush · AORMS chip · Sync chip |
+| **UI scale** | 1×. The shell follows the system text size and display scale (`UiScale` in `MainWindow.xaml.cs`) |
+| **Narrow windows** | The navigation pane is fully open from 900 px, an icon rail from 560 px, and a menu button below that. The page line moves clear of the button. Page headers and toolbars wrap (`Hcw.Ui` `FlexBar`); the element page's section sketch gives its column back under 700 px. Page titles are level 2 headings and section headers level 3, under the level 1 page line |
+
+AOS (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New, Save and Publish are in the File menu.
 
 Themes: `HcwTheme.xaml` · `HcwFluentBridge.xaml` · `FluentTokens.xaml`.
 

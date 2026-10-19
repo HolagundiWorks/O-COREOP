@@ -28,6 +28,9 @@ public sealed class ProjectInfo
     public string LogoPath { get; set; } = "";
     /// <summary>AORMS Connect / hub project UUID for Flush + JM pull (S11).</summary>
     public string HubProjectId { get; set; } = "";
+    /// <summary>AORMS online project (Connect): the project office id, and AQC's binding id once bound. Set from File > Online projects.</summary>
+    public string AormsProjectOfficeId { get; set; } = "";
+    public string AormsAqcId { get; set; } = "";
 
     public static readonly string[] PreparedByRoles = { "Engineer", "Architect", "PMC" };
 
@@ -46,7 +49,9 @@ public sealed class ProjectInfo
         ["cin"] = Cin,
         ["pan"] = Pan,
         ["logo_path"] = LogoPath,
-        ["hub_project_id"] = HubProjectId
+        ["hub_project_id"] = HubProjectId,
+        ["aorms_project_office_id"] = AormsProjectOfficeId,
+        ["aorms_aqc_id"] = AormsAqcId
     };
 
     public void LoadFrom(JsonObject? o)
@@ -66,6 +71,8 @@ public sealed class ProjectInfo
         Pan = o["pan"]?.GetValue<string>() ?? "";
         LogoPath = o["logo_path"]?.GetValue<string>() ?? "";
         HubProjectId = o["hub_project_id"]?.GetValue<string>() ?? "";
+        AormsProjectOfficeId = o["aorms_project_office_id"]?.GetValue<string>() ?? "";
+        AormsAqcId = o["aorms_aqc_id"]?.GetValue<string>() ?? "";
     }
 
     public void Reset()
@@ -84,6 +91,8 @@ public sealed class ProjectInfo
         Pan = "";
         LogoPath = "";
         HubProjectId = "";
+        AormsProjectOfficeId = "";
+        AormsAqcId = "";
     }
 
     /// <summary>"GSTIN: … · CIN: … · PAN: …" for the present IDs, or empty.</summary>

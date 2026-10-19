@@ -58,11 +58,12 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
-        BuildRibbonTabs();
-        SelectTab("project");
+        Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
+        BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();
         RefreshSyncBadge();
+        _ = RestoreConnectAsync();
         // Warm Connect session into firm.db for Flush readiness.
         _ = ProjectSyncService.StatusSummary();
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
@@ -81,7 +82,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     }
 
     // Was 0.8; user asked 1.2× of that → 0.96 of design.
-    const double UiScale = 0.96;
+    const double UiScale = 1.0; // the shell follows the system text size and display scale exactly
 
     void ScaleViewport_SizeChanged(object sender, SizeChangedEventArgs e)
     {
@@ -572,137 +573,52 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         return new ImageIcon { Source = (ImageSource)src, Width = 16, Height = 16 };
     }
 
-    private readonly Dictionary<string, Button> _pillarButtons = new(StringComparer.OrdinalIgnoreCase);
+    private bool _navSyncing;
 
-    private void BuildRibbonTabs()
+    /// <summary>Builds the left navigation pane from the sections: a heading for each, and an item for each page.</summary>
+    private void BuildNavigation()
     {
-        // Pillars live in the taskbar (staff geography) — progressive commands in stage strip.
-        TaskbarPillarPanel.Children.Clear();
-        _pillarButtons.Clear();
-        RibbonTabPanel.Children.Clear();
-
-        var primary = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "project", "rcc", "civil", "outputs" };
-        var moreFlyout = new MenuFlyout();
-
+        AppNav.MenuItems.Clear();
         foreach (var tab in _tabs)
         {
-            if (primary.Contains(tab.Id))
+            AppNav.MenuItems.Add(new NavigationViewItemHeader { Content = tab.Title, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            foreach (var cmd in tab.Commands)
             {
-                var btn = new Button
+                var icon = cmd.Icon switch
                 {
-                    Content = tab.Title,
-                    Tag = tab.Id,
-                    Style = (Style)Application.Current.Resources["HcwGhostButton"],
+                    FontIcon fi => (IconElement)CloneFontIcon(fi, 16),
+                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 16, Height = 16 },
+                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = 16, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
                 };
-                ToolTipService.SetToolTip(btn, $"{tab.Title} — show commands");
-                btn.Click += Pillar_Click;
-                _pillarButtons[tab.Id] = btn;
-                TaskbarPillarPanel.Children.Add(btn);
+                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+                AppNav.MenuItems.Add(new NavigationViewItem { Content = cmd.Label, Tag = cmd.Tag, MinHeight = 32, FontSize = 13, Icon = icon });
             }
-            else
-            {
-                var item = new MenuFlyoutItem { Text = tab.Title, Tag = tab.Id };
-                item.Click += PillarMenu_Click;
-                moreFlyout.Items.Add(item);
-            }
-        }
-
-        if (moreFlyout.Items.Count > 0)
-        {
-            var moreBtn = new Button
-            {
-                Content = "More",
-                Style = (Style)Application.Current.Resources["HcwGhostButton"],
-                Flyout = moreFlyout,
-            };
-            ToolTipService.SetToolTip(moreBtn, "Schedule · Office · Contracts · Accounts · Stores · HR");
-            TaskbarPillarPanel.Children.Add(moreBtn);
         }
     }
 
-    private void Pillar_Click(object sender, RoutedEventArgs e)
+    // In the narrow layout the pane's menu button sits at the top left, so the page line moves clear of it.
+    private void AppNav_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not string id) return;
-        SelectTab(id);
-        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
-        if (first is not null) Navigate(first.Tag);
+        var minimal = sender.DisplayMode == NavigationViewDisplayMode.Minimal;
+        PageLine.Margin = new Thickness(minimal ? 56 : 24, 12, 24, 4);
+        ClockPomodoroHost.Visibility = sender.DisplayMode == NavigationViewDisplayMode.Expanded ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void PillarMenu_Click(object sender, RoutedEventArgs e)
+    private void AppNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
-        if (sender is not FrameworkElement fe || fe.Tag is not string id) return;
-        SelectTab(id);
-        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
-        if (first is not null) Navigate(first.Tag);
+        if (_navSyncing || args.SelectedItem is not NavigationViewItem { Tag: string tag })
+            return;
+        Navigate(tag);
+        // an action such as Pull JM is not a page: put the highlight back on the page being shown
+        RefreshCommandHighlight();
     }
 
     private void SelectTab(string id)
     {
         _activeTab = id;
-        var accent = BrushRes("HcwAccentBrush", Color.FromArgb(255, 0xFF, 0x4F, 0x18));
-        var ink = BrushRes("HcwInkBrush", Color.FromArgb(255, 0x14, 0x15, 0x17));
-        var muted = BrushRes("HcwMutedBrush", Color.FromArgb(255, 0x5C, 0x63, 0x70));
-        var transparent = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        foreach (var kv in _pillarButtons)
-        {
-            bool on = string.Equals(kv.Key, id, StringComparison.OrdinalIgnoreCase);
-            kv.Value.FontWeight = on
-                ? Microsoft.UI.Text.FontWeights.SemiBold
-                : Microsoft.UI.Text.FontWeights.Normal;
-            kv.Value.BorderThickness = on ? new Thickness(0, 0, 0, 2) : new Thickness(0);
-            kv.Value.BorderBrush = on ? accent : transparent;
-            kv.Value.Foreground = on ? ink : muted;
-            kv.Value.Background = transparent;
-        }
-
-        var tab = _tabs.FirstOrDefault(t => t.Id == id) ?? _tabs[0];
-        RibbonCommandPanel.Children.Clear();
-        double captionSize = ResourceDouble("RibbonCommandCaptionSize", 12);
-        double iconSize = ResourceDouble("RibbonCommandIconSize", 22);
-        foreach (var cmd in tab.Commands)
-        {
-            var stack = new StackPanel { Spacing = 6, Width = 88 };
-            FrameworkElement iconEl = cmd.Icon switch
-            {
-                FontIcon fi => CloneFontIcon(fi, iconSize),
-                ImageIcon ii => new ImageIcon { Source = ii.Source, Width = iconSize, Height = iconSize },
-                FrameworkElement fe => CloneFrameworkIcon(fe, iconSize),
-                _ => LetterIcon(LetterForTag(cmd.Tag), iconSize - 2)
-            };
-            iconEl.HorizontalAlignment = HorizontalAlignment.Center;
-            stack.Children.Add(iconEl);
-            stack.Children.Add(new TextBlock
-            {
-                Text = cmd.Label,
-                FontSize = captionSize,
-                Foreground = muted,
-                TextAlignment = TextAlignment.Center,
-                TextWrapping = TextWrapping.WrapWholeWords,
-                MaxLines = 2,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-
-            bool active = string.Equals(cmd.Tag, _activeTag, StringComparison.OrdinalIgnoreCase);
-            var btn = new Button
-            {
-                Content = stack,
-                Tag = cmd.Tag,
-                Padding = new Thickness(10, 8, 10, 8),
-                MinWidth = 88,
-                MinHeight = 56,
-                Background = active
-                    ? BrushRes("HcwSoftBrush", Color.FromArgb(255, 0xEC, 0xEE, 0xF2))
-                    : transparent,
-                BorderBrush = active ? accent : transparent,
-                BorderThickness = active ? new Thickness(0, 0, 0, 2) : new Thickness(0),
-                CornerRadius = new CornerRadius(8)
-            };
-            ToolTipService.SetToolTip(btn, cmd.Label);
-            btn.Click += RibbonCommand_Click;
-            RibbonCommandPanel.Children.Add(btn);
-        }
+        var first = _tabs.FirstOrDefault(t => t.Id == id)?.Commands.FirstOrDefault();
+        if (first is not null)
+            Navigate(first.Tag);
     }
 
     private static FontIcon CloneFontIcon(FontIcon src, double size = 16) => new()
@@ -735,12 +651,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         if (Application.Current.Resources.TryGetValue(key, out var v) && v is double d)
             return d;
         return fallback;
-    }
-
-    private void RibbonCommand_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not FrameworkElement fe || fe.Tag is not string tag) return;
-        Navigate(tag);
     }
 
     // ——— IAppCommandBus: the single external route into navigation ———
@@ -787,12 +697,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         }
 
         _activeTag = tag;
-        // Keep matching tab selected for context; ribbon stays expanded.
         var owner = _tabs.FirstOrDefault(t => t.Commands.Any(c => c.Tag == tag));
-        if (owner is not null && owner.Id != _activeTab)
-            SelectTab(owner.Id);
-        else
-            RefreshCommandHighlight();
+        if (owner is not null)
+            _activeTab = owner.Id;
+        RefreshCommandHighlight();
 
         ContentFrame.Content = tag switch
         {
@@ -951,6 +859,125 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         else AppNotify.Warning("Publish", message);
     }
 
+    // ── AORMS sign-in (Aorms.Connect; shared Credential Manager entry) ─────────────────────────────
+
+    private void RefreshConnectBadge()
+    {
+        if (ConnectBadgeText is null) return;
+        ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText;
+        ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details);
+    }
+
+    private async Task RestoreConnectAsync()
+    {
+        BBSApp.Services.Connect.ConnectService.Changed += () => DispatcherQueue.TryEnqueue(RefreshConnectBadge);
+        await BBSApp.Services.Connect.ConnectService.RestoreAsync().ConfigureAwait(true);
+        RefreshConnectBadge();
+        if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SessionReplaced)
+            await OfferTakeOverAsync();
+    }
+
+    private void ConnectBadge_Tapped(object sender, TappedRoutedEventArgs e) => _ = ConnectFlowAsync();
+    private void ConnectSignIn_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
+
+    private void ConnectSignOut_Click(object sender, RoutedEventArgs e)
+    {
+        BBSApp.Services.Connect.ConnectService.SignOut();
+        RefreshConnectBadge();
+        AppNotify.Info("AORMS", "Signed out. AQC works on its own until you sign in again.");
+    }
+
+    private async Task ConnectFlowAsync()
+    {
+        var cs = BBSApp.Services.Connect.ConnectService.State;
+        if (cs == BBSApp.Services.Connect.ConnectState.SessionReplaced) { await OfferTakeOverAsync(); return; }
+        if (cs == BBSApp.Services.Connect.ConnectState.SignedIn) { await ShowConnectAccountAsync(); return; }
+        await ShowSignInDialogAsync();
+    }
+
+    private async Task ShowConnectAccountAsync()
+    {
+        var dlg = new ContentDialog
+        {
+            Title = "AORMS",
+            Content = new TextBlock { Text = BBSApp.Services.Connect.ConnectService.Details, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true },
+            PrimaryButtonText = "Sign out",
+            CloseButtonText = "Close",
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() == ContentDialogResult.Primary) ConnectSignOut_Click(this, new RoutedEventArgs());
+    }
+
+    private async Task OfferTakeOverAsync()
+    {
+        var dlg = new ContentDialog
+        {
+            Title = "AORMS is in use on another computer",
+            Content = new TextBlock
+            {
+                Text = "You are signed in to AORMS on another computer. Only one computer can use AQC with AORMS at a time. Sign in here instead?",
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = "Sign in here",
+            CloseButtonText = "Not now",
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+        var err = await BBSApp.Services.Connect.ConnectService.TakeOverAsync();
+        RefreshConnectBadge();
+        if (err is null) AppNotify.Success("AORMS", "Signed in on this computer.");
+        else AppNotify.Error("AORMS", err);
+    }
+
+    private async Task ShowSignInDialogAsync()
+    {
+        var email = new TextBox { Header = "Email", Text = BBSApp.Services.Connect.ConnectService.RememberedEmail ?? "", InputScope = new InputScope { Names = { new InputScopeName(InputScopeNameValue.EmailSmtpAddress) } } };
+        var password = new PasswordBox { Header = "Password" };
+        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Microsoft.UI.Colors.Firebrick), Visibility = Visibility.Collapsed };
+        var dlg = new ContentDialog
+        {
+            Title = "Sign in to AORMS",
+            Content = new StackPanel
+            {
+                Spacing = 10, MinWidth = 320,
+                Children =
+                {
+                    new TextBlock { Text = $"Server: {BBSApp.Services.Connect.ConnectService.BaseUrl}", Opacity = 0.7, FontSize = 12 },
+                    email, password, error,
+                },
+            },
+            PrimaryButtonText = "Sign in",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Content.XamlRoot,
+        };
+        string? notConnected = null;
+        dlg.PrimaryButtonClick += async (_, a) =>
+        {
+            var d = a.GetDeferral();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email.Text) || string.IsNullOrEmpty(password.Password))
+                {
+                    error.Text = "Enter your email and password."; error.Visibility = Visibility.Visible; a.Cancel = true; return;
+                }
+                dlg.IsPrimaryButtonEnabled = false;
+                var err = await BBSApp.Services.Connect.ConnectService.SignInAsync(email.Text, password.Password);
+                dlg.IsPrimaryButtonEnabled = true;
+                if (err is null) return;
+                if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.NotConnected) { notConnected = err; return; }
+                error.Text = err; error.Visibility = Visibility.Visible; password.Password = ""; a.Cancel = true;
+            }
+            finally { d.Complete(); }
+        };
+        await dlg.ShowAsync();
+        password.Password = "";
+        RefreshConnectBadge();
+        if (notConnected is not null) AppNotify.Warning("AORMS", notConnected);
+        else if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SignedIn)
+            AppNotify.Success("AORMS", BBSApp.Services.Connect.ConnectService.Details);
+    }
+
     private void SyncBadge_Tapped(object sender, TappedRoutedEventArgs e)
     {
         RefreshSyncBadge();
@@ -987,20 +1014,17 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         NavigateTo("earthwork");
     }
 
+    /// <summary>Marks the navigation item of the page being shown, without navigating again.</summary>
     private void RefreshCommandHighlight()
     {
-        var accent = BrushRes("HcwAccentBrush", Color.FromArgb(255, 0xFF, 0x4F, 0x18));
-        var selectedBg = BrushRes("HcwSoftBrush", Color.FromArgb(255, 0xEC, 0xEE, 0xF2));
-        var transparent = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        foreach (var child in RibbonCommandPanel.Children)
+        _navSyncing = true;
+        try
         {
-            if (child is not Button btn || btn.Tag is not string tag) continue;
-            bool on = string.Equals(tag, _activeTag, StringComparison.OrdinalIgnoreCase);
-            btn.Background = on ? selectedBg : transparent;
-            btn.BorderBrush = on ? accent : transparent;
-            btn.BorderThickness = on ? new Thickness(0, 0, 0, 2) : new Thickness(0);
-            btn.CornerRadius = new CornerRadius(8);
+            AppNav.SelectedItem = AppNav.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => string.Equals(i.Tag as string, _activeTag, StringComparison.OrdinalIgnoreCase));
+        }
+        finally
+        {
+            _navSyncing = false;
         }
     }
 
@@ -1304,7 +1328,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void SetWindowTitle(string text)
     {
         Title = text;
-        // Caption = document name only (avoid repeating "AQC Core").
+        // Caption = document name only (avoid repeating "O-CoreOp").
         if (TitleBarText != null)
         {
             var name = ProjectStore.Current.Name;
@@ -1413,7 +1437,12 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             AppNotify.Error("Import from CAD", ex.Message);
             return;
         }
+        await ShowCadImportPreviewAsync(prep, "Import from CAD");
+    }
 
+    /// <summary>The preview dialog shared by "Import from CAD" (a file) and "Online projects" (the portal). Nothing is written before Import.</summary>
+    private async Task ShowCadImportPreviewAsync(CadImportService.Prepared prep, string title)
+    {
         var plan = prep.Plan;
         var lines = plan.Items
             .Where(i => i.Action != Aqc.CadImport.PlanAction.Unchanged)
@@ -1424,7 +1453,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             : "\nThis project already holds rows from a different drawing; importing adds this drawing's rows alongside them.\n";
         var dlg = new ContentDialog
         {
-            Title = "Import from CAD",
+            Title = title,
             Content = new ScrollViewer
             {
                 MaxHeight = 420,
@@ -1447,6 +1476,100 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         CadImportService.Apply(prep);
         RefreshWindowTitle();
         AppNotify.Success("Import from CAD", plan.Summary);
+    }
+
+    // ── Online projects (AORMS) ───────────────────────────────────────────────────────────────────
+
+    private void OnlineProjects_Click(object sender, RoutedEventArgs e) => _ = ShowOnlineProjectsAsync();
+
+    private async Task ShowOnlineProjectsAsync()
+    {
+        if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
+        {
+            AppNotify.Info("AORMS", "Sign in to AORMS first (File > Sign in to AORMS).");
+            await ConnectFlowAsync();
+            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn) return;
+        }
+
+        List<Aorms.Connect.OnlineProject> projects;
+        try { projects = await BBSApp.Services.Connect.ConnectService.ListProjectsAsync(); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("Online projects", BBSApp.Services.Connect.ConnectService.Describe(ex));
+            RefreshConnectBadge();
+            return;
+        }
+        if (projects.Count == 0)
+        {
+            AppNotify.Info("Online projects", "Your AORMS studio has no projects yet.");
+            return;
+        }
+
+        var info = ProjectStore.Current.Info;
+        var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 320, MinWidth = 440 };
+        foreach (var p in projects)
+        {
+            var linked = p.ProjectOfficeId == info.AormsProjectOfficeId;
+            list.Items.Add(new ListViewItem
+            {
+                Tag = p,
+                Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}"
+                          + (p.IsBound ? "  ·  has AQC data" : "  ·  not bound yet")
+                          + (linked ? "  ·  linked to this project" : ""),
+            });
+            if (linked) list.SelectedIndex = list.Items.Count - 1;
+        }
+        if (list.SelectedIndex < 0) list.SelectedIndex = 0;
+
+        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75, FontSize = 12,
+            Text = "Link ties the open project to the AORMS project. Import CAD take-off reads the newest measurement published from AADT and shows a preview first." };
+        var dlg = new ContentDialog
+        {
+            Title = "Online projects",
+            Content = new StackPanel { Spacing = 10, Children = { list, status } },
+            PrimaryButtonText = "Import CAD take-off",
+            SecondaryButtonText = "Link to this project",
+            CloseButtonText = "Close",
+            XamlRoot = Content.XamlRoot,
+        };
+        var result = await dlg.ShowAsync();
+        if (list.SelectedItem is not ListViewItem { Tag: Aorms.Connect.OnlineProject sel }) return;
+
+        if (result == ContentDialogResult.Secondary)
+        {
+            info.AormsProjectOfficeId = sel.ProjectOfficeId;
+            info.AormsAqcId = sel.Aqc?.Id ?? "";
+            ProjectStore.Current.Notify();
+            AppNotify.Success("Online projects", $"Linked to {sel.Ref} · {sel.Title}. Save the project to keep the link.");
+            return;
+        }
+        if (result != ContentDialogResult.Primary) return;
+
+        if (sel.Aqc is null)
+        {
+            AppNotify.Info("Online projects", $"{sel.Ref} has no AQC data yet, so no CAD take-off has been published to it.");
+            return;
+        }
+        string? json;
+        try { json = await BBSApp.Services.Connect.ConnectService.PullCadTakeoffAsync(sel.Aqc.Id); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("CAD take-off", BBSApp.Services.Connect.ConnectService.Describe(ex));
+            return;
+        }
+        if (json is null)
+        {
+            AppNotify.Info("CAD take-off", $"No CAD take-off has been published to {sel.Ref} yet. Publish it from AADT first.");
+            return;
+        }
+        CadImportService.Prepared prep;
+        try { prep = CadImportService.PrepareJson(json); }
+        catch (Exception ex)
+        {
+            AppNotify.Error("CAD take-off", "The published take-off could not be read: " + ex.Message);
+            return;
+        }
+        await ShowCadImportPreviewAsync(prep, $"Import CAD take-off from {sel.Ref}");
     }
 
     private async void ExportCad_Click(object sender, RoutedEventArgs e)

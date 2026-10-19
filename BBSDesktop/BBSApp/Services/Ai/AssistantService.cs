@@ -142,7 +142,7 @@ public sealed class AssistantService
     }
 
     private const string SystemPrompt =
-        "You are the built-in assistant for AQC-Core, a Windows desktop app for construction "
+        "You are the built-in assistant for O-CoreOp (formerly AQC-Core), a Windows desktop app for construction "
       + "quantity take-off and costing (RCC bar bending schedules, civil BOQ, estimates) by "
       + "Human Centric Works, Hospet.\n\n"
       + "Ground rules:\n"

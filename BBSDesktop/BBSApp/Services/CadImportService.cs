@@ -23,6 +23,14 @@ public static class CadImportService
         return new Prepared(file, model, CadImporter.Plan(file, model, options));
     }
 
+    /// <summary>Same as <see cref="Prepare"/>, for bridge JSON that did not come from a file (the AORMS portal).</summary>
+    public static Prepared PrepareJson(string json, ImportOptions? options = null)
+    {
+        var file = BridgeFile.Parse(json);
+        var model = BuildModel(ProjectStore.Current);
+        return new Prepared(file, model, CadImporter.Plan(file, model, options));
+    }
+
     /// <summary>Applies the plan to the open project. One undo step via <see cref="Undo"/>.</summary>
     public static void Apply(Prepared p)
     {

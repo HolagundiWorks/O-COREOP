@@ -89,7 +89,7 @@
                                 <Button Grid.Column="1" Content="Insert template" Click="Template_Click"
                                         Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
                             </Grid>
-                            <TextBox x:Name="BodyBox" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="220"
+                            <TextBox x:Name="BodyBox" AutomationProperties.Name="Text of the letter" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="220"
                                      FontFamily="Consolas"/>
                         </StackPanel>
 

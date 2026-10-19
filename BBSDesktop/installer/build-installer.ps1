@@ -143,7 +143,7 @@ New-Item -ItemType Directory -Path $InstallerOutDir -Force | Out-Null
 & $iscc "/DAppVersion=$AppVersion" $IssPath
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)" }
 
-$setup = Join-Path $InstallerOutDir "AQCCore-Setup-$AppVersion.exe"
+$setup = Join-Path $InstallerOutDir "O-CoreOp-Setup-$AppVersion.exe"
 if (-not (Test-Path -LiteralPath $setup)) {
     throw "Expected installer not found: $setup"
 }
@@ -151,6 +151,6 @@ if (-not (Test-Path -LiteralPath $setup)) {
 Write-Host ""
 Write-Host "Installer ready:" -ForegroundColor Green
 Write-Host "  $setup"
-Write-Host "  Installs to %LocalAppData%\Programs\AQC-Core\"
+Write-Host "  Installs to %LocalAppData%\Programs\O-CoreOp\"
 Write-Host ""
 Get-Item $setup | Format-List FullName, Length, LastWriteTime
