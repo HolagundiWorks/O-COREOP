@@ -4,7 +4,7 @@
 
 O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
-RCC bar bending schedules, civil BOQ, drawing takeoff, rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, correspondence, contracts, running-account billing, stores and HR.
+RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (via ShilpiDB), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, correspondence, contracts, running-account billing, stores and HR.
 
 One project can be operated as either a **Project Manager / PMC** or a **Contractor**: each persona has its own letterhead and numbering series, and every letter, bill and order is branded and numbered accordingly.
 
@@ -83,7 +83,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | RCC | Columns (incl. pedestal), beams, slabs, footings, walls, stairs — BBS + section sketches |
 | Civil BOQ | Masonry, plaster, PCC, earthwork, SSM, shuttering, flooring, paint, doors/windows, etc. |
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
-| Takeoff | PDF drawing measure → Commit to BOQ |
+| Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported (File > Take-off from ShilpiDB) |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
 | Rate book | App-level versioned rates (`%LocalAppData%\AQCCore\`) |
 | Estimate | DSR abstract (L/B/H, area, volume) + % markups → grand total; PDF sketches appendix |
@@ -95,7 +95,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | Accounts | RA bills with retention + statutory deductions (GST, TDS 194C, labour cess, GST-TDS), certify & number, cash/bank book, per-contractor ledger |
 | Stores | Purchase orders, goods-receipt notes, inventory, supplier / warehouse masters |
 | HR & resources | Sites, resources, employees, attendance & payroll (payroll register PDF) |
-| AI assistant | Opt-in copilot on the command bar — navigate, summarise the project, run the engine (read-only), and (each confirmed) add RCC rows, change covers/markups, draft correspondence, commit takeoff openings, read the takeoff PDF, author/apply link rules. Needs an Anthropic API key (entered in-app, stored encrypted); inert without one |
+| AI assistant | Opt-in copilot on the command bar — navigate, summarise the project, run the engine (read-only), and (each confirmed) add RCC rows, change covers/markups, draft correspondence, author/apply link rules. Needs an Anthropic API key (entered in-app, stored encrypted); inert without one |
 | Project file | `.bbsproj` (JSON, v17 — project info, personas, estimate markups, schedule, office, contracts, accounts, stores, HR, link rules) |
 
 ## Settings & data locations

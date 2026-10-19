@@ -31,6 +31,13 @@ public static class CadImportService
         return new Prepared(file, model, CadImporter.Plan(file, model, options));
     }
 
+    /// <summary>Same as <see cref="Prepare"/>, for a take-off already read from ShilpiDB.</summary>
+    public static Prepared Prepare(BridgeFile file, ImportOptions? options = null)
+    {
+        var model = BuildModel(ProjectStore.Current);
+        return new Prepared(file, model, CadImporter.Plan(file, model, options));
+    }
+
     /// <summary>Applies the plan to the open project. One undo step via <see cref="Undo"/>.</summary>
     public static void Apply(Prepared p)
     {

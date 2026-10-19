@@ -374,7 +374,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             Cmd("dashboard", "Dashboard", Glyph("\uE80F")),
             Cmd("levels", "Levels", Glyph("\uF158")),
-            Cmd("takeoff", "Drawing takeoff", Glyph("\uE8A5")),
+            Cmd("takeoff", "Take-off (O-Draft)", Glyph("\uE8A5")),
         }));
         _tabs.Add(new RibbonTab("rcc", "RCC steel", new[]
         {
@@ -1441,7 +1441,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     }
 
     /// <summary>The preview dialog shared by "Import from CAD" (a file) and "Online projects" (the portal). Nothing is written before Import.</summary>
-    private async Task ShowCadImportPreviewAsync(CadImportService.Prepared prep, string title)
+    internal async Task ShowCadImportPreviewAsync(CadImportService.Prepared prep, string title)
     {
         var plan = prep.Plan;
         var lines = plan.Items
