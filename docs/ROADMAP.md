@@ -128,4 +128,4 @@ Take-off from drawings is done in AADT, not here ([AADT.md](AADT.md)); AQC impor
 | AADT writes the file | `aqcexport` in AADT | 🔭 AADT's last port item |
 | Push online / sync | Bind a local project online, edit lease, outbox, `ProjectStore` hooks (see [AORMS-CONNECT-HANDOFF.md](AORMS-CONNECT-HANDOFF.md) items 4–5) | 🔭 next |
 | Rate books | Map the shared rate books onto `RateBookStore` (library `RateBooksApi` is done) | 🔭 |
-| Take-off in O-Draft, recorded in ShilpiDB | PDF take-off panel removed; File > Take-off from ShilpiDB reads the records into the import preview ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md)). O-Draft side: [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) | ✅ O-CoreOp side built and run against real ShilpiDB; O-Draft side 🔭 |
+| Take-off in O-Draft, recorded in ShilpiDB | PDF take-off panel removed; Take-off page lists the drawings on the shared ShilpiDB server, reads one into the import preview, and stores the annotated drawing PDF ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md)). O-Draft side: [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) | ✅ O-CoreOp side built and run against real ShilpiDB; O-Draft side 🔭 |
