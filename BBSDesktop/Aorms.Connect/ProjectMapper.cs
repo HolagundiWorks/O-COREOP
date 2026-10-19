@@ -139,6 +139,42 @@ public static class ProjectMapper
         return doc;
     }
 
+    /// <summary>
+    /// Applies rows that changed elsewhere (a catch-up) to a project document and returns the new document. The document is split into rows,
+    /// the changed rows are merged in by (section, row id) (a deleted row is removed; a deleted parent takes its lines with it) and the document
+    /// is rebuilt, so line numbering and ordering follow <see cref="FromSync"/>. Settings, <c>takeoff</c> and <c>last_estimate</c> stay as they were.
+    /// <paramref name="doc"/> is not modified apart from minted row ids.
+    /// </summary>
+    public static JsonObject ApplyDelta(JsonObject doc, IEnumerable<SyncRow> delta)
+    {
+        var sync = ToSync(doc);
+        var merged = new Dictionary<(string, string), SyncRow>();
+        var order = new List<(string, string)>();
+        foreach (var r in sync.Rows) { merged[(r.Section, r.RowId)] = r; order.Add((r.Section, r.RowId)); }
+        foreach (var d in delta)
+        {
+            var key = (d.Section, d.RowId);
+            if (d.Deleted)
+            {
+                merged.Remove(key);
+                foreach (var (_, line, _) in ParentLineSections)
+                    if (d.Section == ParentOf(line))
+                        foreach (var k in merged.Keys.Where(k => k.Item1 == line && k.Item2.StartsWith(d.RowId + ":", StringComparison.Ordinal)).ToList()) merged.Remove(k);
+            }
+            else
+            {
+                if (!merged.ContainsKey(key)) order.Add(key);
+                merged[key] = d with { Deleted = false };
+            }
+        }
+        var rows = order.Where(merged.ContainsKey).Select(k => merged[k]).ToList();
+        var result = FromSync(sync.Settings, rows);
+        foreach (var keep in new[] { "takeoff", "last_estimate" })
+            if (doc[keep] is { } v) result[keep] = v.DeepClone();
+        return result;
+    }
+
+    static string ParentOf(string lineSection) => ParentLineSections.First(p => p.Line == lineSection).Parent;
     /// <summary>Contract wire shape for <c>POST /projects/{id}/rows</c> and <c>POST /projects</c>.</summary>
     public static JsonArray ToWire(IEnumerable<SyncRow> rows)
     {

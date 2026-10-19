@@ -50,9 +50,9 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 
 | # | Item |
 |---|---|
-| 4.1 | A file-backed `IOutboxStore`, so unsent edits survive a restart (only the in-memory one exists) |
+| 4.1 | ~~A file-backed `IOutboxStore`~~ done (`FileOutboxStore`) |
 | 4.2 | The home screen: sign in first, "Continue without signing in" for the Community edition, then Online projects, then Local; open from a seed; Push online |
-| 4.3 | `ProjectStore` hooks: call `Outbox.Upsert/Delete` and `NoteChange()` from `ProjectStore.Notify()`, drive `ProjectSync.TickAsync()` from a timer of about 1 s, and mint `_rid` on take-off rows through `ProjectMapper.ToSync` |
+| 4.3 | ~~`ProjectStore` hooks and the sync timer~~ built: `ProjectSyncHost`, `RowBaseline`, `ProjectMapper.ApplyDelta`, File > Push project online / Pull latest from AORMS (see the progress log). Not yet run against AORMS |
 | 4.4 | Map the shared rate books onto `RateBookStore` (the library `RateBooksApi` is done) |
 | 4.5 | Remove `Aorms.Bridge`, `Aorms.Bridge.Smoke` and the old Bind/Flush flow once nothing references them. The status strip still has Bind and Flush buttons |
 | 4.6 | Two suite apps refreshing the shared token at once, and sign-out clearing the shared entry from the UI, were not checked |
@@ -119,3 +119,10 @@ Close the running app before rebuilding to the same folder; Windows keeps `AQCCo
 - **Annotated drawings in reports.** The stored annotated PDFs (see `docs/TAKEOFF-SHILPIDB.md` section 6) are embedded in the project report and the estimate PDF. Run in a scratch program, not yet in the app with a real project.
 - **Roadmap and docs brought up to date** (`docs/ROADMAP.md`: "Backlog" section; README take-off wording).
 - **Overlap warning.** Importing a drawing that adds rows on a floor and trade another drawing already supplies now lists "Check before importing" in the preview (once per drawing and floor; a warning, not a refusal). 5 tests; `AQC.CadImport.Tests` is 54 passed.
+
+**2026-10-19 (project sync, 4.3):**
+
+- **Built:** `Aorms.Connect/RowBaseline.cs` (what the server holds, a hash per row, saved as `<aqc id>.base.json` beside the outbox; `Diff` returns the rows to send and delete), `ProjectMapper.ApplyDelta` (merge rows changed elsewhere into a project document; keeps settings, `takeoff`, `last_estimate`), `ProjectStore.MintRowIds` (a stable `_rid` on every take-off row; a copied row gets a new one), `BBSApp/Services/Connect/ProjectSyncHost.cs` (1 s tick, push online, pull latest, status text) and two File menu items. The status chip now reads, for example, `AORMS · Studio · 3 unsent`.
+- **Design choice:** the open project is the source of truth for what the user typed, so the host diffs it instead of hooking every edit; the cost is one `ToJson` of the project per second while it is being edited, and only when dirty. A project of 10 000 rows has not been timed (hand-off 6.4 style check is still open).
+- **Checked:** 21 new library tests (`Aorms.Connect.Tests` 109 passed) that follow the host's loop against a scripted server: one edit sends one row, a delete is sent as a delete, offline edits survive a restart and go on the next run, a catch-up is applied and does not come back as a local edit, a catch-up with unsent edits asks for review and keeps the head. The app builds and starts. **Not checked:** against the real server, the two dialogs, `MintRowIds` (it lives in the WinUI project, which has no tests), the timing on a large project.
+- **Behaviour to know:** a project opened on a computer with no baseline file takes the local file as the baseline and says so in the chip's tooltip; use Pull latest to bring in the online version. If a pull arrives while there are unsent edits to the same rows, the online version wins and the unsent edits to those rows are dropped (the dialog says so). The edit lease is taken automatically; when someone else holds it the project is read-only and the chip says so (editing is not blocked in the UI yet: the rows queue and go when the lease is free).

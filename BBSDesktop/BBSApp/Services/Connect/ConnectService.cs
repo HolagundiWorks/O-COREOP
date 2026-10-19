@@ -34,7 +34,7 @@ public static class ConnectService
     public static string ClientLabel => $"AQC on {Environment.MachineName}";
     public static event Action? Changed;
 
-    static ConnectClient Client()
+    internal static ConnectClient Client()
     {
         if (_client is not null) return _client;
         var c = new ConnectClient(new Uri(BaseUrl.TrimEnd('/') + "/"), new CredentialTokenStore(), shared: new CredentialSharedSignInStore(), app: "aqc");

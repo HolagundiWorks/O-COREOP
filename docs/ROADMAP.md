@@ -86,7 +86,7 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 **Connect and sync**
 
-4. Wire the file-backed outbox and the `ProjectStore` hooks: `Outbox.Upsert/Delete`, a ~1 s `ProjectSync.TickAsync` timer, `_rid` on take-off rows (4.3; the store itself is built).
+4. ~~Wire the file-backed outbox and the `ProjectStore` hooks~~ built 2026-10-19 (`ProjectSyncHost`, File > Push project online / Pull latest from AORMS); not yet run against AORMS, dialogs not clicked through, large projects not timed (4.3).
 5. Home screen: sign in first, "Continue without signing in", then Online projects, then Local; open from a seed; Push online (4.2).
 6. Map the shared rate books onto `RateBookStore` (4.4); then remove the old `Aorms.Bridge`, its smoke tool and the Bind and Flush buttons (4.5).
 
@@ -153,6 +153,6 @@ Take-off from drawings and PDFs is done in **O-Draft** (earlier AADT), recorded 
 | Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF; embedded in the project report and the estimate PDF | ✅ run in a scratch program; not yet in the app with a real project |
 | AORMS sign-in | Credential Manager stores, status chip, File > Sign in / Sign out, take-over prompt | ✅ built; live sign-in not yet tried |
 | Online projects | File > Online projects…: list, link, import the CAD take-off published to the portal | ✅ built; not yet run |
-| File-backed outbox | `FileOutboxStore` (unsent edits survive a restart) | ✅ 8 tests; not wired in yet (backlog 4) |
+| Project sync | `FileOutboxStore`, `RowBaseline`, `ProjectSyncHost`: edits are queued, sent under the edit lease, survive a restart; File > Push project online / Pull latest from AORMS | ✅ 29 library tests; not run against AORMS, dialogs not clicked through |
 | O-Draft writes the take-off | `takeoff.record`, `takeoff.annotate`, `aqcexport`, PDF underlay | 🔭 O-Draft repository |
-| Push online / sync, rate books | see the Backlog | 🔭 |
+| Home screen, rate books | see the Backlog | 🔭 |

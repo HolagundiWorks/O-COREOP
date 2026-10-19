@@ -32,6 +32,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private readonly HashSet<string> _navTags = new(StringComparer.Ordinal);
     private string _activeTab = "project";
     private string _activeTag = "dashboard";
+    private readonly DispatcherTimer _syncTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DispatcherTimer? _toastTimer;
     private DispatcherTimer? _clockTimer;
     private DispatcherTimer? _pomodoroClickTimer;
@@ -71,6 +72,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         StartCompanyPolling();
         AppNotify.Raised += OnAppNotify;
         ProjectStore.Current.Changed += OnStoreChanged;
+        ProjectStore.Current.Changed += BBSApp.Services.Connect.ProjectSyncHost.MarkDirty;
+        _syncTimer.Tick += async (_, _) => { await BBSApp.Services.Connect.ProjectSyncHost.TickAsync(); RefreshConnectBadge(); };
+        _syncTimer.Start();
         Closed += (_, _) =>
         {
             AppNotify.Raised -= OnAppNotify;
@@ -865,8 +869,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void RefreshConnectBadge()
     {
         if (ConnectBadgeText is null) return;
-        ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText;
-        ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details);
+        var sync = BBSApp.Services.Connect.ProjectSyncHost.Active ? " Â· " + BBSApp.Services.Connect.ProjectSyncHost.StateText : "";
+        ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText + sync;
+        var notice = BBSApp.Services.Connect.ProjectSyncHost.Notice;
+        ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details + (notice is null ? "" : "\n" + notice));
     }
 
     private async Task RestoreConnectAsync()
@@ -876,6 +882,105 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         RefreshConnectBadge();
         if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SessionReplaced)
             await OfferTakeOverAsync();
+    }
+
+    // ── Push online / Pull latest ───────────────────────────────────────────────────────────────
+
+    private async void PushOnline_Click(object sender, RoutedEventArgs e)
+    {
+        try { await PushOnlineFlowAsync(); }
+        catch (Exception ex) { AppNotify.Error("Push online", BBSApp.Services.Connect.ConnectService.Describe(ex)); }
+    }
+
+    private async Task PushOnlineFlowAsync()
+    {
+        var info = ProjectStore.Current.Info;
+        if (!string.IsNullOrWhiteSpace(info.AormsAqcId))
+        {
+            AppNotify.Info("Push online", "This project is already online and syncs by itself. Use Pull latest to bring in changes from elsewhere.");
+            return;
+        }
+        if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
+        {
+            AppNotify.Info("Push online", "Sign in to AORMS first (File > Sign in to AORMS).");
+            await ConnectFlowAsync();
+            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn) return;
+        }
+        var projects = await BBSApp.Services.Connect.ConnectService.ListProjectsAsync();
+        var free = projects.Where(p => !p.IsBound).ToList();
+        if (free.Count == 0)
+        {
+            AppNotify.Info("Push online", "Every project in your AORMS studio already has AQC data. Create the project in AORMS first, or link this one with File > Online projects.");
+            return;
+        }
+        var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 280, MinWidth = 440 };
+        foreach (var p in free)
+            list.Items.Add(new ListViewItem { Tag = p, Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}" });
+        var linked = free.FindIndex(p => p.ProjectOfficeId == info.AormsProjectOfficeId);
+        list.SelectedIndex = linked >= 0 ? linked : 0;
+        var dlg = new ContentDialog
+        {
+            Title = "Push project online",
+            Content = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    new TextBlock { TextWrapping = TextWrapping.Wrap, Text = "Choose the AORMS project this one belongs to. The whole project is sent and from then on every change is kept in step. An AORMS project can be bound to one AQC project, once." },
+                    list,
+                },
+            },
+            PrimaryButtonText = "Push online",
+            CloseButtonText = "Cancel",
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+        if (list.SelectedItem is not ListViewItem { Tag: Aorms.Connect.OnlineProject sel }) return;
+
+        AppNotify.Info("Push online", $"Sending to {sel.Ref}…");
+        var outcome = await BBSApp.Services.Connect.ProjectSyncHost.PushOnlineAsync(sel.ProjectOfficeId);
+        RefreshConnectBadge();
+        if (outcome.Pending > 0)
+            AppNotify.Warning("Push online", $"Bound to {sel.Ref}; {outcome.Rows} rows sent, {outcome.Pending} still waiting and will go when the connection allows. Save the project to keep the link.");
+        else
+            AppNotify.Success("Push online", $"Bound to {sel.Ref}; {outcome.Rows} rows sent. Save the project to keep the link.");
+    }
+
+    private async void PullLatest_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
+            {
+                AppNotify.Info("Pull latest", "Sign in to AORMS first (File > Sign in to AORMS).");
+                return;
+            }
+            await BBSApp.Services.Connect.ProjectSyncHost.EnsureStartedAsync();
+            var pull = await BBSApp.Services.Connect.ProjectSyncHost.PullLatestAsync();
+            if (pull.Incoming == 0) { AppNotify.Success("Pull latest", "Up to date: nothing has changed online."); return; }
+            if (pull.NeedsReview)
+            {
+                var dlg = new ContentDialog
+                {
+                    Title = "Changes arrived from elsewhere",
+                    Content = new TextBlock
+                    {
+                        TextWrapping = TextWrapping.Wrap,
+                        Text = $"{pull.Incoming} row(s) changed online, and you have {pull.UnsentLocal} unsent change(s) here. Taking the online changes replaces your unsent edits to the same rows; your other unsent edits stay and are still sent. Take the online changes?",
+                    },
+                    PrimaryButtonText = "Take online changes",
+                    CloseButtonText = "Not now",
+                    XamlRoot = Content.XamlRoot,
+                };
+                if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+            }
+            BBSApp.Services.Connect.ProjectSyncHost.ApplyPull(pull);
+            NavigateTo(_activeTag);
+            RefreshWindowTitle();
+            RefreshConnectBadge();
+            AppNotify.Success("Pull latest", $"{pull.Incoming} row(s) brought in from AORMS.");
+        }
+        catch (Exception ex) { AppNotify.Error("Pull latest", BBSApp.Services.Connect.ConnectService.Describe(ex)); }
     }
 
     private void ConnectBadge_Tapped(object sender, TappedRoutedEventArgs e) => _ = ConnectFlowAsync();
