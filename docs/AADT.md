@@ -3,6 +3,7 @@
 Instructions for anyone (person or agent) working on AQC. Written 2026-10-11 on the owner's instruction; updated the same day when the CAD tools moved to AADT.
 
 ## Status: hcwCAD-KIT is dropped; AADT is the CAD program
+**Update 2026-10-19 (owner):** AADT is now called **O-Draft** (repository `HolagundiWorks/O-DRAFT`). Take-off from drawings **and PDFs** is done in O-Draft and **recorded in ShilpiDB**; O-CoreOp reads it from there and its own PDF take-off panel is removed. The contract is [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) and the instructions for O-Draft are [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md). The bridge file described below remains the offline path and the format of each take-off row; read "AADT" below as O-Draft.
 
 **Decision (owner, 2026-10-11):** the AutoCAD plugin hcwCAD-KIT (<https://github.com/HolagundiWorks/hcwCAD-KIT>) is dropped. Its tools are being rebuilt as built-in commands inside **AADT** (<https://github.com/HolagundiWorks/AADT>, the owner's own CAD program, written in Rust; private). Measuring and exporting happen inside AADT, not inside AutoCAD, BricsCAD or ZWCAD.
 

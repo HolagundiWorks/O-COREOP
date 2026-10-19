@@ -76,7 +76,7 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 | 6.2 | Code signing for the installer and an update path (roadmap 3.1) |
 | 6.3 | Automated UI tests with UI Automation for the main flows, run in CI (roadmap 3.2) |
 | 6.4 | Check quantities and purchase-order output against a real project and add the cases it exposes (roadmap 3.3) |
-| 6.5 | Decide whether to retire the PDF take-off canvas now that take-off is done in the drawing app (marked deferred, "Owner's call") |
+| 6.5 | ~~Retire the PDF take-off canvas~~ done 2026-10-19: take-off moves to O-Draft and is read from ShilpiDB (`docs/TAKEOFF-SHILPIDB.md`) |
 | 6.6 | Pixel-level take-off pre-fill (deferred; needs reliable scale calibration) |
 | 6.7 | Narrow-width polish: cramped table columns and any page that was not looked at (3.2) |
 

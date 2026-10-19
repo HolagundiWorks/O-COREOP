@@ -69,7 +69,7 @@ public sealed partial class DashboardPage : Page
                 new[] { "Note" },
                 new IReadOnlyList<string>[]
                 {
-                    new[] { "Import a PDF under Drawing takeoff, or generate civil / RCC quantities from the ribbon." }
+                    new[] { "Read the take-off recorded by O-Draft under Take-off, or generate civil / RCC quantities from the ribbon." }
                 });
         }
     }

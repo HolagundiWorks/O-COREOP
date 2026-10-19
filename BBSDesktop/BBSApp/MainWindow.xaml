@@ -61,6 +61,7 @@
                     <MenuFlyoutItem Text="Open…" Click="Open_Click" AccessKey="O"/>
                     <MenuFlyoutItem Text="Open company file…" Click="CompanyOpen_Click"/>
                     <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click"/>
+                    <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff"/>
                     <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
                     <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
                     <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>

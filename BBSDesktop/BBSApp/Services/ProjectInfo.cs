@@ -31,6 +31,8 @@ public sealed class ProjectInfo
     /// <summary>AORMS online project (Connect): the project office id, and AQC's binding id once bound. Set from File > Online projects.</summary>
     public string AormsProjectOfficeId { get; set; } = "";
     public string AormsAqcId { get; set; } = "";
+    /// <summary>The take-off database (.vdb) O-Draft recorded this project's take-off in. Read from the Take-off page.</summary>
+    public string TakeoffVdbPath { get; set; } = "";
 
     public static readonly string[] PreparedByRoles = { "Engineer", "Architect", "PMC" };
 
@@ -51,7 +53,8 @@ public sealed class ProjectInfo
         ["logo_path"] = LogoPath,
         ["hub_project_id"] = HubProjectId,
         ["aorms_project_office_id"] = AormsProjectOfficeId,
-        ["aorms_aqc_id"] = AormsAqcId
+        ["aorms_aqc_id"] = AormsAqcId,
+        ["takeoff_vdb_path"] = TakeoffVdbPath
     };
 
     public void LoadFrom(JsonObject? o)
@@ -73,6 +76,7 @@ public sealed class ProjectInfo
         HubProjectId = o["hub_project_id"]?.GetValue<string>() ?? "";
         AormsProjectOfficeId = o["aorms_project_office_id"]?.GetValue<string>() ?? "";
         AormsAqcId = o["aorms_aqc_id"]?.GetValue<string>() ?? "";
+        TakeoffVdbPath = o["takeoff_vdb_path"]?.GetValue<string>() ?? "";
     }
 
     public void Reset()
@@ -93,6 +97,7 @@ public sealed class ProjectInfo
         HubProjectId = "";
         AormsProjectOfficeId = "";
         AormsAqcId = "";
+        TakeoffVdbPath = "";
     }
 
     /// <summary>"GSTIN: … · CIN: … · PAN: …" for the present IDs, or empty.</summary>
