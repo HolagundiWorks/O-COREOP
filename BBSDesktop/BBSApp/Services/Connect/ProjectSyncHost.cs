@@ -40,7 +40,7 @@ public static class ProjectSyncHost
     static readonly TimeSpan QuietPeriod = TimeSpan.FromSeconds(1.5);
     static DateTime _lastEdit = DateTime.MinValue;
 
-    public static string OutboxFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AQCCore", "outbox");
+    public static string OutboxFolder => Path.Combine(Branding.AppDataDirectory, "outbox");
 
     public static string StateText => _sync is null ? "" : _sync.State switch
     {

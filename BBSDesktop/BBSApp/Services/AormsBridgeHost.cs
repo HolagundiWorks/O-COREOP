@@ -6,7 +6,7 @@ using Aorms.Bridge;
 namespace BBSApp.Services;
 
 /// <summary>
-/// Factory for the AORMS hub bridge (firm.db under LocalAppData\AQCCore).
+/// Factory for the AORMS hub bridge (firm.db under LocalAppData\O-CoreOp).
 /// Configure via env: ESTI_LICENSE_API_URL, ESTI_HUB_URL, ESTI_PRODUCT_API_KEY, INSTALL_ID.
 /// </summary>
 public static class AormsBridgeHost
@@ -21,7 +21,8 @@ public static class AormsBridgeHost
             DeviceId = Environment.GetEnvironmentVariable("INSTALL_ID")
                 ?? $"aqc-{Environment.MachineName}".ToLowerInvariant(),
         };
-        var bridge = new AormsBridge(opt);
+        Branding.MigrateAppData(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+        var bridge = new AormsBridge(opt, Aorms.Bridge.FirmDb.DefaultPath(Branding.AppDataFolder));
         // Connect-first: pull session.json syncToken into firm.db when present.
         bridge.TryImportConnectSession(overwrite: true);
         return bridge;

@@ -11,7 +11,7 @@ Merged on 2026-10-19 (merge commit `a0aa37d`):
 - The OSAS shell: menu bar, grouped left navigation pane, work area, status strip. The pane is open from 900 px, an icon rail from 560 px, and a menu button below that. See `docs/WINUI-SHELL.md`.
 - The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the private `hcw-ui` repository (`..\..\..\hcw-ui` from the app folder). The build fails without it.
 - Accessibility fixes from the WCAG 2.2 AA audit: names on sheet cells and icon buttons, targets of 24 px or more, headings, a polite notice host, 1x scale.
-- The rename to O-CoreOp. The program is still `AQCCore.exe`, the installer's AppId and the `aqc` AORMS session name are unchanged, on purpose.
+- The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run); the installer's AppId and the `aqc` AORMS session name are unchanged, on purpose.
 - AORMS sign-in (Credential Manager stores, status badge, File > Sign in / Sign out, take-over prompt) and File > Online projects (list the studio's projects, link one, import CAD take-off).
 - CI (`.github/workflows/ci.yml`): the import and sign-in tests, and a build.
 
@@ -30,7 +30,7 @@ Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/com
 | 2.3 | The portal needs migration `0113_aqc_sessions_aos_app.sql` applied before the suite apps can hold a session. It is on the branch `claude/aos-suite-session` of the portal repository | Checked: not applied | portal repository, `web/supabase/migrations/` |
 | 2.4 | Click through File > Import from CAD, File > Export for CAD and File > Online projects with a real drawing export. The libraries have 20 and 80 tests; the app screens have not been used | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/` |
 | 2.5 | Install on a **clean** machine with the Inno Setup installer and check the Start menu entry reads O-CoreOp. On the development machine (2026-10-19) the installer upgraded an existing copy in place: it still installs to `%LOCALAPPDATA%\Programs\AQC-Core`, not `O-CoreOp`, and the run was silent, so the Start menu text was not looked at | Partly checked | `BBSDesktop/installer/AQCCore.iss`, `build-installer.ps1` |
-| 2.6 | ~~Rebuild the installer~~ done (1.1.0, built and installed 2026-10-19 from `main`). **Open:** `build-installer.ps1` does not put `office.dll` in the publish folder unless the O-STUDIO engine is built in its default folder (`architect-office-desktop\office-ffi\target\release`); without it the installed app cannot open a company file. It was copied into `artifacts\publish` by hand. Pass `OfficeDllDir` through the script, or fail the build when the file is missing | Checked | `BBSDesktop/installer/build-installer.ps1` |
+| 2.6 | ~~Rebuild the installer~~ done (1.1.0, built and installed 2026-10-19 from `main`). `build-installer.ps1 -OfficeDllDir <folder with office.dll>` now bundles the company-file engine and fails the build if `office.dll` is missing. Reinstalled 2026-10-19 under the new name: the installer replaced the `AQC-Core` folder with `Programs\O-CoreOp`, and the app opened with the settings copied from `AQCCore` | Checked | `BBSDesktop/installer/build-installer.ps1` |
 
 ## 3. Accessibility (WCAG 2.2 AA)
 
@@ -88,7 +88,7 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 
 - Remaining old names are in technical specs where they are identifiers or contract names: `docs/AADT.md`, `docs/bridge/AQC-IMPORTER-SPEC.md`, `docs/AORMS-BRIDGE*.md`, `docs/SUITE-PACKAGING.md`, `docs/PROJECT-SYNC.md`, `CLAUDE.md`. Rewrite them when the contracts they describe are next revised.
 - `LICENSING.md` and `CONTRIBUTING.md` still name the product **AQC-Core**. Those are the licence terms; changing the licensed product's name is a legal edit. Decide with whoever owns the licence, then change them together (dual AGPL-3.0 and commercial).
-- The program is `AQCCore.exe`, the project file is `.bbsproj` and the repository folder is still `AQC` on disk. Keep them unless you also plan a migration; installed copies and saved projects use them.
+- The program is `O-CoreOp.exe` (was `AQCCore.exe`; the installer removes the old install). The project file is still `.bbsproj` and the repository folder is still `AQC` on disk; saved projects use the extension, so keep it unless you plan a migration.
 
 ## 8. Build, test and run
 
@@ -99,7 +99,7 @@ dotnet test BBSDesktop/Aorms.Connect.Tests
 dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Debug -p:Platform=x64 -p:WindowsPackageType=None -o $env:TEMP\ocoreop
 ```
 
-Close the running app before rebuilding to the same folder; Windows keeps `AQCCore.exe` locked. Delete `bin`, `obj`, `artifacts` and `build` any time; they are ignored by git.
+Close the running app before rebuilding to the same folder; Windows keeps `O-CoreOp.exe` locked. Delete `bin`, `obj`, `artifacts` and `build` any time; they are ignored by git.
 
 ## 9. Decisions only the owner can make
 

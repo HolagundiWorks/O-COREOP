@@ -27,7 +27,7 @@ public sealed class RateBookVersion
     public List<RateItem> Items { get; set; } = new();
 }
 
-/// <summary>App-level rate book library with versioned schedules (%LocalAppData%/AQCCore/ratebooks.json).</summary>
+/// <summary>App-level rate book library with versioned schedules (%LocalAppData%/O-CoreOp/ratebooks.json).</summary>
 public sealed class RateBookStore
 {
     public static RateBookStore Current { get; } = new();

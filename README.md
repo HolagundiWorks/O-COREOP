@@ -1,6 +1,6 @@
 # O-CoreOp
 
-**O-CoreOp** is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The executable `AQCCore.exe` and the project file extension `.bbsproj` keep their names because installed copies and saved projects use them.
+**O-CoreOp** is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The project file extension `.bbsproj` keeps its name because saved projects use it. Earlier versions installed as `AQCCore.exe`; the installer replaces them and the app copies the settings from `%LocalAppData%\AQCCore` on first run.
 
 O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
@@ -22,7 +22,7 @@ Quantities follow IS 456 / IS 1200–derived conventions — always cross-check 
 | Engine | **C++** `bbs_engine.dll` (JSON C API) |
 | Reports | QuestPDF (estimate / BOQ / PO) |
 
-Executable name: `AQCCore.exe`
+Executable name: `O-CoreOp.exe` (earlier versions: `AQCCore.exe`)
 
 ## Requirements
 
@@ -44,7 +44,7 @@ dotnet build -c Release -p:Platform=x64
 dotnet run -c Release -p:Platform=x64
 ```
 
-Or launch: `BBSApp\bin\x64\Release\net8.0-windows10.0.19041.0\AQCCore.exe`
+Or launch: `BBSApp\bin\x64\Release\net8.0-windows10.0.19041.0\O-CoreOp.exe`
 
 ## Installer (Setup.exe)
 
@@ -55,7 +55,7 @@ cd BBSDesktop
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
-Output: `BBSDesktop\artifacts\installer\AQCCore-Setup-1.0.1.exe`  
+Output: `BBSDesktop\artifacts\installer\O-CoreOp-Setup-1.1.0.exe`  
 Installs to `%LocalAppData%\Programs\O-CoreOp\`
 
 The version comes from `<Version>` in `BBSApp.csproj`; the script passes it to Inno Setup, so the output filename tracks it automatically. Pass `-SkipEngineBuild` when `BBSDesktop\build\bbs_engine.dll` already exists.
@@ -85,7 +85,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
 | Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported (File > Take-off from ShilpiDB) |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
-| Rate book | App-level versioned rates (`%LocalAppData%\AQCCore\`) |
+| Rate book | App-level versioned rates (`%LocalAppData%\O-CoreOp\`) |
 | Estimate | DSR abstract (L/B/H, area, volume) + % markups → grand total; PDF sketches appendix |
 | PO / report | Steel & materials PO; project PDF with BOQ tables + sketches |
 | Personas | One project operated as **PM / PMC** or **Contractor** — declared in **File → Project settings**; each has its own letterhead + numbering series (`PMC/…` vs `CON/…`) |
@@ -102,8 +102,8 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 
 | Data | Path |
 |------|------|
-| Rate books / logos | `%LocalAppData%\AQCCore\` (reads legacy `%LocalAppData%\BOQCore\` if present) |
-| AI assistant API key | `%LocalAppData%\AQCCore\` — encrypted with Windows DPAPI (per-user); or the `ANTHROPIC_API_KEY` env var |
+| Rate books / logos | `%LocalAppData%\O-CoreOp\` (reads legacy `%LocalAppData%\BOQCore\` if present) |
+| AI assistant API key | `%LocalAppData%\O-CoreOp\` — encrypted with Windows DPAPI (per-user); or the `ANTHROPIC_API_KEY` env var |
 | Project | User-chosen `.bbsproj` |
 
 ## Branding

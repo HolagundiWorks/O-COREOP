@@ -7,7 +7,7 @@ using System.Text;
 namespace BBSApp.Services.Ai;
 
 /// <summary>
-/// Persists the assistant's Anthropic API key under %LocalAppData%\AQCCore\,
+/// Persists the assistant's Anthropic API key under %LocalAppData%\O-CoreOp\,
 /// encrypted with Windows DPAPI (<see cref="DataProtectionScope.CurrentUser"/>).
 /// The stored blob can only be decrypted by the same Windows user on the same
 /// machine. A pre-DPAPI plaintext key from an earlier build is migrated on read.
@@ -15,7 +15,7 @@ namespace BBSApp.Services.Ai;
 public static class AssistantSettings
 {
     private static string Dir =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AQCCore");
+        Branding.AppDataDirectory;
 
     private static string DatFile => Path.Combine(Dir, "assistant.dat");        // DPAPI-encrypted blob
     private static string LegacyPlaintextFile => Path.Combine(Dir, "assistant.key"); // pre-DPAPI plaintext

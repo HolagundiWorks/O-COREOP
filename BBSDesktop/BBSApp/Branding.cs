@@ -35,8 +35,9 @@ public static class Branding
     public const string LicenseUrl = "https://www.gnu.org/licenses/agpl-3.0.html";
     public const string SuiteUrl = "https://aorms.in";
 
-    /// <summary>%LocalAppData% folder (keep stable — do not rename).</summary>
-    public const string AppDataFolder = "AQCCore";
+    /// <summary>%LocalAppData% folder. Earlier versions used AQCCore; the first run copies that folder here and leaves it in place.</summary>
+    public const string AppDataFolder = "O-CoreOp";
+    public const string PreviousAppDataFolder = "AQCCore";
     public const string LegacyAppDataFolder = "BOQCore";
 
     public const string ProjectFileFilter = "O-CoreOp Project";
@@ -54,12 +55,48 @@ public static class Branding
     {
         get
         {
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                AppDataFolder);
+            var root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            MigrateAppData(root);
+            var dir = Path.Combine(root, AppDataFolder);
             Directory.CreateDirectory(dir);
             return dir;
         }
+    }
+
+    /// <summary>
+    /// Copies the settings folder of earlier versions (AQCCore) to the current one the first time, without overwriting anything.
+    /// The old folder stays, so going back to an earlier version still finds its data.
+    /// </summary>
+    public static void MigrateAppData(string localAppData)
+    {
+        var current = Path.Combine(localAppData, AppDataFolder);
+        var previous = Path.Combine(localAppData, PreviousAppDataFolder);
+        try
+        {
+            if (!Directory.Exists(current) && Directory.Exists(previous))
+                CopyFolder(previous, current);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A half-copied folder would look like missing data; remove it so the next start tries again.
+            try
+            {
+                if (Directory.Exists(current))
+                    Directory.Delete(current, true);
+            }
+            catch (Exception inner) when (inner is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    private static void CopyFolder(string from, string to)
+    {
+        Directory.CreateDirectory(to);
+        foreach (var file in Directory.EnumerateFiles(from))
+            File.Copy(file, Path.Combine(to, Path.GetFileName(file)), false);
+        foreach (var dir in Directory.EnumerateDirectories(from))
+            CopyFolder(dir, Path.Combine(to, Path.GetFileName(dir)));
     }
 
     public static string ResolveAppDataFile(string fileName)

@@ -13,7 +13,8 @@
 param(
     [string] $AppVersion = "",
     [switch] $SkipEngineBuild,
-    [switch] $SkipPublish
+    [switch] $SkipPublish,
+    [string] $OfficeDllDir = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,7 +25,7 @@ $AppProj = Join-Path $DesktopDir "BBSApp\BBSApp.csproj"
 $EngineDll = Join-Path $DesktopDir "build\bbs_engine.dll"
 $PublishDir = Join-Path $DesktopDir "artifacts\publish"
 $InstallerOutDir = Join-Path $DesktopDir "artifacts\installer"
-$IssPath = Join-Path $InstallerDir "AQCCore.iss"
+$IssPath = Join-Path $InstallerDir "O-CoreOp.iss"
 $LicensePath = Join-Path (Split-Path $DesktopDir -Parent) "LICENSE"
 
 function Get-AppVersionFromCsproj {
@@ -110,14 +111,15 @@ if (-not $SkipPublish) {
         -p:PublishSingleFile=false `
         -p:GenerateAppxPackageOnBuild=false `
         -p:AppxPackageSigningEnabled=false `
+        "-p:OfficeDllDir=$OfficeDllDir" `
         -o $PublishDir
 
     if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)" }
 }
 
-$exe = Join-Path $PublishDir "AQCCore.exe"
+$exe = Join-Path $PublishDir "O-CoreOp.exe"
 if (-not (Test-Path -LiteralPath $exe)) {
-    throw "Publish output missing AQCCore.exe at $PublishDir"
+    throw "Publish output missing O-CoreOp.exe at $PublishDir"
 }
 
 $pubEngine = Join-Path $PublishDir "bbs_engine.dll"
@@ -126,7 +128,12 @@ if (-not (Test-Path -LiteralPath $pubEngine)) {
     Copy-Item -LiteralPath $EngineDll -Destination $pubEngine -Force
 }
 
-Write-Host "Publish : AQCCore.exe + bbs_engine.dll ready"
+# office.dll (the shared company-file engine) comes from the O-STUDIO build; without it the installed app cannot open a company file.
+if (-not (Test-Path -LiteralPath (Join-Path $PublishDir "office.dll"))) {
+    throw "office.dll is missing from the publish folder. Build office-ffi in the O-STUDIO repository (release) and pass -OfficeDllDir <folder with office.dll>."
+}
+
+Write-Host "Publish : O-CoreOp.exe + bbs_engine.dll + office.dll ready"
 
 # --- Inno Setup ---
 $iscc = Find-ISCC

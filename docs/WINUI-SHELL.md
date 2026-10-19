@@ -1,7 +1,7 @@
 # O-CoreOp WinUI shell (OSAS)
 
 **Status:** HCW neumorphic · staff geography · **Updated:** 2026-08-10  
-**App:** `BBSDesktop/BBSApp` (assembly `AQCCore` · display **O-CoreOp**)  
+**App:** `BBSDesktop/BBSApp` (assembly `O-CoreOp` · display **O-CoreOp**)  
 **Canon:** esti [`DESKTOP-WINUI-UX.md`](https://github.com/HolagundiWorks/aorms/blob/main/docs/esti/DESKTOP-WINUI-UX.md) · [`HCW-UI-UX-PRINCIPLES.md`](https://github.com/HolagundiWorks/aorms/blob/main/docs/esti/HCW-UI-UX-PRINCIPLES.md)
 
 ## Branding
@@ -42,5 +42,5 @@ Themes: `HcwTheme.xaml` · `HcwFluentBridge.xaml` · `FluentTokens.xaml`.
 
 ```bat
 msbuild BBSDesktop\BBSApp\BBSApp.csproj /p:Configuration=Release /p:Platform=x64 /p:WindowsPackageType=None
-start BBSDesktop\BBSApp\bin\x64\Release\net8.0-windows10.0.19041.0\AQCCore.exe
+start BBSDesktop\BBSApp\bin\x64\Release\net8.0-windows10.0.19041.0\O-CoreOp.exe
 ```

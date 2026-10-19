@@ -41,7 +41,7 @@ public sealed class StoredAnnotatedDrawing
 
 public static class AnnotatedStore
 {
-    /// <summary>Folder for the project's annotated drawings: beside the saved project (<c>&lt;name&gt;.assets\annotated</c>), or under %LocalAppData%\AQCCore until it is saved.</summary>
+    /// <summary>Folder for the project's annotated drawings: beside the saved project (<c>&lt;name&gt;.assets\annotated</c>), or under %LocalAppData%\O-CoreOp until it is saved.</summary>
     public static string FolderFor(ProjectStore store)
     {
         if (!string.IsNullOrWhiteSpace(store.FilePath))
@@ -49,7 +49,7 @@ public static class AnnotatedStore
             var dir = Path.GetDirectoryName(store.FilePath)!;
             return Path.Combine(dir, Path.GetFileNameWithoutExtension(store.FilePath) + ".assets", "annotated");
         }
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AQCCore", "annotated");
+        return Path.Combine(Branding.AppDataDirectory, "annotated");
     }
 
     /// <summary>Stores a verified PDF and records it on the project, replacing the earlier copy for the same drawing.</summary>

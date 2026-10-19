@@ -1,4 +1,4 @@
-; O-CoreOp (formerly AQC-Core) — Inno Setup script (per-user, no admin)
+; O-CoreOp — Inno Setup script (per-user, no admin)
 ; Build via: powershell -File build-installer.ps1
 
 #ifndef AppVersion
@@ -8,7 +8,7 @@
 #define MyAppName "O-CoreOp"
 #define MyAppPublisher "Human Centric Works"
 #define MyAppPublisherUrl "https://humancentic.works"
-#define MyAppExeName "AQCCore.exe"
+#define MyAppExeName "O-CoreOp.exe"
 #define MyAppId "{{A8F3C2E1-9B4D-4E6A-8C1F-2D7E5A9B0C3D}"
 
 [Setup]
@@ -21,6 +21,7 @@ AppPublisherURL={#MyAppPublisherUrl}
 AppSupportURL={#MyAppPublisherUrl}
 DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
+UsePreviousAppDir=no
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
@@ -54,3 +55,9 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDi
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
+
+[InstallDelete]
+; Earlier versions installed as AQC-Core / AQCCore.exe. Remove that program so an upgrade leaves one O-CoreOp behind.
+; Settings in %LocalAppData%\AQCCore are not touched: the app copies them to O-CoreOp on first run.
+Type: filesandordirs; Name: "{localappdata}\Programs\AQC-Core"
+Type: files; Name: "{app}\AQCCore.*"

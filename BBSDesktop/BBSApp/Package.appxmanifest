@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" IgnorableNamespaces="uap uap10 rescap mp">
-  <Identity Name="HumanCentricWorks.AQCCore" Publisher="CN=Human Centric Works" Version="1.1.0.0" />
+  <Identity Name="HumanCentricWorks.OCoreOp" Publisher="CN=Human Centric Works" Version="1.1.0.0" />
   <mp:PhoneIdentity PhoneProductId="a8f3c2e1-9b4d-4e6a-8c1f-2d7e5a9b0c3d" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>O-CoreOp</DisplayName>
