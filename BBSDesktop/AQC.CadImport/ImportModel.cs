@@ -61,6 +61,8 @@ public sealed class ImportPlan
     public List<PlanItem> Items { get; } = new();
     /// <summary>Set when AQC already holds rows from another drawing; the caller should ask before importing.</summary>
     public string? OtherDrawingId { get; set; }
+    /// <summary>Things to read before importing that are not changes: for example another drawing already supplies the same trade on the same floor.</summary>
+    public List<string> Warnings { get; } = new();
     public IEnumerable<PlanItem> Of(PlanAction a) => Items.Where(i => i.Action == a);
     public int Count(PlanAction a) => Items.Count(i => i.Action == a);
     public bool HasChanges => Items.Any(i => i.Action is PlanAction.Add or PlanAction.Update);

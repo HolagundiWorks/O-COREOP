@@ -19,6 +19,8 @@ public sealed record ShilpiDrawing(
     IReadOnlyDictionary<byte, int> Counts, AnnotatedPdfInfo? Annotated, string? Problem)
 {
     public bool IsComplete => State == "complete";
+    /// <summary>The drawing's name, or "drawing &lt;slot&gt;" when O-Draft recorded an unsaved drawing that has no name.</summary>
+    public string DisplayName => string.IsNullOrWhiteSpace(Drawing) ? $"drawing {Slot}" : Drawing;
     public int Rows => Counts.Where(kv => kv.Key != ShilpiTakeoff.KindHeader && kv.Key != ShilpiTakeoff.KindAnnotatedChunk).Sum(kv => kv.Value);
 }
 
@@ -65,7 +67,7 @@ public static class ShilpiTakeoff
         [KindLintel] = "lintels", [KindRoom] = "rooms", [KindSlab] = "slabs",
     };
 
-    public sealed record Result(BridgeFile File, int Records, IReadOnlyList<string> Skipped, string BridgeJson, ShilpiDrawing Drawing);
+    public sealed record Result(BridgeFile File, int Records, IReadOnlyList<string> Skipped, string BridgeJson, ShilpiDrawing Drawing, IReadOnlyList<string>? Notes = null);
 
     /// <summary>True for the records a take-off read needs (everything except annotated-PDF chunks, which can be large).</summary>
     public static bool IsTakeoffRecord(ulong id) => KindOf(id) != KindAnnotatedChunk;
@@ -125,7 +127,7 @@ public static class ShilpiTakeoff
         var drawing = ListDrawings(mine).First();
         if (drawing.Problem is not null) throw new BridgeFormatException(drawing.Problem);
         if (!drawing.IsComplete)
-            throw new BridgeFormatException($"The take-off for {drawing.Drawing} is still being recorded in O-Draft (state: {drawing.State}). Try again when it is complete.");
+            throw new BridgeFormatException($"The take-off for {drawing.DisplayName} is still being recorded in O-Draft (state: {drawing.State}). Try again when it is complete.");
 
         var h = ParseObject(header, "header");
         var root = new JsonObject
@@ -137,7 +139,9 @@ public static class ShilpiTakeoff
             if (h[key] is { } node) root[key] = node.DeepClone();
 
         var skipped = new List<string>();
+        var notes = new List<string>();
         var sections = Sections.Values.ToDictionary(s => s, _ => new JsonArray());
+        var boxes = new Dictionary<JsonObject, ShilpiRecord>(ReferenceEqualityComparer.Instance);
         int used = 0;
         foreach (var r in mine)
         {
@@ -148,13 +152,79 @@ public static class ShilpiTakeoff
             try { row = ParseObject(r, section); }
             catch (BridgeFormatException e) { skipped.Add(e.Message); continue; }
             sections[section].Add(row);
+            boxes[row] = r;
             used++;
         }
+
+        FillRoomSizesFromBoxes(sections["rooms"], boxes, notes);
+        AssignOpeningsToWalls(sections["openings"], sections["walls"], boxes, notes);
+
         foreach (var (name, arr) in sections)
             if (arr.Count > 0) root[name] = arr;
 
         var json = root.ToJsonString(new JsonSerializerOptions { TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver() });
-        return new Result(BridgeFile.Parse(json), used, skipped, json, drawing);
+        return new Result(BridgeFile.Parse(json), used, skipped, json, drawing, notes);
+    }
+
+    // ---- gaps in what O-Draft records today, filled from the bounding boxes the records carry ----
+
+    /// <summary>
+    /// A room row from O-Draft has an area but no length and breadth, which the flooring row needs. The record's box is the room's drawn
+    /// outline in millimetres, so a rectangular room's length and breadth are its box. When the box is clearly larger than the area (an L-shaped
+    /// room), the area is kept exact and the shorter side of the box is used, so the length is the area divided by it; the row says so.
+    /// </summary>
+    static void FillRoomSizesFromBoxes(JsonArray rooms, Dictionary<JsonObject, ShilpiRecord> boxes, List<string> notes)
+    {
+        foreach (var node in rooms)
+        {
+            if (node is not JsonObject room || !boxes.TryGetValue(room, out var rec)) continue;
+            if (Dbl(room, "length_mm") > 0 && Dbl(room, "breadth_mm") > 0) continue;
+            double w = rec.MaxX - rec.MinX, h = rec.MaxY - rec.MinY;
+            if (!(w > 0 && h > 0)) continue;
+            double area = room["area_m2"] is JsonValue av && double.TryParse(av.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var a) ? a : 0;
+            double boxArea = w * h / 1e6;
+            double breadth = Math.Min(w, h), length = Math.Max(w, h);
+            var name = Str(room, "name") is { Length: > 0 } n ? n : Str(room, "ref");
+            if (area > 0 && Math.Abs(boxArea - area) / area > 0.02)
+            {
+                length = area * 1e6 / breadth;
+                room["_note"] = "room outline is not a rectangle: length and breadth are approximate and the area is kept";
+                notes.Add($"room {name}: not rectangular, size approximated from its area");
+            }
+            else notes.Add($"room {name}: length and breadth taken from its outline");
+            room["length_mm"] = Math.Round(length, 1);
+            room["breadth_mm"] = Math.Round(breadth, 1);
+        }
+    }
+
+    /// <summary>
+    /// An opening that does not say which wall it is in (O-Draft does not write <c>wall_ref</c> yet) is given the nearest wall on the same level
+    /// whose box, widened by 150 mm, meets the opening's box. The row carries a note so the preview tells the user to check it. If no wall
+    /// meets it the row is left without a wall and the importer flags that.
+    /// </summary>
+    static void AssignOpeningsToWalls(JsonArray openings, JsonArray walls, Dictionary<JsonObject, ShilpiRecord> boxes, List<string> notes)
+    {
+        const double tol = 150;
+        var candidates = walls.OfType<JsonObject>().Where(w => boxes.ContainsKey(w) && Str(w, "ref").Length > 0).ToList();
+        foreach (var node in openings)
+        {
+            if (node is not JsonObject op || Str(op, "wall_ref").Length > 0 || !boxes.TryGetValue(op, out var o)) continue;
+            JsonObject? best = null; double bestDist = double.MaxValue;
+            foreach (var w in candidates)
+            {
+                if (Str(w, "level") != Str(op, "level")) continue;
+                var b = boxes[w];
+                if (o.MaxX < b.MinX - tol || o.MinX > b.MaxX + tol || o.MaxY < b.MinY - tol || o.MinY > b.MaxY + tol) continue;
+                double cx = (o.MinX + o.MaxX) / 2, cy = (o.MinY + o.MaxY) / 2;
+                double dx = Math.Max(Math.Max(b.MinX - cx, 0), cx - b.MaxX), dy = Math.Max(Math.Max(b.MinY - cy, 0), cy - b.MaxY);
+                double dist = Math.Sqrt(dx * dx + dy * dy);
+                if (dist < bestDist) { bestDist = dist; best = w; }
+            }
+            if (best is null) continue;
+            op["wall_ref"] = Str(best, "ref");
+            op["_note"] = "wall chosen by position in the drawing (O-Draft did not say which wall); check it";
+            notes.Add($"opening {(Str(op, "mark").Length > 0 ? Str(op, "mark") : Str(op, "ref"))}: placed in wall {Str(best, "ref")} by position");
+        }
     }
 
     /// <summary>Assembles and verifies the annotated PDF of a drawing from its chunk records (SHA-256 and length must match the header).</summary>
@@ -162,21 +232,21 @@ public static class ShilpiTakeoff
     {
         var mine = records.Where(r => SlotOf(r.Id) == slot).ToList();
         var drawing = ListDrawings(mine).FirstOrDefault() ?? throw new BridgeFormatException($"Drawing slot {slot} has no header.");
-        var info = drawing.Annotated ?? throw new BridgeFormatException($"{drawing.Drawing}: no annotated drawing has been recorded yet.");
+        var info = drawing.Annotated ?? throw new BridgeFormatException($"{drawing.DisplayName}: no annotated drawing has been recorded yet.");
         var chunks = mine.Where(r => KindOf(r.Id) == KindAnnotatedChunk).OrderBy(r => NOf(r.Id)).ToList();
         if (chunks.Count != info.Chunks || chunks.Select((c, i) => NOf(c.Id) == (uint)i).Contains(false))
-            throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is incomplete ({chunks.Count} of {info.Chunks} parts). Try again when O-Draft has finished.");
+            throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is incomplete ({chunks.Count} of {info.Chunks} parts). Try again when O-Draft has finished.");
         using var ms = new MemoryStream();
         foreach (var c in chunks)
         {
-            if (string.IsNullOrEmpty(c.PayloadHex)) throw new BridgeFormatException($"{drawing.Drawing}: annotated drawing part {NOf(c.Id)} has no data.");
+            if (string.IsNullOrEmpty(c.PayloadHex)) throw new BridgeFormatException($"{drawing.DisplayName}: annotated drawing part {NOf(c.Id)} has no data.");
             ms.Write(Convert.FromHexString(c.PayloadHex));
         }
         var bytes = ms.ToArray();
-        if (bytes.LongLength != info.Bytes) throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is {bytes.LongLength} bytes, the header says {info.Bytes}.");
+        if (bytes.LongLength != info.Bytes) throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is {bytes.LongLength} bytes, the header says {info.Bytes}.");
         var sha = Convert.ToHexString(SHA256.HashData(bytes));
-        if (!string.Equals(sha, info.Sha256, StringComparison.OrdinalIgnoreCase)) throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing does not match its checksum; it was changed while being read.");
-        if (bytes.Length < 5 || bytes[0] != '%' || bytes[1] != 'P' || bytes[2] != 'D' || bytes[3] != 'F') throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is not a PDF.");
+        if (!string.Equals(sha, info.Sha256, StringComparison.OrdinalIgnoreCase)) throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing does not match its checksum; it was changed while being read.");
+        if (bytes.Length < 5 || bytes[0] != '%' || bytes[1] != 'P' || bytes[2] != 'D' || bytes[3] != 'F') throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is not a PDF.");
         return bytes;
     }
 
@@ -201,6 +271,7 @@ public static class ShilpiTakeoff
 
     static string Str(JsonObject? o, string key) => o is not null && o[key] is JsonValue v ? v.ToString() : "";
     static long Num(JsonObject o, string key) => o[key] is JsonValue v && long.TryParse(v.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0;
+    static double Dbl(JsonObject o, string key) => o[key] is JsonValue v && double.TryParse(v.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0;
     static string? NullIfEmpty(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
 }
 

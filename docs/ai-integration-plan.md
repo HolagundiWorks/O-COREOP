@@ -1,5 +1,7 @@
 # AI Integration Plan — AQC‑Core
 
+> **Note (2026-10-19):** AI phases 3b and 3c (`list_takeoff`, `commit_opening`, `read_drawing`) were removed when take-off moved to O-Draft; see [ROADMAP.md](ROADMAP.md).
+
 **Status:** Phases 0–7 implemented. Phases 3–7's takeoff, linked‑item, level, civil‑BOQ and row‑edit tools are delivered **additively at the tool layer** (not by rewiring their UIs) — see the notes.
 **Scope:** Where and how to add an AI assistant/copilot to AQC‑Core, and the seams it plugs into.
 **Branch:** `claude/ai-entry-points-kgcmip`

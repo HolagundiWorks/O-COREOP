@@ -162,6 +162,8 @@ public class ProjectSyncEngineTests
         var (p, _, _) = await Make(new FakeServer().On("GET api/aqc/v1/projects/q1/rows", HttpStatusCode.OK, json), head: 4);
         var clean = await p.CatchUpAsync();
         Assert.False(clean.NeedsReview);
+        Assert.Equal(4, p.HeadSeq); // rows came back, so the head moves only when the caller has applied them
+        p.AdoptHead(clean.HeadSeq);
         Assert.Equal(9, p.HeadSeq);
 
         var (q, _, _) = await Make(new FakeServer().On("GET api/aqc/v1/projects/q1/rows", HttpStatusCode.OK, json), head: 4);

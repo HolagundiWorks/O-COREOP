@@ -105,7 +105,7 @@ A project usually has several drawings (a floor each, sections, a site plan). Ea
 - **Which drawings belong to which project.** `source.project_office_id` is the AORMS project office id O-Draft already keeps with a linked drawing (`aorms.open`). O-CoreOp saves the same id on its project (File > Online projects > Link). The Take-off page lists **every** drawing in the database, puts the **linked project's drawings first** and marks them "this project", and marks others "another project". A drawing with no project id is listed unmarked; the user chooses.
 - **Importing.** One drawing at a time: pick it, read it, review the preview, import. Rows are tagged `source = "hcwcad:<drawing_id>"` and `source_ref = <ref>`, so each drawing's rows are kept apart and each re-import updates only its own. Nothing is merged across drawings.
 - **Levels** are matched **by name** across drawings, so two drawings that both name a floor `Ground` feed the same AQC level.
-- **The rule that keeps quantities honest: one drawing per part of the building.** If two drawings both measure the same wall on the same floor (a plan and a detail sheet), O-CoreOp will import both and **double count**. It cannot know they overlap. Until a checker exists, the writer should record only the drawing that is the measured source for a floor, and the importer shows the levels each drawing touches in the preview. A future check is listed in section 9.
+- **The rule that keeps quantities honest: one drawing per part of the building.** If two drawings both measure the same wall on the same floor (a plan and a detail sheet), O-CoreOp will import both and **double count**. It cannot know they overlap. O-CoreOp now **warns** (it does not block): when a drawing about to be imported adds rows on a floor and trade that another drawing already supplies, the preview lists "Check before importing" naming that drawing and floor, once per drawing and floor. The writer should still record only the drawing that is the measured source for a floor.
 - **Removing a drawing's take-off** from the database is a delete in ShilpiDB by slot; rows already imported stay in O-CoreOp (it never deletes) and the next preview lists them as "no longer in the drawing".
 
 ## 6. The annotated drawing
@@ -116,7 +116,7 @@ When a take-off is **complete**, O-Draft generates an **annotated drawing PDF**:
 - **Transport: ShilpiDB chunks.** Split the PDF into chunks of **at most 512 KiB** (the gateway returns payloads as hex, so each is read as up to 1 MiB of JSON); `PUT` chunk `i` as kind 9, `n = i`, raw bytes as the body, zero-size box. Total **at most 64 MiB**. Then the header's `annotated_pdf` carries the **SHA-256** (hex) of the whole PDF, its **byte count**, the **number of chunks**, the **page count** and the generation time. The PDF must be of the **same revision** the take-off was measured from (`revision_sha256`).
 - **O-CoreOp fetches it on request** (button **Fetch annotated drawing** on the Take-off page), reassembles it, **checks** every chunk is present, the length, the SHA-256 and that it starts with `%PDF`, and refuses anything that fails. It stores the file beside the project (`<project name>.assets\annotated\<drawing>-<hash>.pdf`, or under `%LocalAppData%\AQCCore\annotated` until the project is saved) and records it in the project file (`annotated_drawings`: drawing id, file, SHA-256, generated, revision, fetched). A newer fetch for the same drawing replaces the older file.
 - **Reading a take-off never downloads the PDF**: chunks are skipped by id.
-- **Reports.** *Not built yet:* the stored PDF is opened from the Take-off page; embedding its pages in the O-CoreOp report PDFs replaces what the removed PDF panel did and is listed in section 9.
+- **Reports.** Every stored annotated PDF is embedded in the **project report** and the **estimate PDF** as an appendix: each page is rendered to an image (up to 8 pages per PDF; a note says if there are more) and drawn on its own report page, headed with the drawing name, the page number, when O-Draft recorded it and the first 8 characters of the drawing revision. A stored file that is missing or cannot be rendered is left out of the report (the Take-off page still lists it). Nothing is redrawn or re-measured in O-CoreOp. Code: `BBSApp/Services/StoredAnnotatedPdf.cs`.
 
 ## 7. Rules that do not change
 
@@ -143,9 +143,27 @@ Code: `BBSDesktop/AQC.CadImport/ShilpiTakeoff.cs` (contract, reader, gateway cli
 ## 9. State
 
 - **Built and run:** everything in section 8; 29 unit tests (`ShilpiTakeoffTests`, fakes plus the two bridge samples); and a check against the **real** `shilpid` and `shilpi-http` on the development machine: two drawings recorded in one database through the `recording` to `complete` protocol, listed with their row counts and projects, one drawing's rows read without the other's, and a 300 000-byte binary PDF written as chunks, listed, fetched and compared byte for byte.
-- **Not built:** anything in O-Draft. The Take-off page and the shared-server launcher have not been used by a person. Nothing has been read from a database O-Draft wrote.
-- **Not built in O-CoreOp:** embedding the annotated PDF in reports; a check for two drawings that overlap on one floor (section 5); an "O-Draft has re-recorded this drawing since your import" notice (the preview already shows it on the next read).
+- **O-Draft side (read 2026-10-19):** O-Draft has implemented this contract in its engine (`takeoff.record`, `takeoff.annotate`; see section 10). The Take-off page and the shared-server launcher have not been used by a person.
+- **Not built in O-CoreOp:** an "O-Draft has re-recorded this drawing since your import" notice (the preview already shows it on the next read). **Built, run in a scratch program but not in the app:** the report appendix (rendered a 3-page PDF, skipped a missing file, produced a 4-page report); not yet seen in a real project report or estimate.
 - **Open for the owner:** whether the OSAS launcher starts the shared server at logon; whether one drawing may describe several floors (the header's `levels` allows it, and rows name their level); the size limit on annotated PDFs.
+
+## 10. Reading what O-Draft actually wrote (2026-10-19)
+
+O-Draft's `takeoff.record` was run (its own test, against a real `shilpid`) and the database it left was read with this reader. The records are kept as a regression fixture, `BBSDesktop/AQC.CadImport.Tests/fixtures/odraft-takeoff-records.json`, and `ODraftOutputTests` (10 tests) reads them.
+
+**Agrees with the contract (checked):** the header is `complete`; the id layout and kinds are as written here; the slot O-Draft chose for its drawing id equals the slot this reader computes (two independent implementations of `SlotFor`); one header per drawing; every payload parses; nothing was skipped; the take-off imports and importing it again changes nothing.
+
+**Differences, and what O-CoreOp does about each** (the first three also go to O-Draft as requests, section 8 of its hand-off):
+
+| What O-Draft writes | Effect | What O-CoreOp now does |
+|---|---|---|
+| A room row has `area_m2` and `size` text but **no `level`, no `length_mm`, no `breadth_mm`** | the flooring row was skipped ("level '' is not in the file's levels") | A row with no level goes to the file's floor when the file has exactly one (several floors: skipped, with that reason). Length and breadth come from the record's **box** (the room's drawn outline, millimetres) when the box agrees with `area_m2` to 2%; if not (an L-shaped room) the area is kept exact, the box's shorter side is the breadth, and the row is flagged "approximate" |
+| Openings carry **no `wall_ref`** | they would be imported without a wall and not deduct | The opening is placed in the nearest wall **on the same level whose box, widened by 150 mm, meets the opening's box**; the preview flags it "wall chosen by position; check it". No wall within reach: left without a wall and flagged as before |
+| Walls carry **no `thickness_mm`** (only the layer, for example `MEASURE-FULLBRICK`) | the importer assumed 230 mm silently | Still 230 mm, but the preview now says "no wall thickness; 230 mm assumed, check it" |
+| `opening_schedule` has `"kind": "Ventilator"` | an opening of that kind would have become a door | A ventilator is a window (mark V1) |
+| Header `levels` rows also carry `ceiling_mm` and `lintel_bottom_mm`; `source.drawing` is empty for an unsaved drawing; `project_office_id` is absent for an unlinked drawing | none | Accepted; the Take-off page shows the slot number when the name is empty |
+
+The Take-off page's status line says how many values were worked out from positions or outlines. **Not checked:** the annotated PDF O-Draft records (its tests use a stand-in plotter; this reader's chunk path was checked with its own writer against a real server, not with O-Draft's), a database with several drawings written by O-Draft, `project_office_id`, and a take-off with more than one floor.
 
 ## Versioning
 

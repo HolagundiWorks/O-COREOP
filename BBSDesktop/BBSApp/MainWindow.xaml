@@ -74,6 +74,8 @@
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
                     <MenuFlyoutItem Text="Online projects…" Click="OnlineProjects_Click"/>
+                    <MenuFlyoutItem Text="Push project online&#8230;" Click="PushOnline_Click"/>
+                    <MenuFlyoutItem Text="Pull latest from AORMS" Click="PullLatest_Click"/>
                     <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>

@@ -26,10 +26,11 @@ public sealed partial class ReportPage : Page
         if (file is null) return;
 
         var annotated = await TakeoffAnnotatedPdf.TryCaptureAsync(ProjectStore.Current);
-        if (PdfExport.ExportProjectReport(file.Path, ProjectStore.Current, out var err, annotated))
+        var stored = await StoredAnnotatedPdf.RenderAllAsync(ProjectStore.Current);
+        if (PdfExport.ExportProjectReport(file.Path, ProjectStore.Current, out var err, annotated, stored))
         {
             Info.Title = "PDF";
-            Info.Message = annotated is null
+            Info.Message = annotated is null && stored.Count == 0
                 ? "Report saved."
                 : "Report saved (includes annotated drawing).";
             Info.Severity = InfoBarSeverity.Success;

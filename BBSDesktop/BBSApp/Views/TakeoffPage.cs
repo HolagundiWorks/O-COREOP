@@ -122,7 +122,7 @@ public sealed class TakeoffPage : Page
         // this project's drawings first, then the others
         foreach (var d in _list.OrderByDescending(d => !string.IsNullOrEmpty(linked) && d.ProjectOfficeId == linked).ThenBy(d => d.Drawing, StringComparer.OrdinalIgnoreCase))
         {
-            var bits = new List<string> { string.IsNullOrWhiteSpace(d.Drawing) ? $"slot {d.Slot}" : d.Drawing };
+            var bits = new List<string> { d.DisplayName };
             if (d.Problem is not null) bits.Add("unreadable: " + d.Problem);
             else
             {
@@ -148,7 +148,7 @@ public sealed class TakeoffPage : Page
         foreach (var a in list)
         {
             var open = new Button { Content = "Open", IsEnabled = a.Exists };
-            AutomationProperties.SetName(open, $"Open the annotated drawing {a.Drawing}");
+            AutomationProperties.SetName(open, $"Open the annotated drawing for {a.Drawing}");
             open.Click += async (_, _) =>
             {
                 try { await Windows.System.Launcher.LaunchFileAsync(await Windows.Storage.StorageFile.GetFileFromPathAsync(a.File)); }
@@ -219,11 +219,12 @@ public sealed class TakeoffPage : Page
         {
             var result = await ShilpiTakeoffService.ReadDrawingAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
             var prep = CadImportService.Prepare(result.File);
-            _status.Text = $"{result.Records} take-off records read from {d.Drawing}"
+            _status.Text = $"{result.Records} take-off records read from {d.DisplayName}"
                            + (result.Skipped.Count > 0 ? $" ({result.Skipped.Count} could not be used: {string.Join("; ", result.Skipped.Take(3))})" : "")
-                           + ". " + prep.Plan.Summary + ".";
+                           + ". " + prep.Plan.Summary + "."
+                           + (result.Notes is { Count: > 0 } notes ? $" {notes.Count} value(s) were worked out from the drawing's positions or outlines because the take-off did not state them; the preview marks the ones to check." : "");
             _busy = false; UpdateButtons();
-            await App.MainWindow!.ShowCadImportPreviewAsync(prep, $"Import take-off: {d.Drawing}");
+            await App.MainWindow!.ShowCadImportPreviewAsync(prep, $"Import take-off: {d.DisplayName}");
         }
         catch (Exception ex) { _status.Text = ex.Message; AppNotify.Error("Take-off", ex.Message); }
         finally { _busy = false; UpdateButtons(); }
@@ -237,8 +238,8 @@ public sealed class TakeoffPage : Page
         try
         {
             var pdf = await ShilpiTakeoffService.FetchAnnotatedPdfAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
-            var entry = AnnotatedStore.Save(ProjectStore.Current, d.DrawingId, d.Drawing, pdf, d.Annotated.Generated, d.RevisionSha256);
-            _status.Text = $"Annotated drawing for {d.Drawing} stored: {entry.File}"
+            var entry = AnnotatedStore.Save(ProjectStore.Current, d.DrawingId, d.DisplayName, pdf, d.Annotated.Generated, d.RevisionSha256);
+            _status.Text = $"Annotated drawing for {d.DisplayName} stored: {entry.File}"
                            + (string.IsNullOrWhiteSpace(ProjectStore.Current.FilePath) ? " (save the project to keep it beside the project file)." : ".");
             ShowStored();
         }

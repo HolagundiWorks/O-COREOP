@@ -244,7 +244,7 @@ public sealed class ConnectClient : IDisposable
 
     private async Task<(bool ok, int status, string body)> SendRefreshAsync(ConnectConfig cfg, string refreshToken, CancellationToken ct)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Post, $"{cfg.SupabaseUrl.TrimEnd('/')}/auth/v1/token?grant_type=refresh_token")
+        using var req = new HttpRequestMessage(HttpMethod.Post, $"{cfg.SupabaseUrl!.TrimEnd('/')}/auth/v1/token?grant_type=refresh_token")
         {
             Content = new StringContent(JsonSerializer.Serialize(new { refresh_token = refreshToken }), Encoding.UTF8, "application/json"),
         };

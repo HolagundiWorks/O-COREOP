@@ -50,9 +50,9 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 
 | # | Item |
 |---|---|
-| 4.1 | A file-backed `IOutboxStore`, so unsent edits survive a restart (only the in-memory one exists) |
+| 4.1 | ~~A file-backed `IOutboxStore`~~ done (`FileOutboxStore`) |
 | 4.2 | The home screen: sign in first, "Continue without signing in" for the Community edition, then Online projects, then Local; open from a seed; Push online |
-| 4.3 | `ProjectStore` hooks: call `Outbox.Upsert/Delete` and `NoteChange()` from `ProjectStore.Notify()`, drive `ProjectSync.TickAsync()` from a timer of about 1 s, and mint `_rid` on take-off rows through `ProjectMapper.ToSync` |
+| 4.3 | ~~`ProjectStore` hooks and the sync timer~~ built: `ProjectSyncHost`, `RowBaseline`, `ProjectMapper.ApplyDelta`, File > Push project online / Pull latest from AORMS (see the progress log). Not yet run against AORMS |
 | 4.4 | Map the shared rate books onto `RateBookStore` (the library `RateBooksApi` is done) |
 | 4.5 | Remove `Aorms.Bridge`, `Aorms.Bridge.Smoke` and the old Bind/Flush flow once nothing references them. The status strip still has Bind and Flush buttons |
 | 4.6 | Two suite apps refreshing the shared token at once, and sign-out clearing the shared entry from the UI, were not checked |
@@ -112,3 +112,47 @@ Close the running app before rebuilding to the same folder; Windows keeps `AQCCo
 - **2.6 done.** The release installer builds: `BBSDesktop/artifacts/installer/O-CoreOp-Setup-1.1.0.exe` (51 MB). Not installed or run (2.5 is still open). Two things the script does not tell you:
   - **The engine must be built with MSVC.** On this machine the only compiler on `PATH` was LLVM-MinGW, and `build-installer.ps1` tried it and failed (`std::malloc` / `std::free` without `<cstdlib>` in `src/api/bbs_c_api.cpp`, wide-path `ofstream` in `src/core/Project.cpp`). Built instead with Visual Studio 2022 Build Tools (`vcvars64`, CMake, Ninja, outside the repo) and copied `bbs_engine.dll` to `BBSDesktop/build/`. `bbs_tests.exe`: 0 failures. Fixing the two clang errors would let the script work without Visual Studio.
   - **`hcw-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `hcw-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `hcw-ui` (build its own RID output) or have the script pre-build it.
+
+**2026-10-19 (later):**
+
+- **Engine builds with clang/MinGW as well as MSVC.** `src/api/bbs_c_api.cpp` includes `<cstdlib>`; `src/core/Project.cpp` opens files through `std::filesystem::path`; `CMakeLists.txt` sets `PREFIX ""` so MinGW names the library `bbs_engine.dll` (it was `libbbs_engine.dll`). Built with both compilers, `bbs_tests.exe` 0 failures on each. This **removes the need for Visual Studio** in `build-installer.ps1`'s engine step (item 2.6's first note is resolved). The `hcw-ui` win-x64 pre-build note still stands.
+- **Annotated drawings in reports.** The stored annotated PDFs (see `docs/TAKEOFF-SHILPIDB.md` section 6) are embedded in the project report and the estimate PDF. Run in a scratch program, not yet in the app with a real project.
+- **Roadmap and docs brought up to date** (`docs/ROADMAP.md`: "Backlog" section; README take-off wording).
+- **Overlap warning.** Importing a drawing that adds rows on a floor and trade another drawing already supplies now lists "Check before importing" in the preview (once per drawing and floor; a warning, not a refusal). 5 tests; `AQC.CadImport.Tests` is 54 passed.
+
+**2026-10-19 (project sync, 4.3):**
+
+- **Built:** `Aorms.Connect/RowBaseline.cs` (what the server holds, a hash per row, saved as `<aqc id>.base.json` beside the outbox; `Diff` returns the rows to send and delete), `ProjectMapper.ApplyDelta` (merge rows changed elsewhere into a project document; keeps settings, `takeoff`, `last_estimate`), `ProjectStore.MintRowIds` (a stable `_rid` on every take-off row; a copied row gets a new one), `BBSApp/Services/Connect/ProjectSyncHost.cs` (1 s tick, push online, pull latest, status text) and two File menu items. The status chip now reads, for example, `AORMS · Studio · 3 unsent`.
+- **Design choice:** the open project is the source of truth for what the user typed, so the host diffs it instead of hooking every edit; the cost is one `ToJson` of the project per second while it is being edited, and only when dirty. A project of 10 000 rows has not been timed (hand-off 6.4 style check is still open).
+- **Checked:** 21 new library tests (`Aorms.Connect.Tests` 109 passed) that follow the host's loop against a scripted server: one edit sends one row, a delete is sent as a delete, offline edits survive a restart and go on the next run, a catch-up is applied and does not come back as a local edit, a catch-up with unsent edits asks for review and keeps the head. The app builds and starts. **Not checked:** against the real server, the two dialogs, `MintRowIds` (it lives in the WinUI project, which has no tests), the timing on a large project.
+- **Behaviour to know:** a project opened on a computer with no baseline file takes the local file as the baseline and says so in the chip's tooltip; use Pull latest to bring in the online version. If a pull arrives while there are unsent edits to the same rows, the online version wins and the unsent edits to those rows are dropped (the dialog says so). The edit lease is taken automatically; when someone else holds it the project is read-only and the chip says so (editing is not blocked in the UI yet: the rows queue and go when the lease is free).
+
+**2026-10-19 (reading O-Draft's output):**
+
+- O-Draft implemented `takeoff.record` and `takeoff.annotate` (slots, `recording` to `complete`, shared server, chunked PDF) in its repository (committed in part; the slot and annotate work was uncommitted in its `.wt/slots` worktree when read). Its 11 tests pass, and its real-server test passed against an installed `shilpid` (both run here from a copy, so its repository was not touched).
+- **Read with this reader, and it agrees:** header, ids, slot (two independent `SlotFor` agree), 7 rows, nothing skipped. **Four gaps** in what O-Draft records (rooms have no level, length or breadth; openings have no `wall_ref`; walls have no thickness; the schedule uses kind `Ventilator`), each handled in O-CoreOp and flagged in the preview, and each sent back to O-Draft as a request ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) section 8; details in [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10).
+- Regression fixture `fixtures/odraft-takeoff-records.json` and `ODraftOutputTests` (10 tests); `AQC.CadImport.Tests` is 64 passed.
+- **Not checked:** O-Draft's real annotated PDF (its tests use a stand-in plotter), two drawings from O-Draft in one database, a linked project, several floors.
+
+**Debug pass 2026-10-19 (tests, review and driving the real app):**
+
+The app was driven through Windows UI Automation for the first time (`BBSDesktop/tests/e2e/`, see its README), against a real shared take-off server (with what O-Draft really wrote) and a scripted fake AORMS. Sign-in, Online projects, Push online, Pull latest and the Take-off page had never been clicked before. **Bugs found and fixed** (each with a test where the code is testable, and each re-checked in the real app):
+
+| # | Bug | How it showed | Fix |
+|---|---|---|---|
+| 1 | **Pull latest failed**: the project was rebuilt in memory and handed to `LoadFrom`, which cannot read typed values (`Int32 cannot be converted to Double`); the change was never applied | an error toast after Pull in the real app | the document goes through JSON text first (`ProjectSyncHost.ApplyPull`) |
+| 2 | **`ApplyPull` was not atomic**: it dropped outbox entries and adopted the server's hashes before loading, so a failed load would make the next sync push a stale value over the other computer's change | code review, then confirmed by #1 | load first, restore the project if it fails, adopt only after success |
+| 3 | After a pull the app **re-sent rows it had not changed** (it tidies rows on reload: adds default fields, rebuilds shuttering), which two computers could bounce back and forth | `ROWS 3` right after the catch-up in the fake server's log | the baseline is taken from the project as it is after a pull |
+| 4 | **Derived rows churned**: shuttering (and link-rule rows) are rebuilt from scratch whenever quantities are calculated, so every rebuild gave every row a new random id and the server saw all of them deleted and re-inserted (17 rows sent for one pull) | the fake server's log | derived rows (`source` starting `auto`) get a stable id from what they derive from (`ProjectMapper.DerivedRowId`); 6 tests |
+| 5 | **Local paths went to the server** (take-off file path, stored PDF paths, logo path) inside the settings, and the head moved on every sync so settings looked changed every time (an endless settings push) | code review | `ProjectMapper.SyncSettings` strips the local-only keys on push online, on settings push and in the change hash; 6 tests |
+| 6 | **Settings changed on another computer never came in** on a pull | code review | the catch-up returns the server's settings and `ApplyDelta` merges them (local paths kept) |
+| 7 | The catch-up **advanced the head before the rows were applied**, so a failure while applying lost them | code review | the head moves only when there is nothing to apply, or when the caller adopts it after applying |
+| 8 | The change check **ran every second while typing** and rebuilt the whole project each time (0.3 to 0.5 s of UI time on 10 000 rows) | measured | it waits for 1.5 s of quiet; `ToSync` no longer deep-clones every row only to empty it (181 to 59 ms) |
+| 9 | A drawing O-Draft recorded **without a name** showed an empty title and messages like ": no annotated drawing" | the Take-off page in the real app | `ShilpiDrawing.DisplayName` ("drawing <slot>") |
+| 10 | A compiler null warning in `ConnectClient` (the guard was a level up; made explicit) | build | none needed beyond `!` |
+
+**Checked in the real app (24 checks, all passing):** sign in (wrong password first, with its message), the chip naming the studio, a take-off imported through the UI, push online (54 rows, no local paths), the chip going to `synced`, a changed take-off reaching AORMS as exactly one row by itself, a catch-up applied (the wall then shows as changed locally) with nothing sent back, sign-out. Also on the Take-off page: the drawing list from the shared server, Read take-off and its preview, Fetch annotated drawing (PDF verified, stored, listed with Open).
+
+**Test totals:** `AQC.CadImport.Tests` 65, `Aorms.Connect.Tests` 127, `Office.Shared.Tests` 5, engine `bbs_tests` 0 failures (MSVC and clang), all passing. **Timing, 10 000 rows (release build):** a change check costs about 0.14 s, settings 0.06 s, building the JSON 0.06 s; the baseline file is written in under 0.1 s.
+
+**Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.

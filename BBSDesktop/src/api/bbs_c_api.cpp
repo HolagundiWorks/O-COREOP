@@ -9,6 +9,7 @@
 #include "../core/Json.h"
 #include "../core/Project.h"
 
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <vector>

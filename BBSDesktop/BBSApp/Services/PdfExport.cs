@@ -19,7 +19,8 @@ public static class PdfExport
         string path,
         ProjectStore store,
         out string? error,
-        AnnotatedDrawing? annotatedDrawing = null)
+        AnnotatedDrawing? annotatedDrawing = null,
+        IReadOnlyList<RenderedAnnotatedPdf>? storedAnnotated = null)
     {
         error = null;
         try
@@ -43,7 +44,7 @@ public static class PdfExport
                     page.Content().Column(col =>
                     {
                         col.Spacing(14);
-                        if (sections.Count == 0 && !hasDrawing)
+                        if (sections.Count == 0 && !hasDrawing && storedAnnotated is not { Count: > 0 })
                         {
                             col.Item().Text("No element data in this project. Add RCC or civil BOQ items, then export again.");
                             return;
@@ -62,6 +63,13 @@ public static class PdfExport
                         {
                             col.Item().PageBreak();
                             col.Item().Element(c => TakeoffAnnotatedPdf.Draw(c, store, annotatedDrawing));
+                        }
+
+                        // annotated drawings O-Draft generated and O-CoreOp stored (quantity lines, measurements, hatches)
+                        if (storedAnnotated is { Count: > 0 })
+                        {
+                            col.Item().PageBreak();
+                            col.Item().Element(c => StoredAnnotatedPdf.Draw(c, storedAnnotated));
                         }
                     });
                 });
@@ -176,7 +184,8 @@ public static class PdfExport
         EstimateResult result,
         IReadOnlySet<string> levels,
         out string? error,
-        AnnotatedDrawing? annotatedDrawing = null)
+        AnnotatedDrawing? annotatedDrawing = null,
+        IReadOnlyList<RenderedAnnotatedPdf>? storedAnnotated = null)
     {
         error = null;
         try
@@ -240,6 +249,13 @@ public static class PdfExport
                         {
                             col.Item().PageBreak();
                             col.Item().Element(c => TakeoffAnnotatedPdf.Draw(c, store, annotatedDrawing));
+                        }
+
+                        // annotated drawings O-Draft generated and O-CoreOp stored (quantity lines, measurements, hatches)
+                        if (storedAnnotated is { Count: > 0 })
+                        {
+                            col.Item().PageBreak();
+                            col.Item().Element(c => StoredAnnotatedPdf.Draw(c, storedAnnotated));
                         }
                     });
                 });

@@ -118,3 +118,22 @@ The reader, the id and slot code and its tests are `BBSDesktop/AQC.CadImport/Shi
 3. Size limit for annotated PDFs (64 MiB assumed).
 4. O-CoreOp reports will embed the annotated PDF pages; confirm whether the PDF should be one page per sheet or one combined page set (O-CoreOp does not mind).
 5. A check for two drawings that measure the same floor (the double-count risk in 3.6): who owns it, O-Draft (warn when recording) or O-CoreOp (warn when importing)?
+
+## 8. Results of reading your output (2026-10-19, from the O-CoreOp side)
+
+I read the database your `takeoff.record` wrote (your ignored real-server test, run against an installed `shilpid`, 11 normal tests passing as well) with O-CoreOp's reader. Full detail is in [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10; the records are saved as `BBSDesktop/AQC.CadImport.Tests/fixtures/odraft-takeoff-records.json`.
+
+**It agrees with the contract.** Header `complete`, id layout, kinds, and your slot for the drawing id equals the slot O-CoreOp computes. All seven rows read; the take-off imports; importing again changes nothing. Thank you for the unit tests on the slot vectors: both sides now agree on them independently.
+
+**Four things to change in O-Draft, in order of how much they matter.** O-CoreOp copes with each for now (so nothing is blocked), but a computed value is a guess and the preview marks it "check":
+
+1. **Write `level` on room rows** (the walls, openings, columns, lintels and slabs have it; rooms do not). Today a room only imports because the file happens to have one floor.
+2. **Write `length_mm` and `breadth_mm` on room rows** (the flooring row needs both; `area_m2` alone is not enough). A rectangular room: its two sides. Any other shape: send `area_m2` and the bounding sides and say which (a field `"rectangular": false`). O-CoreOp currently derives them from the record's box, which is exact only for rectangles.
+3. **Write `wall_ref` on openings** (you list this as not done). Without it an opening does not deduct from a wall, which is the point of the opening rows. O-CoreOp currently guesses the nearest wall by position (box widened by 150 mm); a wrong guess changes a masonry quantity.
+4. **Write `thickness_mm` on wall rows.** The wall row has the layer (`MEASURE-FULLBRICK`) but no thickness, so O-CoreOp assumes 230 mm. If a layer implies a thickness, say it in the row.
+
+Smaller: `opening_schedule` has `"kind": "Ventilator"` for V1; the contract says a ventilator is a window, so either send `Window` or keep `Ventilator` (O-CoreOp now treats both as windows). The header's `levels` rows carry `ceiling_mm` and `lintel_bottom_mm` as well; that is fine, they are ignored. `source.drawing` was empty for an unsaved drawing; recording an unsaved drawing could be refused, or named `(unsaved)`.
+
+**Not yet checked, and worth doing on your side:** run `takeoff.record` with `annotate` against the real `shilpid` (your tests use a stand-in plotter, so no real PDF has crossed the server yet); record **two** drawings into one server and one of them linked to an AORMS project (`project_office_id`); a drawing with more than one floor. Send me the database (or run the same test and keep the file) and I will read it with the same reader.
+
+**Your "not done" items:** the check for two drawings measuring the same floor is built on the O-CoreOp side as a warning in the import preview (not on yours). PDF underlay and calibration are still the next piece of work and still block PDF-only projects.
