@@ -212,7 +212,7 @@ public sealed class StoresBook
         var initials = new string((companyName ?? "")
             .Split(new[] { ' ', '-', '.', ',' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(w => char.ToUpperInvariant(w[0])).ToArray());
-        return string.IsNullOrWhiteSpace(initials) ? "AQC" : initials;
+        return string.IsNullOrWhiteSpace(initials) ? "OC" : initials;
     }
 
     public string Preview(string code, DateTime date, string company)

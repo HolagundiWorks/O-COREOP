@@ -145,7 +145,7 @@ public sealed class OfficeRegister
         var initials = new string((companyName ?? "")
             .Split(new[] { ' ', '-', '.', ',' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(w => char.ToUpperInvariant(w[0])).ToArray());
-        return string.IsNullOrWhiteSpace(initials) ? "AQC" : initials;
+        return string.IsNullOrWhiteSpace(initials) ? "OC" : initials;
     }
 
     private static string Compose(string prefix, string code, string fy, int seq) =>

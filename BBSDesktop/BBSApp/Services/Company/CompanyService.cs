@@ -40,6 +40,42 @@ public static class CompanyService
 
     public static event Action? Changed;
 
+    static string SuiteFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "suite.json");
+
+    /// <summary>The company file chosen in OSAS, the suite app, if there is one and it still exists. The company is chosen only there.</summary>
+    public static string? SuitePath()
+    {
+        try
+        {
+            if (!File.Exists(SuiteFile))
+                return null;
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(SuiteFile));
+            return doc.RootElement.TryGetProperty("company_path", out var p) && p.GetString() is { Length: > 0 } path && File.Exists(path) ? path : null;
+        }
+        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Starts OSAS, where the company is chosen, created and signed in to. False when OSAS is not installed.</summary>
+    public static bool StartOsas()
+    {
+        var folder = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\OSAS", "InstallLocation", null) as string;
+        var exe = Path.Combine(string.IsNullOrWhiteSpace(folder) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "OSAS") : folder, "OSAS.exe");
+        if (!File.Exists(exe))
+            return false;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
+            return true;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
+        {
+            return false;
+        }
+    }
+
     public static SharedCompany? Current => _company;
 
     public static bool IsOpen => _company is not null;
@@ -96,6 +132,16 @@ public static class CompanyService
             {
                 // Remembering the path is a convenience only.
             }
+            Changed?.Invoke();
+        });
+
+    /// <summary>Opens a company file signed in by a one-time ticket from the suite app (OSAS).</summary>
+    public static Task OpenWithTicketAsync(string path, string ticket) =>
+        Task.Run(() =>
+        {
+            Close();
+            _company = SharedCompany.OpenWithTicket(AppDir, path, ticket);
+            _lastDataVersion = -1;
             Changed?.Invoke();
         });
 
@@ -163,32 +209,59 @@ public static class CompanyService
             store.IsDirty = false;
         });
 
+    /// <summary>What a look at the company file found.</summary>
+    public enum PollResult
+    {
+        /// <summary>Nothing the open project cares about changed.</summary>
+        None,
+
+        /// <summary>The other app saved the open project and this window had nothing unsaved, so it should reload it now.</summary>
+        ReloadNow,
+
+        /// <summary>The other app saved the open project, but this window has unsaved changes. The next save will refuse and offer a reload.</summary>
+        ConflictPending,
+    }
+
     /// <summary>
-    /// Looks for a change made by the other app. Returns true once when the open project's document has moved on; the link is then
-    /// marked so a save will refuse and ask for a reload.
+    /// Looks for a change made by the other app. It asks the engine only for the change counter and the revision of the open project's
+    /// document, and does not count as activity. When the document has moved on: with nothing unsaved here the project should be reloaded
+    /// (live sync); with unsaved changes the link is marked so a save refuses and asks for a reload.
     /// </summary>
-    public static Task<bool> PollAsync() =>
+    public static Task<PollResult> PollAsync() =>
         Task.Run(() =>
         {
             var company = _company;
             var link = ProjectStore.Current.Shared;
             if (company is null)
-                return false;
-            if (!company.SchemaOk())
+                return PollResult.None;
+            var watch = company.Watch(link?.ProjectId);
+            if (!watch.SchemaOk)
                 throw new OfficeException(1, "Another app has upgraded this company file. Update O-CoreOp to keep working with it.");
-            var version = company.DataVersion();
-            if (version == _lastDataVersion || link is null)
-            {
-                _lastDataVersion = version;
-                return false;
-            }
-            _lastDataVersion = version;
-            var revision = company.DocumentRevision(link.ProjectId);
-            if (revision == link.Revision || link.ChangedElsewhere)
-                return false;
+            _lastDataVersion = watch.Version;
+            if (link is null || watch.Revision == link.Revision || watch.Revision == 0)
+                return PollResult.None;
+            if (!ProjectStore.Current.IsDirty)
+                return PollResult.ReloadNow;
+            if (link.ChangedElsewhere)
+                return PollResult.None;
             link.ChangedElsewhere = true;
-            return true;
+            return PollResult.ConflictPending;
         });
+
+    /// <summary>Loads the open project again from the company file (what the other app saved), replacing what is in the window.</summary>
+    public static async Task<string> ReloadOpenAsync()
+    {
+        var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "This project is not linked to the company file.");
+        var document = await Task.Run(() => Require().GetDocument(link.ProjectId));
+        if (document is null || JsonNode.Parse(document.Body) is not JsonObject root)
+            throw new OfficeException(1, "The saved project could not be read.");
+        var store = ProjectStore.Current;
+        store.LoadFrom(root);
+        store.FilePath = null;
+        store.Shared = new SharedProjectLink(link.ProjectId, document.Revision);
+        store.IsDirty = false;
+        return $"{store.Name}, revision {document.Revision}, saved by {document.UpdatedBy}.";
+    }
 
     static SharedCompany Require() => _company ?? throw new OfficeException(2, "No company file is open.");
 }

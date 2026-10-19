@@ -1,5 +1,7 @@
 # Branch handoff (2026-10-11)
 
+> Update 2026-10-19: the branches named below are history. `feat/company-live-sync` and `feat/shared-company-file` were merged into `main` and deleted; see `HANDOFF-O-COREOP.md` for what is current.
+
 All remote branches were reviewed and merged into `main`. Nothing was deleted; the branches stay as history.
 
 | Branch | State | What it holds |

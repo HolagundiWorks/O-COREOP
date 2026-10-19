@@ -193,7 +193,7 @@ public sealed class AccountsBook
         var initials = new string((companyName ?? "")
             .Split(new[] { ' ', '-', '.', ',' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(w => char.ToUpperInvariant(w[0])).ToArray());
-        return string.IsNullOrWhiteSpace(initials) ? "AQC" : initials;
+        return string.IsNullOrWhiteSpace(initials) ? "OC" : initials;
     }
 
     private static string PartyPrefix(RunningBill b, string companyName) =>

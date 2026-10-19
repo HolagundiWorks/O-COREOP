@@ -15,7 +15,11 @@ Merged on 2026-10-19 (merge commit `a0aa37d`):
 - AORMS sign-in (Credential Manager stores, status badge, File > Sign in / Sign out, take-over prompt) and File > Online projects (list the studio's projects, link one, import CAD take-off).
 - CI (`.github/workflows/ci.yml`): the import and sign-in tests, and a build.
 
-Not on `main` yet: this branch also carries one commit that rewrites `README.md` and `docs/WINUI-SHELL.md` to use only the current names.
+Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/company-live-sync` was then deleted):
+
+- The README and `docs/WINUI-SHELL.md` rewrite to the current names.
+- **Shared company file and OSAS hub** (section 5.1): O-CoreOp has no company picker. It opens the company file OSAS chose (`OSAS_COMPANY`), signed in by OSAS's one-time ticket (`OSAS_TICKET`, `OSAS_USER`), and shows a project saved in O-Studio within about two seconds, and the reverse. Code: `BBSDesktop/Office.Shared` (`OfficeSession`, `SharedCompany`, 5 tests), `BBSApp/MainWindow.Company.cs`, `Services/Company/CompanyService.cs`, the `Shared` link in `Services/ProjectStore.cs`. The engine is `office.dll`, copied beside the app from the O-STUDIO build (`OfficeDllDir`).
+- The project sync host, take-off reading from O-Draft, annotated drawings in reports, and the overlap warning (progress log below).
 
 ## 2. Do first: make what exists trustworthy
 
@@ -25,8 +29,8 @@ Not on `main` yet: this branch also carries one commit that rewrites `README.md`
 | 2.2 | Sign in to the real AORMS portal and pull a project. Everything in `Aorms.Connect` was tested against a fake server and a local development server | Not tested live (`docs/ROADMAP.md`, "CAD take-off and AORMS sign-in") | `docs/AORMS-CONNECT-HANDOFF.md`, `BBSDesktop/Aorms.Connect.Smoke` |
 | 2.3 | The portal needs migration `0113_aqc_sessions_aos_app.sql` applied before the suite apps can hold a session. It is on the branch `claude/aos-suite-session` of the portal repository | Checked: not applied | portal repository, `web/supabase/migrations/` |
 | 2.4 | Click through File > Import from CAD, File > Export for CAD and File > Online projects with a real drawing export. The libraries have 20 and 80 tests; the app screens have not been used | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/` |
-| 2.5 | Install on a clean machine with the Inno Setup installer and check an installed copy of the older name upgrades in place (same AppId) and the Start menu entry reads O-CoreOp | Not tested | `BBSDesktop/installer/AQCCore.iss`, `build-installer.ps1` |
-| 2.6 | Rebuild the installer and the release build after the rename; the script was edited for the new name but not run | Checked: not rebuilt | `BBSDesktop/installer/` |
+| 2.5 | Install on a **clean** machine with the Inno Setup installer and check the Start menu entry reads O-CoreOp. On the development machine (2026-10-19) the installer upgraded an existing copy in place: it still installs to `%LOCALAPPDATA%\Programs\AQC-Core`, not `O-CoreOp`, and the run was silent, so the Start menu text was not looked at | Partly checked | `BBSDesktop/installer/AQCCore.iss`, `build-installer.ps1` |
+| 2.6 | ~~Rebuild the installer~~ done (1.1.0, built and installed 2026-10-19 from `main`). **Open:** `build-installer.ps1` does not put `office.dll` in the publish folder unless the O-STUDIO engine is built in its default folder (`architect-office-desktop\office-ffi\target\release`); without it the installed app cannot open a company file. It was copied into `artifacts\publish` by hand. Pass `OfficeDllDir` through the script, or fail the build when the file is missing | Checked | `BBSDesktop/installer/build-installer.ps1` |
 
 ## 3. Accessibility (WCAG 2.2 AA)
 
@@ -61,7 +65,7 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 
 | # | Item | Roadmap | Notes |
 |---|---|---|---|
-| 5.1 | Read the shared company file, so a client and a project are created once. O-CoreOp does not reference `Office.Interop` today; it gets projects only through the portal | 2.2 | The interface is `office-ffi` in the O-STUDIO repository, contract in its `docs/office-abi.md`. O-CoreOp keeps its own tables under the schema-track rules (`<track>_*` names only) |
+| 5.1 | ~~Read the shared company file~~ **done 2026-10-19.** Projects are stored in the shared company file (`project_documents`, kind `aqc.project`, revisioned, optimistic `expected_revision`, last 10 revisions kept) and sync live both ways with O-Studio. The company, sign-in and users are chosen and managed in OSAS only. **Open:** clients are still not read from the company file inside O-CoreOp; a protected (encrypted) company file stays single-program; switching company in OSAS does not move an open O-CoreOp | 2.2 | Contract in O-STUDIO `docs/office-abi.md`, `docs/shared-company-file.md`, `docs/suite-hub.md` |
 | 5.2 | Produce and read `ProjectRef` and `ArtifactRef`: a BOQ, an estimate and a rate schedule each get an `ArtifactRef` that names the drawing revision it was made from | 2.3 | Contract: `docs/contracts/refs.md` in the O-STUDIO repository (written; implemented in `office-core`; no app uses it yet) |
 | 5.3 | Compute and store a SHA-256 for each artifact at each revision | 2.3 | Needed for 5.2 |
 | 5.4 | An MCP server around the calculation engine (`aqc.calculate_boq`, `aqc.compare_estimates`), with the same descriptor shape as O-Studio's `office-agent` | 2.5 | Writes are proposals first; today only O-Studio has a server. The in-app assistant (`Services/Ai`) is separate and stays opt-in |
@@ -102,7 +106,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `AQCCo
 1. The licence wording and product name in `LICENSING.md` and `CONTRIBUTING.md` (section 7).
 2. Whether the PDF take-off canvas is retired (6.5).
 3. Whether the company file or the portal is the system of record when both exist. The proposed rule is in `docs/contracts/refs.md`: the portal id when there is one, otherwise the company file and project id.
-4. Whether O-CoreOp may require the shared company file, or must still run on its own project file. This decides how much of section 5 is needed.
+4. ~~Whether O-CoreOp may require the shared company file~~ Answered: the company is chosen in OSAS and O-CoreOp follows it. A local `.bbsproj` still works when no company is chosen; decide if that should stay.
 
 ## 10. Progress log
 
@@ -164,3 +168,9 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 - **Found by reading a file O-Draft's engine wrote:** its file mode writes `.vdb` **version 2** (and slot 0), which the installed `shilpid` 0.2.0 refuses. O-CoreOp now reads `.vdb` files directly (`VdbFile`, versions 1 and 2, no server; `VdbFileTests` 8), and the Take-off page's file option uses it. Checked in the real app with O-Draft's file (`tests/e2e/uia-vdbfile.ps1`, 9 checks). The file-option code that started `shilpid` was removed.
 - `AQC.CadImport.Tests` is now 83 passed.
 - **Not checked:** two parametric walls meeting at a corner (O-Draft's slice has one wall), `material`/`finish` from a real O-Draft file (it does not write them yet), and the real annotated PDF.
+
+**2026-10-19 (hub merge and install):**
+
+- `origin/main` (project sync, O-Draft reading, annotated drawings, debug pass) was merged into the company-live-sync branch with no conflicts, and the result went to `main` as a fast-forward (`b67710a`). After the merge `Office.Shared.Tests` (6) and `AQC.CadImport.Tests` (65) pass and the app builds in Release. `Aorms.Connect.Tests` was not re-run after the merge.
+- O-CoreOp 1.1.0 was built and installed on the development machine, with `office.dll` copied in by hand (see 2.6).
+- **Not done:** a run of the installed app against the company file after the merge (the merged sync host and the shared-company code were not driven together); `uia-sync-e2e.ps1` was not re-run.

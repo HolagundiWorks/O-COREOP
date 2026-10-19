@@ -61,6 +61,26 @@ public sealed class SharedCompany : IDisposable
         }
     }
 
+    /// <summary>
+    /// Opens a company file and signs in with a one-time ticket from the suite app (OSAS) instead of a password. The ticket works once, for
+    /// two minutes, and signs in the person who was signed in there.
+    /// </summary>
+    public static SharedCompany OpenWithTicket(string appDir, string path, string ticket)
+    {
+        var session = OfficeSession.Create(appDir);
+        try
+        {
+            var company = session.Call("company.open", new JsonObject { ["path"] = path, ["secret"] = "", ["unlock"] = "" });
+            var who = session.Call("auth.login_ticket", new JsonObject { ["ticket"] = ticket });
+            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, who?["username"]?.GetValue<string>() ?? "");
+        }
+        catch
+        {
+            session.Dispose();
+            throw;
+        }
+    }
+
     public IReadOnlyList<SharedClient> Clients() =>
         Array(_session.Call("client_list", new JsonObject { ["include_archived"] = false })).Select(c => new SharedClient(Long(c, "id"), Text(c, "name"))).ToList();
 
@@ -103,6 +123,16 @@ public sealed class SharedCompany : IDisposable
     {
         var list = _session.Call("doc_list", new JsonObject { ["project_id"] = projectId });
         return Array(list).Where(d => Text(d, "kind") == kind).Select(d => Long(d, "revision")).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// What to poll: the change counter, whether this build still understands the file, and the revision of the project's document now
+    /// (0 when there is none or no project is given). It does not count as activity, so polling never keeps an idle session from locking.
+    /// </summary>
+    public (long Version, bool SchemaOk, long Revision) Watch(long? projectId)
+    {
+        var w = _session.Call("watch", new JsonObject { ["project_id"] = projectId, ["kind"] = DocumentKind })!;
+        return (Long(w, "version"), w["schema_ok"]?.GetValue<bool>() ?? false, Long(w, "revision"));
     }
 
     /// <summary>A number that goes up whenever another app writes to the company file. Poll it to know when to look again.</summary>
