@@ -33,6 +33,8 @@ public sealed class ProjectInfo
     public string AormsAqcId { get; set; } = "";
     /// <summary>The take-off database (.vdb) O-Draft recorded this project's take-off in. Read from the Take-off page.</summary>
     public string TakeoffVdbPath { get; set; } = "";
+    /// <summary>Annotated drawing PDFs fetched from ShilpiDB, one per drawing.</summary>
+    public List<StoredAnnotatedDrawing> AnnotatedDrawings { get; } = new();
 
     public static readonly string[] PreparedByRoles = { "Engineer", "Architect", "PMC" };
 
@@ -54,7 +56,8 @@ public sealed class ProjectInfo
         ["hub_project_id"] = HubProjectId,
         ["aorms_project_office_id"] = AormsProjectOfficeId,
         ["aorms_aqc_id"] = AormsAqcId,
-        ["takeoff_vdb_path"] = TakeoffVdbPath
+        ["takeoff_vdb_path"] = TakeoffVdbPath,
+        ["annotated_drawings"] = new JsonArray(AnnotatedDrawings.Select(a => (JsonNode)a.ToJson()).ToArray())
     };
 
     public void LoadFrom(JsonObject? o)
@@ -77,6 +80,9 @@ public sealed class ProjectInfo
         AormsProjectOfficeId = o["aorms_project_office_id"]?.GetValue<string>() ?? "";
         AormsAqcId = o["aorms_aqc_id"]?.GetValue<string>() ?? "";
         TakeoffVdbPath = o["takeoff_vdb_path"]?.GetValue<string>() ?? "";
+        AnnotatedDrawings.Clear();
+        if (o["annotated_drawings"] is JsonArray ad)
+            foreach (var e in ad.OfType<JsonObject>()) AnnotatedDrawings.Add(StoredAnnotatedDrawing.FromJson(e));
     }
 
     public void Reset()
@@ -98,6 +104,7 @@ public sealed class ProjectInfo
         AormsProjectOfficeId = "";
         AormsAqcId = "";
         TakeoffVdbPath = "";
+        AnnotatedDrawings.Clear();
     }
 
     /// <summary>"GSTIN: … · CIN: … · PAN: …" for the present IDs, or empty.</summary>
