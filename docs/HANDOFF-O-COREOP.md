@@ -103,3 +103,12 @@ Close the running app before rebuilding to the same folder; Windows keeps `AQCCo
 2. Whether the PDF take-off canvas is retired (6.5).
 3. Whether the company file or the portal is the system of record when both exist. The proposed rule is in `docs/contracts/refs.md`: the portal id when there is one, otherwise the company file and project id.
 4. Whether O-CoreOp may require the shared company file, or must still run on its own project file. This decides how much of section 5 is needed.
+
+## 10. Progress log
+
+**2026-10-19, started from this hand-off:**
+
+- **4.1 done.** `Aorms.Connect/FileOutboxStore.cs`: a file-backed `IOutboxStore`. A save writes a temporary file and swaps it in; an unreadable file is moved aside (`.corrupt-<time>`), never deleted, and `QuarantinedPath` says where. 8 new tests (`FileOutboxStoreTests`); `Aorms.Connect.Tests` is 88 passed. **Not wired yet:** nothing in `BBSApp` creates one (that is 4.3, with the `ProjectStore` hooks); the intended path is `%LocalAppData%\AQCCore\outbox\<aqc project id>.json`.
+- **2.6 done.** The release installer builds: `BBSDesktop/artifacts/installer/O-CoreOp-Setup-1.1.0.exe` (51 MB). Not installed or run (2.5 is still open). Two things the script does not tell you:
+  - **The engine must be built with MSVC.** On this machine the only compiler on `PATH` was LLVM-MinGW, and `build-installer.ps1` tried it and failed (`std::malloc` / `std::free` without `<cstdlib>` in `src/api/bbs_c_api.cpp`, wide-path `ofstream` in `src/core/Project.cpp`). Built instead with Visual Studio 2022 Build Tools (`vcvars64`, CMake, Ninja, outside the repo) and copied `bbs_engine.dll` to `BBSDesktop/build/`. `bbs_tests.exe`: 0 failures. Fixing the two clang errors would let the script work without Visual Studio.
+  - **`hcw-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `hcw-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `hcw-ui` (build its own RID output) or have the script pre-build it.
