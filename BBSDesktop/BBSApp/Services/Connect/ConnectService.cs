@@ -7,7 +7,7 @@ namespace BBSApp.Services.Connect;
 
 public enum ConnectState
 {
-    /// <summary>Not signed in: AQC works on its own (Community).</summary>
+    /// <summary>Not signed in: O-CoreOp works on its own (Community).</summary>
     SignedOut,
     SignedIn,
     /// <summary>Signed in on another computer; the user can take the session over here.</summary>
@@ -31,7 +31,7 @@ public static class ConnectService
     public static string BaseUrl => Environment.GetEnvironmentVariable("AORMS_URL")?.Trim() is { Length: > 0 } u ? u : DefaultUrl;
     /// <summary>Email of the saved suite login, to prefill the sign-in box.</summary>
     public static string? RememberedEmail { get { try { return new CredentialSharedSignInStore().Load()?.Email; } catch { return null; } } }
-    public static string ClientLabel => $"AQC on {Environment.MachineName}";
+    public static string ClientLabel => $"O-CoreOp on {Environment.MachineName}";
     public static event Action? Changed;
 
     internal static ConnectClient Client()
@@ -63,7 +63,7 @@ public static class ConnectService
     {
         ConnectState.SignedIn when Session is { } s =>
             $"{s.Account.Email} · {s.Studio.Name} · role {s.Role} · plan {s.Entitlement.Plan ?? "?"}{(s.CanWrite ? "" : " (read-only)")}",
-        _ => LastNotice ?? "Not signed in. AQC works on its own until you sign in.",
+        _ => LastNotice ?? "Not signed in. O-CoreOp works on its own until you sign in.",
     };
 
     /// <summary>Silent sign-in at app start. Never takes a session over from another computer.</summary>
@@ -122,7 +122,7 @@ public static class ConnectService
     /// <summary>The studio's AORMS projects (needs a connected sign-in). Throws a ConnectException the caller can show with <see cref="Describe"/>.</summary>
     public static Task<List<OnlineProject>> ListProjectsAsync() => new ProjectsApi(Client()).ListAsync();
 
-    /// <summary>The newest CAD take-off (AADT's <c>aqcexport</c> file) published for a bound project, as bridge JSON; null when none.</summary>
+    /// <summary>The newest CAD take-off (O-Draft's <c>aqcexport</c> file) published for a bound project, as bridge JSON; null when none.</summary>
     public static async Task<string?> PullCadTakeoffAsync(string aqcId)
     {
         var r = await new CadBridgeApi(Client()).DownloadLatestAsync(aqcId).ConfigureAwait(true);
@@ -153,9 +153,9 @@ public static class ConnectService
 
     static string NotConnectedMessage(ConnectException e) => e.Reason switch
     {
-        "EXPIRED" => "Your studio's AORMS plan has expired. AQC continues in Community mode.",
-        "NO_STUDIO" => "This account isn't part of an AORMS studio. AQC continues in Community mode.",
-        _ => "Your studio's AORMS plan doesn't include connected mode (Studio plan or higher). AQC continues in Community mode.",
+        "EXPIRED" => "Your studio's AORMS plan has expired. O-CoreOp continues in Community mode.",
+        "NO_STUDIO" => "This account isn't part of an AORMS studio. O-CoreOp continues in Community mode.",
+        _ => "Your studio's AORMS plan doesn't include connected mode (Studio plan or higher). O-CoreOp continues in Community mode.",
     };
 
     static string Friendly(ConnectException e) => e.Code switch

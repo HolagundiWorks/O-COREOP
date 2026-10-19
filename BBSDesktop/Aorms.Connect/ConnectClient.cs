@@ -30,7 +30,7 @@ public enum RestoreOutcome
 /// </summary>
 public sealed class ConnectClient : IDisposable
 {
-    /// <summary>The wire contract this client implements. A server announcing a different one is refused ("Update AQC").</summary>
+    /// <summary>The wire contract this client implements. A server announcing a different one is refused ("Update O-CoreOp").</summary>
     public const string SupportedContract = "2026-10-aqc-1";
     private static readonly TimeSpan RefreshSkew = TimeSpan.FromSeconds(60);
 
@@ -85,7 +85,7 @@ public sealed class ConnectClient : IDisposable
         using var res = await _http.GetAsync("api/aqc/v1/config", ct).ConfigureAwait(false);
         var cfg = await ReadAsync<ConnectConfig>(res, ct).ConfigureAwait(false);
         if (cfg.Contract != SupportedContract)
-            throw new ConnectException(0, "update_required", $"This AORMS server speaks '{cfg.Contract}'; this AQC speaks '{SupportedContract}'. Update AQC.");
+            throw new ConnectException(0, "update_required", $"This AORMS server speaks '{cfg.Contract}'; this O-CoreOp speaks '{SupportedContract}'. Update O-CoreOp.");
         return _config = cfg;
     }
 

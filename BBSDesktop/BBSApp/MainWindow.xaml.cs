@@ -911,7 +911,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         var free = projects.Where(p => !p.IsBound).ToList();
         if (free.Count == 0)
         {
-            AppNotify.Info("Push online", "Every project in your AORMS studio already has AQC data. Create the project in AORMS first, or link this one with File > Online projects.");
+            AppNotify.Info("Push online", "Every project in your AORMS studio already has O-CoreOp data. Create the project in AORMS first, or link this one with File > Online projects.");
             return;
         }
         var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 280, MinWidth = 440 };
@@ -927,7 +927,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
                 Spacing = 10,
                 Children =
                 {
-                    new TextBlock { TextWrapping = TextWrapping.Wrap, Text = "Choose the AORMS project this one belongs to. The whole project is sent and from then on every change is kept in step. An AORMS project can be bound to one AQC project, once." },
+                    new TextBlock { TextWrapping = TextWrapping.Wrap, Text = "Choose the AORMS project this one belongs to. The whole project is sent and from then on every change is kept in step. An AORMS project can be bound to one O-CoreOp project, once." },
                     list,
                 },
             },
@@ -991,7 +991,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         BBSApp.Services.Connect.ConnectService.SignOut();
         RefreshConnectBadge();
-        AppNotify.Info("AORMS", "Signed out. AQC works on its own until you sign in again.");
+        AppNotify.Info("AORMS", "Signed out. O-CoreOp works on its own until you sign in again.");
     }
 
     private async Task ConnectFlowAsync()
@@ -1022,7 +1022,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Title = "AORMS is in use on another computer",
             Content = new TextBlock
             {
-                Text = "You are signed in to AORMS on another computer. Only one computer can use AQC with AORMS at a time. Sign in here instead?",
+                Text = "You are signed in to AORMS on another computer. Only one computer can use O-CoreOp with AORMS at a time. Sign in here instead?",
                 TextWrapping = TextWrapping.Wrap,
             },
             PrimaryButtonText = "Sign in here",
@@ -1623,7 +1623,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             {
                 Tag = p,
                 Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}"
-                          + (p.IsBound ? "  ·  has AQC data" : "  ·  not bound yet")
+                          + (p.IsBound ? "  ·  has O-CoreOp data" : "  ·  not bound yet")
                           + (linked ? "  ·  linked to this project" : ""),
             });
             if (linked) list.SelectedIndex = list.Items.Count - 1;
@@ -1631,7 +1631,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         if (list.SelectedIndex < 0) list.SelectedIndex = 0;
 
         var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75, FontSize = 12,
-            Text = "Link ties the open project to the AORMS project. Import CAD take-off reads the newest measurement published from AADT and shows a preview first." };
+            Text = "Link ties the open project to the AORMS project. Import CAD take-off reads the newest measurement published from O-Draft and shows a preview first." };
         var dlg = new ContentDialog
         {
             Title = "Online projects",
@@ -1656,7 +1656,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
         if (sel.Aqc is null)
         {
-            AppNotify.Info("Online projects", $"{sel.Ref} has no AQC data yet, so no CAD take-off has been published to it.");
+            AppNotify.Info("Online projects", $"{sel.Ref} has no O-CoreOp data yet, so no CAD take-off has been published to it.");
             return;
         }
         string? json;
@@ -1668,7 +1668,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         }
         if (json is null)
         {
-            AppNotify.Info("CAD take-off", $"No CAD take-off has been published to {sel.Ref} yet. Publish it from AADT first.");
+            AppNotify.Info("CAD take-off", $"No CAD take-off has been published to {sel.Ref} yet. Publish it from O-Draft first.");
             return;
         }
         CadImportService.Prepared prep;
@@ -1686,7 +1686,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         var picker = new FileSavePicker();
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         picker.SuggestedFileName = ProjectStore.Current.Name.Replace(' ', '_') + ".aqcbridge";
-        picker.FileTypeChoices.Add("AQC bridge file", new List<string> { ".json" });
+        picker.FileTypeChoices.Add("O-CoreOp bridge file", new List<string> { ".json" });
         var file = await picker.PickSaveFileAsync();
         if (file is null) return;
         try
