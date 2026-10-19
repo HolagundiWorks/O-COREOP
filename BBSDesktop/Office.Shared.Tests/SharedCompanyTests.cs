@@ -44,7 +44,7 @@ public class SharedCompanyTests : IDisposable
         using var session = OfficeSession.Create(Path.Combine(_dir, "app-x"));
         session.Call("company.create", new JsonObject { ["path"] = path, ["name"] = "Studio One", ["username"] = "owner", ["password"] = Password, ["confirm"] = Password });
         session.Call("company.close");
-        return path + ".adms";
+        return path + ".osas";
     }
 
     private SharedCompany Open(string path, string app) => SharedCompany.Open(Path.Combine(_dir, app), path, "owner", Password);

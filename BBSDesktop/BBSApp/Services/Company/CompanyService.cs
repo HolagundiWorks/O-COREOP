@@ -24,7 +24,7 @@ public sealed class SharedProjectLink
 }
 
 /// <summary>
-/// The company file shared with O-Studio (an .adms file). While one is open, a project can be opened from it and saved back to it,
+/// The company file shared with O-Studio (an .osas file; earlier .adms files open too). While one is open, a project can be opened from it and saved back to it,
 /// and O-Studio can have the same file open at the same time. O-CoreOp keeps a project's quantities in the company file as a
 /// document on that project; the clients and projects themselves are the office's records and are shared.
 /// </summary>
