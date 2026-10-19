@@ -65,7 +65,7 @@ public sealed partial class MainWindow
         AutomationProperties.SetName(CompanyBadge, CompanyService.StatusText);
         ToolTipService.SetToolTip(CompanyBadge, CompanyService.IsOpen
             ? $"{CompanyService.Current!.Path}. Shared with O-Studio — tap for its projects."
-            : "The company file shared with O-Studio — tap to open one.");
+            : "The company file shared with O-Studio, chosen in OSAS — tap to open it.");
     }
 
     async Task CompanyPollAsync()
@@ -106,15 +106,22 @@ public sealed partial class MainWindow
         return false;
     }
 
+    /// <summary>
+    /// The company is chosen in OSAS, the suite app, and nowhere else. This opens the one OSAS chose (it still asks for the sign-in when OSAS
+    /// did not hand over a ticket); when none is chosen yet it starts OSAS.
+    /// </summary>
     async void CompanyOpen_Click(object sender, RoutedEventArgs e)
     {
         if (!EngineReady()) return;
-        var picker = new FileOpenPicker();
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-        picker.FileTypeFilter.Add(".adms");
-        var file = await picker.PickSingleFileAsync();
-        if (file is null) return;
-        await OpenCompanyPathAsync(file.Path);
+        if (CompanyService.SuitePath() is { } path)
+        {
+            await OpenCompanyPathAsync(path);
+            return;
+        }
+        if (CompanyService.StartOsas())
+            AppNotify.Info("Company file", "No company is chosen yet. Choose or create it in OSAS, then open O-CoreOp from OSAS.");
+        else
+            AppNotify.Warning("Company file", "OSAS, the suite app, is not installed. The company is chosen there.");
     }
 
     /// <summary>Asks for the user name and password for a company file, then opens it.</summary>
@@ -163,7 +170,7 @@ public sealed partial class MainWindow
         if (!EngineReady()) return;
         if (!CompanyService.IsOpen)
         {
-            AppNotify.Info("Company file", "Open a company file first (File > Open company file).");
+            AppNotify.Info("Company file", "The company is chosen in OSAS: use File > Open the company OSAS chose.");
             return;
         }
         IReadOnlyList<SharedProject> projects;
@@ -357,7 +364,7 @@ public sealed partial class MainWindow
         if (!EngineReady()) return;
         if (!CompanyService.IsOpen)
         {
-            AppNotify.Info("Company file", "Open a company file first (File > Open company file).");
+            AppNotify.Info("Company file", "The company is chosen in OSAS: use File > Open the company OSAS chose.");
             return;
         }
         IReadOnlyList<SharedProject> projects;

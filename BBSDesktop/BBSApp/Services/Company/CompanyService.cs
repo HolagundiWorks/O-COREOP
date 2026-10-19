@@ -40,6 +40,42 @@ public static class CompanyService
 
     public static event Action? Changed;
 
+    static string SuiteFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "suite.json");
+
+    /// <summary>The company file chosen in OSAS, the suite app, if there is one and it still exists. The company is chosen only there.</summary>
+    public static string? SuitePath()
+    {
+        try
+        {
+            if (!File.Exists(SuiteFile))
+                return null;
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(SuiteFile));
+            return doc.RootElement.TryGetProperty("company_path", out var p) && p.GetString() is { Length: > 0 } path && File.Exists(path) ? path : null;
+        }
+        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Starts OSAS, where the company is chosen, created and signed in to. False when OSAS is not installed.</summary>
+    public static bool StartOsas()
+    {
+        var folder = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\OSAS", "InstallLocation", null) as string;
+        var exe = Path.Combine(string.IsNullOrWhiteSpace(folder) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "OSAS") : folder, "OSAS.exe");
+        if (!File.Exists(exe))
+            return false;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true });
+            return true;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or IOException)
+        {
+            return false;
+        }
+    }
+
     public static SharedCompany? Current => _company;
 
     public static bool IsOpen => _company is not null;
