@@ -197,10 +197,11 @@ public sealed partial class EstimatePage : Page
         var file = await picker.PickSaveFileAsync();
         if (file is null) return;
         var annotated = await TakeoffAnnotatedPdf.TryCaptureAsync(ProjectStore.Current);
-        if (PdfExport.ExportEstimate(file.Path, ProjectStore.Current, _result, SelectedLevels(), out var err, annotated))
+        var stored = await StoredAnnotatedPdf.RenderAllAsync(ProjectStore.Current);
+        if (PdfExport.ExportEstimate(file.Path, ProjectStore.Current, _result, SelectedLevels(), out var err, annotated, stored))
         {
             Info.Title = "PDF";
-            Info.Message = annotated is null
+            Info.Message = annotated is null && stored.Count == 0
                 ? "Saved " + file.Path
                 : "Saved (includes annotated drawing): " + file.Path;
             Info.Severity = InfoBarSeverity.Success;
