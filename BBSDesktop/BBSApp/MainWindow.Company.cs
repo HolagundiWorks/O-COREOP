@@ -19,6 +19,36 @@ public sealed partial class MainWindow
     DispatcherTimer? _companyTimer;
     bool _companyPolling;
 
+    /// <summary>
+    /// OSAS, the suite app, chooses the company file and signs the person in once. It starts this app with the file in OSAS_COMPANY and, when
+    /// someone is signed in there, a one-time ticket in OSAS_TICKET. With a ticket the company opens already signed in; without one the
+    /// usual sign-in box appears for that file.
+    /// </summary>
+    async Task StartFromSuiteAsync()
+    {
+        var path = Environment.GetEnvironmentVariable("OSAS_COMPANY");
+        var ticket = Environment.GetEnvironmentVariable("OSAS_TICKET");
+        Environment.SetEnvironmentVariable("OSAS_TICKET", null);
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path) || !CompanyService.EngineAvailable)
+            return;
+        await Task.Delay(800);
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(ticket))
+            {
+                await CompanyService.OpenWithTicketAsync(path, ticket);
+                AppNotify.Success("Company file", $"{CompanyService.Current!.Name} is open, signed in as {CompanyService.Current.User}.");
+                CompanyProjects_Click(this, new RoutedEventArgs());
+                return;
+            }
+        }
+        catch (OfficeException ex)
+        {
+            AppNotify.Warning("Company file", ex.Message);
+        }
+        await OpenCompanyPathAsync(path);
+    }
+
     void StartCompanyPolling()
     {
         CompanyService.Changed += () => DispatcherQueue.TryEnqueue(RefreshCompanyBadge);
@@ -84,12 +114,17 @@ public sealed partial class MainWindow
         picker.FileTypeFilter.Add(".adms");
         var file = await picker.PickSingleFileAsync();
         if (file is null) return;
+        await OpenCompanyPathAsync(file.Path);
+    }
 
+    /// <summary>Asks for the user name and password for a company file, then opens it.</summary>
+    async Task OpenCompanyPathAsync(string path)
+    {
         var user = new TextBox { Header = "User name", Text = "owner" };
         var password = new PasswordBox { Header = "Password" };
         var filePassword = new PasswordBox { Header = "File password (only if the company file is protected)" };
         var panel = new StackPanel { Spacing = 10, MinWidth = 360 };
-        panel.Children.Add(new TextBlock { Text = file.Name, TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(new TextBlock { Text = Path.GetFileName(path), TextWrapping = TextWrapping.Wrap });
         panel.Children.Add(user);
         panel.Children.Add(password);
         panel.Children.Add(filePassword);
@@ -106,7 +141,7 @@ public sealed partial class MainWindow
         try
         {
             var protectedFile = filePassword.Password.Length > 0;
-            await CompanyService.OpenAsync(file.Path, user.Text.Trim(), password.Password, protectedFile ? filePassword.Password : "", protectedFile ? "password" : "");
+            await CompanyService.OpenAsync(path, user.Text.Trim(), password.Password, protectedFile ? filePassword.Password : "", protectedFile ? "password" : "");
             AppNotify.Success("Company file", $"{CompanyService.Current!.Name} is open. O-Studio can have it open at the same time.");
         }
         catch (OfficeException ex)

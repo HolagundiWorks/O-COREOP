@@ -69,6 +69,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
         StartClockPomodoro();
         StartCompanyPolling();
+        _ = StartFromSuiteAsync();
         AppNotify.Raised += OnAppNotify;
         ProjectStore.Current.Changed += OnStoreChanged;
         Closed += (_, _) =>

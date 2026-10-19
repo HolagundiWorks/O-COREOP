@@ -99,6 +99,16 @@ public static class CompanyService
             Changed?.Invoke();
         });
 
+    /// <summary>Opens a company file signed in by a one-time ticket from the suite app (OSAS).</summary>
+    public static Task OpenWithTicketAsync(string path, string ticket) =>
+        Task.Run(() =>
+        {
+            Close();
+            _company = SharedCompany.OpenWithTicket(AppDir, path, ticket);
+            _lastDataVersion = -1;
+            Changed?.Invoke();
+        });
+
     public static void Close()
     {
         var company = _company;

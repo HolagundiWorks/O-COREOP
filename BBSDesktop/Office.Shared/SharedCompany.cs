@@ -61,6 +61,26 @@ public sealed class SharedCompany : IDisposable
         }
     }
 
+    /// <summary>
+    /// Opens a company file and signs in with a one-time ticket from the suite app (OSAS) instead of a password. The ticket works once, for
+    /// two minutes, and signs in the person who was signed in there.
+    /// </summary>
+    public static SharedCompany OpenWithTicket(string appDir, string path, string ticket)
+    {
+        var session = OfficeSession.Create(appDir);
+        try
+        {
+            var company = session.Call("company.open", new JsonObject { ["path"] = path, ["secret"] = "", ["unlock"] = "" });
+            var who = session.Call("auth.login_ticket", new JsonObject { ["ticket"] = ticket });
+            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, who?["username"]?.GetValue<string>() ?? "");
+        }
+        catch
+        {
+            session.Dispose();
+            throw;
+        }
+    }
+
     public IReadOnlyList<SharedClient> Clients() =>
         Array(_session.Call("client_list", new JsonObject { ["include_archived"] = false })).Select(c => new SharedClient(Long(c, "id"), Text(c, "name"))).ToList();
 
