@@ -1,8 +1,8 @@
 # O-CoreOp
 
-**O-CoreOp** (formerly AQC-Core) is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The repository, the executable `AQCCore.exe` and the project file extension `.bbsproj` keep their old names for now.
+**O-CoreOp** is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The executable `AQCCore.exe` and the project file extension `.bbsproj` keep their names because installed copies and saved projects use them.
 
-**AQC-Core** (*Accelerated Quantity and Costing Core*) — quantity take-off and costing by **Human Centric Works, Hospet**.
+O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
 RCC bar bending schedules, civil BOQ, drawing takeoff, rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, correspondence, contracts, running-account billing, stores and HR.
 
@@ -56,7 +56,7 @@ powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
 Output: `BBSDesktop\artifacts\installer\AQCCore-Setup-1.0.1.exe`  
-Installs to `%LocalAppData%\Programs\AQC-Core\`
+Installs to `%LocalAppData%\Programs\O-CoreOp\`
 
 The version comes from `<Version>` in `BBSApp.csproj`; the script passes it to Inno Setup, so the output filename tracks it automatically. Pass `-SkipEngineBuild` when `BBSDesktop\build\bbs_engine.dll` already exists.
 
@@ -108,13 +108,13 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 
 ## Branding
 
-- Product: **AQC-Core** — Accelerated Quantity and Costing Core  
+- Product: **O-CoreOp**, part of OSAS  
 - Developer: **Human Centric Works, Hospet**  
 - Logo: `BBSDesktop/BBSApp/Assets/logo.png`
 
 ## Licensing
 
-AQC-Core is **dual-licensed**:
+O-CoreOp is **dual-licensed**:
 
 - **Community Edition** — [GNU AGPL v3](LICENSE). Free for individuals, hobbyists,
   research, and internal business use. Note the AGPL's network clause: hosting a modified
