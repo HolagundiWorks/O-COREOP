@@ -161,6 +161,14 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 
 **Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.
 
+**2026-10-19 (parametric walls, O-Draft's second hand-off, and the `.vdb` format):**
+
+- O-Draft's hand-off `HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md` is copied into `docs/`; the reply (answers to its four questions, one real mismatch) is section 9 of [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md).
+- **Reader:** a wall row with `thickness_mm` (a parametric `PW-` wall) is used as given; a brick take-off wall with none takes its thickness from its layer (`MEASURE-FULLBRICK` 230, `MEASURE-HALFBRICK` 115); optional `material` accepted (`rcc` skipped, `block.concrete` as Cement Block). `ParametricWallTests` 11.
+- **Found by reading a file O-Draft's engine wrote:** its file mode writes `.vdb` **version 2** (and slot 0), which the installed `shilpid` 0.2.0 refuses. O-CoreOp now reads `.vdb` files directly (`VdbFile`, versions 1 and 2, no server; `VdbFileTests` 8), and the Take-off page's file option uses it. Checked in the real app with O-Draft's file (`tests/e2e/uia-vdbfile.ps1`, 9 checks). The file-option code that started `shilpid` was removed.
+- `AQC.CadImport.Tests` is now 83 passed.
+- **Not checked:** two parametric walls meeting at a corner (O-Draft's slice has one wall), `material`/`finish` from a real O-Draft file (it does not write them yet), and the real annotated PDF.
+
 **2026-10-19 (hub merge and install):**
 
 - `origin/main` (project sync, O-Draft reading, annotated drawings, debug pass) was merged into the company-live-sync branch with no conflicts, and the result went to `main` as a fast-forward (`b67710a`). After the merge `Office.Shared.Tests` (6) and `AQC.CadImport.Tests` (65) pass and the app builds in Release. `Aorms.Connect.Tests` was not re-run after the merge.

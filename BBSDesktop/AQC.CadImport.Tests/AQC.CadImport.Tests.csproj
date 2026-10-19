@@ -13,5 +13,8 @@
   <ItemGroup>
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
   </ItemGroup>
-  <ItemGroup><None Include="fixtures\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" /></ItemGroup>
+  <ItemGroup>
+    <None Include="fixtures\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" />
+    <None Include="fixtures\*.vdb" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" />
+  </ItemGroup>
 </Project>

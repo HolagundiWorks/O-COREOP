@@ -35,6 +35,23 @@ public static class CadImporter
 
     public static string SourceTag(string drawingId) => "hcwcad:" + drawingId;
 
+    /// <summary>
+    /// A wall's thickness. Given: used. Not given (a brick take-off wall from O-Draft carries only its layer): <c>MEASURE-FULLBRICK</c> is a 230 mm wall,
+    /// <c>MEASURE-HALFBRICK</c> a 4.5 in (115 mm) wall, and a <c>material</c> gives its own default; anything else is 230 mm and says it was assumed.
+    /// </summary>
+    static (double Thickness, string? Note, bool Assumed) WallThickness(JsonObject w, string material)
+    {
+        if (BridgeFile.Num(w, "thickness_mm") is { } given) return (given, null, false);
+        var layer = BridgeFile.Str(w, "layer");
+        if (layer.Equals("MEASURE-HALFBRICK", StringComparison.OrdinalIgnoreCase) || material.Equals("brick.half", StringComparison.OrdinalIgnoreCase))
+            return (115, "thickness 115 mm (half brick) taken from " + (layer.Length > 0 ? "layer " + layer : "the material"), false);
+        if (layer.Equals("MEASURE-FULLBRICK", StringComparison.OrdinalIgnoreCase) || material.Equals("brick.full", StringComparison.OrdinalIgnoreCase))
+            return (230, "thickness 230 mm (full brick) taken from " + (layer.Length > 0 ? "layer " + layer : "the material"), false);
+        if (material.Equals("block.concrete", StringComparison.OrdinalIgnoreCase))
+            return (200, "the take-off gives no block thickness; 200 mm assumed, check it", true);
+        return (230, "the take-off gives no wall thickness; 230 mm assumed, check it", true);
+    }
+
     /// <summary>A ventilator is a window as far as the take-off is concerned (V1 in the standard marks).</summary>
     static bool IsWindowKind(string kind) => kind.Equals("Window", StringComparison.OrdinalIgnoreCase) || kind.Equals("Ventilator", StringComparison.OrdinalIgnoreCase);
 
@@ -120,17 +137,23 @@ public static class CadImporter
         {
             var r = BridgeFile.Str(w, "ref");
             var lvl = Lvl(w, Masonry, r, r); if (lvl is null) continue;
-            var thickGiven = BridgeFile.Num(w, "thickness_mm");
-            var thick = thickGiven ?? 230;
+            var material = BridgeFile.Str(w, "material");
+            if (material.Equals("rcc", StringComparison.OrdinalIgnoreCase))
+            {
+                plan.Items.Add(new PlanItem { Section = Masonry, Action = PlanAction.Skipped, Ref = r, Mark = r, Reason = "an RCC wall is not masonry; add it under RCC walls" });
+                continue;
+            }
+            var (thick, thickNote, assumed) = WallThickness(w, material);
+            var unit = BridgeFile.Str(w, "unit_type") is { Length: > 0 } ut ? ut
+                : material.Equals("block.concrete", StringComparison.OrdinalIgnoreCase) ? "Cement Block" : "Brick";
             var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["length"] = N(BridgeFile.Num(w, "length_mm")), ["height"] = N(BridgeFile.Num(w, "height_mm")),
-                ["thickness"] = N(thick),
-                ["unit_type"] = BridgeFile.Str(w, "unit_type") is { Length: > 0 } ut ? ut : "Brick",
+                ["thickness"] = N(thick), ["unit_type"] = unit,
             };
             Upsert(Masonry, r, f, lvl,
-                thickGiven is null ? "the take-off gives no wall thickness; 230 mm assumed, check it"
-                : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : null);
+                assumed ? thickNote
+                : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : thickNote);
             wallMarkByRef[r] = plan.Items.Last(i => i.Section == Masonry && i.Ref == r).Mark;
         }
 

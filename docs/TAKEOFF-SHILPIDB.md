@@ -26,7 +26,7 @@ A store of **records**: a `u64` id, a bounding box (two corners, `f64` each) and
 
 It is **one database for all projects and drawings on the machine** (section 4 keeps them apart). Take-off data is derived (the drawing is the source), so losing the file loses nothing that cannot be recorded again; do not back it up as the system of record.
 
-**Offline or archived take-offs:** O-CoreOp can also open a take-off `.vdb` file by itself (it starts a read-only server on it, reads, and stops). A writer that has no shared server may save a `.vdb` with the same records, in the same layout.
+**Offline or archived take-offs:** O-CoreOp can also open a take-off `.vdb` file by itself, **reading the file directly, with no server** (`VdbFile`). A writer that has no shared server may save a `.vdb` with the same records. The file layout is the same whoever writes it: `"SHILPIDB"`, `u32` version, `u32` record count, then per record `u64` id, four `f64` box values and a `u32`-length payload, all little-endian; anything after the records (O-Draft appends a spatial-grid index) is ignored. **Two version numbers are in use:** `shilpid` writes and reads only **version 1**; O-Draft's own file writer writes **version 2**. O-CoreOp reads both. `shilpid` cannot open a version 2 file (`unsupported data file version 2`), so a file O-Draft saved cannot be served by `shilpid`; see section 10. A file that holds one drawing may use **slot 0** (ids `(kind << 56) | handle`, the original layout; O-Draft's file mode does); slot 0 must not be used on the shared server, where drawings would collide.
 
 ## 4. Records
 
@@ -114,7 +114,7 @@ When a take-off is **complete**, O-Draft generates an **annotated drawing PDF**:
 
 - **O-Draft generates it** (a command it owns; the contract is only how it travels and what is checked).
 - **Transport: ShilpiDB chunks.** Split the PDF into chunks of **at most 512 KiB** (the gateway returns payloads as hex, so each is read as up to 1 MiB of JSON); `PUT` chunk `i` as kind 9, `n = i`, raw bytes as the body, zero-size box. Total **at most 64 MiB**. Then the header's `annotated_pdf` carries the **SHA-256** (hex) of the whole PDF, its **byte count**, the **number of chunks**, the **page count** and the generation time. The PDF must be of the **same revision** the take-off was measured from (`revision_sha256`).
-- **O-CoreOp fetches it on request** (button **Fetch annotated drawing** on the Take-off page), reassembles it, **checks** every chunk is present, the length, the SHA-256 and that it starts with `%PDF`, and refuses anything that fails. It stores the file beside the project (`<project name>.assets\annotated\<drawing>-<hash>.pdf`, or under `%LocalAppData%\AQCCore\annotated` until the project is saved) and records it in the project file (`annotated_drawings`: drawing id, file, SHA-256, generated, revision, fetched). A newer fetch for the same drawing replaces the older file.
+- **O-CoreOp fetches it on request** (button **Fetch annotated drawing** on the Take-off page), reassembles it, **checks** every chunk is present, the length, the SHA-256 and that it starts with `%PDF`, and refuses anything that fails. It stores the file beside the project (`<project name>.assets\annotated\<drawing>-<hash>.pdf`, or under `%LocalAppData%\O-CoreOp\annotated` until the project is saved) and records it in the project file (`annotated_drawings`: drawing id, file, SHA-256, generated, revision, fetched). A newer fetch for the same drawing replaces the older file.
 - **Reading a take-off never downloads the PDF**: chunks are skipped by id.
 - **Reports.** Every stored annotated PDF is embedded in the **project report** and the **estimate PDF** as an appendix: each page is rendered to an image (up to 8 pages per PDF; a note says if there are more) and drawn on its own report page, headed with the drawing name, the page number, when O-Draft recorded it and the first 8 characters of the drawing revision. A stored file that is missing or cannot be rendered is left out of the report (the Take-off page still lists it). Nothing is redrawn or re-measured in O-CoreOp. Code: `BBSApp/Services/StoredAnnotatedPdf.cs`.
 
@@ -128,6 +128,7 @@ These are the file importer's rules, because the records are turned into a bridg
 4. **Never send** plaster, painting, skirting, shuttering, rebar, PCC, earthwork, waterproofing or any rate or cost.
 5. A column carries no height; O-CoreOp computes it from the level.
 6. A wall of 120 mm or less is measured by O-CoreOp as its 110 mm wall.
+7. **A wall's thickness:** `thickness_mm` when the row has it (a parametric wall always does); otherwise the layer says it (`MEASURE-FULLBRICK` 230 mm, `MEASURE-HALFBRICK` 115 mm, the 4.5 in wall, which is rule 6's 110 mm build); otherwise 230 mm, flagged "assumed, check it". An optional `material` is used when present (`brick.full`, `brick.half`, `block.concrete` as Cement Block with 200 mm assumed; `rcc` is skipped because an RCC wall is not masonry); `finish`, `component_type`, `schema_version` and provenance fields are ignored, because finishes are derived here.
 
 ## 8. How O-CoreOp reads it
 
@@ -164,6 +165,15 @@ O-Draft's `takeoff.record` was run (its own test, against a real `shilpid`) and 
 | Header `levels` rows also carry `ceiling_mm` and `lintel_bottom_mm`; `source.drawing` is empty for an unsaved drawing; `project_office_id` is absent for an unlinked drawing | none | Accepted; the Take-off page shows the slot number when the name is empty |
 
 The Take-off page's status line says how many values were worked out from positions or outlines. **Not checked:** the annotated PDF O-Draft records (its tests use a stand-in plotter; this reader's chunk path was checked with its own writer against a real server, not with O-Draft's), a database with several drawings written by O-Draft, `project_office_id`, and a take-off with more than one floor.
+
+### 10.1 Parametric walls and the file format (2026-10-19, second read)
+
+O-Draft added **parametric walls** (hand-off: [HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md](HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md)). Its engine was built from a copy, a 5 m wall made with `param.wall.new` and `param.commit`, recorded with `takeoff.record { path }`, and the file read here (`fixtures/odraft-parametric.takeoff.vdb`, test `VdbFileTests`).
+
+- **The wall row** is `{ ref "PW-wall-1", level, length_mm, height_mm, thickness_mm 230.0, layer "A-WALL" }` with the face lines' box. It reads and imports as one masonry row (230 mm, 5000 by 3000) with no warning. A `PW-` wall and a brick wall (`W`+handle, layer `MEASURE-FULLBRICK`, no thickness) in one drawing each keep their own thickness. `ParametricWallTests`: 11.
+- **Brick rows have no `thickness_mm`**, so rule 7 of section 7 takes it from the layer.
+- **Mismatch: the file is not readable by `shilpid`.** O-Draft's file writer writes format version 2 and the installed `shilpid` 0.2.0 accepts only version 1 (`unsupported data file version 2`). The layout is identical. O-CoreOp reads both versions itself. O-Draft's file mode also writes slot 0 (see section 3). Both are reported to O-Draft in its hand-off, section 9.
+- **Checked in the real app** (`BBSDesktop/tests/e2e/uia-vdbfile.ps1`, 9 checks): choose O-Draft's file in the file dialog; the drawing is listed (`drawing 0 · complete · 1 rows`), reads, and previews "1 to add".
 
 ## Versioning
 
