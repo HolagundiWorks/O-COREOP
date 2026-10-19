@@ -5,14 +5,31 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed (2026-10-19)
+- **Renamed O-CoreOp** (OSAS, the Open Source Architecture Suit). The program is still `AQCCore.exe`; the installer AppId, the `.bbsproj` extension and the `aqc` AORMS session name are unchanged on purpose. New shell: menu bar, grouped left navigation pane, work area and status strip (the same structure as the other OSAS apps), the shared `Hcw.Ui` design (building needs a sibling checkout of the private `hcw-ui` repository), accessibility fixes from the WCAG 2.2 AA audit.
+- **Take-off moved to O-Draft.** Drawings and PDFs are measured in O-Draft, which records the take-off in one shared ShilpiDB server; O-CoreOp reads it from there (see Added). The AutoCAD plugin hcwCAD-KIT is dropped.
+
+### Removed (2026-10-19)
+- The **PDF take-off panel and canvas** (import a PDF, set a scale, measure, Commit to BOQ) and the AI tools that used it. A project saved before keeps its stored take-off and its annotated drawing in reports; there is no longer a way to measure a PDF in O-CoreOp.
+
+### Fixed (2026-10-19, found by driving the real app; see `docs/HANDOFF-O-COREOP.md`)
+- **Pull latest** threw (`Int32 cannot be converted to Double`) and was not atomic; it also re-sent rows it had not changed, and shuttering and link-rule rows were deleted and re-inserted on every calculation (they now have stable ids).
+- Local file paths no longer travel to the server inside the project settings; settings changed on another computer now come in on a pull; the sync head moves only after the incoming rows are applied; the change check waits for 1.5 s of quiet.
+- A drawing recorded without a name is called "drawing <slot>" instead of showing an empty title.
+- Wall thickness for brick take-off walls now comes from the layer (full brick 230 mm, half brick 115 mm) and parametric walls (`PW-` refs, `thickness_mm`) from O-Draft are accepted; `.vdb` files written by O-Draft (format version 2, which `shilpid` cannot open) are read directly.
+- The C++ engine now builds with clang/MinGW as well as MSVC.
+
 ### Added
+- **Take-off from ShilpiDB** — **Project > Take-off (O-Draft)** lists the drawings recorded on the shared take-off server (or in a `.vdb` file, read directly, versions 1 and 2), reads one into the import preview (idempotent, one undo, nothing deleted), and fetches, verifies (SHA-256) and stores the annotated drawing PDF O-Draft generated; the stored PDFs are embedded in the project report and the estimate PDF. Several drawings per project; a warning when two drawings measure the same floor. Contract: `docs/TAKEOFF-SHILPIDB.md`.
+- **CAD import and export** — File > Import from CAD reads an `hcw-aqc-bridge` v1 file (millimetres) with a preview; File > Export for CAD writes levels, project details and beam depths. Contract: `docs/bridge/`.
+- **AORMS sign-in and project sync** — File > Sign in to AORMS (Credential Manager, shared with O-Draft), Online projects, Push project online, Pull latest; queued, file-backed sync under the edit lease; the status chip shows the sync state. See `docs/PROJECT-SYNC.md`.
 - **AI assistant (opt-in)** — a built-in copilot on the command bar that drives the same code
   paths a user would. It can navigate the app, summarise the project, run the deterministic C++
   engine for RCC checks (read-only), and — each behind an explicit confirmation dialog — add RCC
   member rows, add civil-BOQ measurement rows (masonry, plaster, flooring, painting, PCC, etc.),
   edit or delete a row by mark (RCC or civil), change covers/markups, draft office correspondence,
-  commit drawing-takeoff openings to the BOQ, read the loaded takeoff PDF, add storeys/levels, and
-  author/apply linked-item derivation rules. The C++
+  add storeys/levels, and author/apply linked-item derivation rules. (The take-off tools
+  `list_takeoff`, `commit_opening` and `read_drawing` were removed with the PDF take-off panel.) The C++
   engine stays the single source of truth for all numbers. Inert without an Anthropic API key;
   the key is entered in-app and stored encrypted (Windows DPAPI, per-user).
 - **ERD export (DBML / SQL)** — a generator (`SchemaExport`) emits the full logical schema for

@@ -100,7 +100,8 @@ public class ODraftOutputTests
         Assert.Equal(0, plan.Count(PlanAction.Skipped));
         // level 'Ground' is new; rows: 1 wall, 2 opening rows, 1 door + 1 window schedule, 1 column, 1 lintel, 1 room floor, 1 slab
         var wall = plan.Items.Single(i => i.Section == "masonry");
-        Assert.Contains("no wall thickness", wall.Reason);
+        Assert.Contains("230 mm (full brick) taken from layer MEASURE-FULLBRICK", wall.Reason);   // no thickness_mm, so the layer says it
+        Assert.Equal("230", wall.Row!["thickness"]);
         Assert.All(plan.Items.Where(i => i.Section == "masonry_openings"), i => Assert.Contains("chosen by position", i.Reason));
         Assert.Equal("4000", plan.Items.Single(i => i.Section == "flooring").Row!["length"]);
         Assert.Equal("3000", plan.Items.Single(i => i.Section == "flooring").Row!["breadth"]);

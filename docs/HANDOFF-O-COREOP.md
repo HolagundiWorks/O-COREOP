@@ -156,3 +156,11 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 **Test totals:** `AQC.CadImport.Tests` 65, `Aorms.Connect.Tests` 127, `Office.Shared.Tests` 5, engine `bbs_tests` 0 failures (MSVC and clang), all passing. **Timing, 10 000 rows (release build):** a change check costs about 0.14 s, settings 0.06 s, building the JSON 0.06 s; the baseline file is written in under 0.1 s.
 
 **Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.
+
+**2026-10-19 (parametric walls, O-Draft's second hand-off, and the `.vdb` format):**
+
+- O-Draft's hand-off `HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md` is copied into `docs/`; the reply (answers to its four questions, one real mismatch) is section 9 of [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md).
+- **Reader:** a wall row with `thickness_mm` (a parametric `PW-` wall) is used as given; a brick take-off wall with none takes its thickness from its layer (`MEASURE-FULLBRICK` 230, `MEASURE-HALFBRICK` 115); optional `material` accepted (`rcc` skipped, `block.concrete` as Cement Block). `ParametricWallTests` 11.
+- **Found by reading a file O-Draft's engine wrote:** its file mode writes `.vdb` **version 2** (and slot 0), which the installed `shilpid` 0.2.0 refuses. O-CoreOp now reads `.vdb` files directly (`VdbFile`, versions 1 and 2, no server; `VdbFileTests` 8), and the Take-off page's file option uses it. Checked in the real app with O-Draft's file (`tests/e2e/uia-vdbfile.ps1`, 9 checks). The file-option code that started `shilpid` was removed.
+- `AQC.CadImport.Tests` is now 83 passed.
+- **Not checked:** two parametric walls meeting at a corner (O-Draft's slice has one wall), `material`/`finish` from a real O-Draft file (it does not write them yet), and the real annotated PDF.

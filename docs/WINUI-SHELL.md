@@ -26,11 +26,11 @@ Pane footer — the Pomodoro clock (shown when the pane is fully open)
 
 | Region | Role |
 | --- | --- |
-| **File** | New · Open · Import / Export CAD · Save · Save as · Publish project status · AORMS sign-in · Exit |
+| **File** | New · Open · Open company file · Company projects · **Take-off from ShilpiDB** · Import / Export CAD · Undo last CAD import · Save · Save as · Save to company file · Close company file · Publish project status · **AORMS: Sign in · Online projects · Push project online · Pull latest · Sign out** · Exit |
 | **Edit** | Project / Engineering / Cost settings · Bind Connect |
 | **Help** | About |
 | **Navigation pane** | One heading per section (Project, RCC steel, Civil BOQ, Schedule, Office, Contracts, Accounts, Stores, HR & resources, Outputs) and one item per page. Ctrl+1 to Ctrl+9 jump to a section's first page |
-| **Status strip** | Calculator · Bind · Flush · AORMS chip · Sync chip |
+| **Status strip** | Calculator · Bind · Flush (the earlier hub flow, to be removed) · **AORMS chip** (`AORMS · <studio> · synced / 3 unsent / offline …`) · Sync chip (earlier hub flow) · company chip |
 | **UI scale** | 1×. The shell follows the system text size and display scale (`UiScale` in `MainWindow.xaml.cs`) |
 | **Narrow windows** | The navigation pane is fully open from 900 px, an icon rail from 560 px, and a menu button below that. The page line moves clear of the button. Page headers and toolbars wrap (`Hcw.Ui` `FlexBar`); the element page's section sketch gives its column back under 700 px. Page titles are level 2 headings and section headers level 3, under the level 1 page line |
 

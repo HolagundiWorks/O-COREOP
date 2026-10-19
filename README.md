@@ -83,11 +83,13 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | RCC | Columns (incl. pedestal), beams, slabs, footings, walls, stairs — BBS + section sketches |
 | Civil BOQ | Masonry, plaster, PCC, earthwork, SSM, shuttering, flooring, paint, doors/windows, etc. |
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
-| Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported (File > Take-off from ShilpiDB) |
+| Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported. **Project > Take-off (O-Draft)** lists the drawings on the shared ShilpiDB server (refreshes every 5 s), reads one into the import preview, and fetches and stores the annotated drawing PDF O-Draft generated; several drawings per project, with a warning when two measure the same floor |
+| CAD import / export | **File > Import from CAD** reads an `hcw-aqc-bridge` file (the offline path); **Export for CAD** writes levels, project details and beam depths back. Idempotent (`source = hcwcad:<drawing id>`), preview first, one undo step, `Lvl0` never touched. Contracts: `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
+| AORMS sign-in and sync | **File > Sign in to AORMS** (one login for the suite; it is the licence), **Online projects**, **Push project online**, **Pull latest**. Edits are queued and sent under the edit lease and survive a restart. See `docs/PROJECT-SYNC.md` |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
 | Rate book | App-level versioned rates (`%LocalAppData%\AQCCore\`) |
 | Estimate | DSR abstract (L/B/H, area, volume) + % markups → grand total; PDF sketches appendix |
-| PO / report | Steel & materials PO; project PDF with BOQ tables + sketches |
+| PO / report | Steel & materials PO; project PDF with BOQ tables + sketches, plus the annotated drawings O-Draft generated (one report page per PDF page) |
 | Personas | One project operated as **PM / PMC** or **Contractor** — declared in **File → Project settings**; each has its own letterhead + numbering series (`PMC/…` vs `CON/…`) |
 | Schedule | CPM / PERT scheduling with activity network + Gantt |
 | Correspondence | Letters, memos, notices, circulars, certificates, declarations, site instructions, work-order notes, interim payment certificates — FY auto-numbering, per-persona letterhead |
@@ -104,7 +106,11 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 |------|------|
 | Rate books / logos | `%LocalAppData%\AQCCore\` (reads legacy `%LocalAppData%\BOQCore\` if present) |
 | AI assistant API key | `%LocalAppData%\AQCCore\` — encrypted with Windows DPAPI (per-user); or the `ANTHROPIC_API_KEY` env var |
-| Project | User-chosen `.bbsproj` |
+| Project | User-chosen `.bbsproj` (also holds the link to the online project, the take-off file path and the stored annotated drawings) |
+| Unsent AORMS edits | `%LocalAppData%\AQCCore\outbox\<aqc project id>.json` and `.base.json` (rows only, never a token) |
+| Annotated drawings | `<project name>.assets\annotated\` beside the saved project, or `%LocalAppData%\AQCCore\annotated\` until it is saved |
+| Shared take-off server data | `%LocalAppData%\OSAS\takeoff\takeoff.vdb` (ShilpiDB; O-Draft and O-CoreOp both use it) |
+| AORMS sign-in | Windows Credential Manager: `AORMS/Connect` (shared with O-Draft) and `AORMS/Connect/aqc`; never the password or the access token |
 
 ## Branding
 

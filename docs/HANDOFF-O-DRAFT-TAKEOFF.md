@@ -137,3 +137,26 @@ Smaller: `opening_schedule` has `"kind": "Ventilator"` for V1; the contract says
 **Not yet checked, and worth doing on your side:** run `takeoff.record` with `annotate` against the real `shilpid` (your tests use a stand-in plotter, so no real PDF has crossed the server yet); record **two** drawings into one server and one of them linked to an AORMS project (`project_office_id`); a drawing with more than one floor. Send me the database (or run the same test and keep the file) and I will read it with the same reader.
 
 **Your "not done" items:** the check for two drawings measuring the same floor is built on the O-CoreOp side as a warning in the import preview (not on yours). PDF underlay and calibration are still the next piece of work and still block PDF-only projects.
+
+## 9. Reply to the parametric walls hand-off (2026-10-19)
+
+Your hand-off for parametric walls ([HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md](HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md), copied here unchanged) was read and the row shapes in it are now tests (`ParametricWallTests`, 11). I also built your engine from a copy of your working tree, ran `param.wall.new`, `param.commit` and `takeoff.record` on a metric drawing with a 5 m wall, and read the file it wrote with O-CoreOp (kept as `BBSDesktop/AQC.CadImport.Tests/fixtures/odraft-parametric.takeoff.vdb`; your repository was not touched).
+
+**Answers to your questions (section 9 of your document)**
+
+1. **Optional `thickness_mm` on kind 3: accepted, no version bump.** It was already read when present. An additive optional field is not a contract change (see Versioning in [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md)).
+2. **Section 4A now, 4B accepted when you want it.** O-CoreOp derives plaster, paint and shuttering itself and ignores `finish`. If you add `material` it is used: `brick.full` and `brick.half` set the thickness (230 and 115 mm) when none is given, `block.concrete` sets the unit type to Cement Block (200 mm assumed and flagged when no thickness), and `rcc` is **skipped** with "an RCC wall is not masonry; add it under RCC walls". `component_type`, `schema_version` and the provenance fields are ignored. None of them is required.
+3. **`PW-*` refs need no reserving.** Any string `ref` that is stable and unique within the drawing works; O-CoreOp stores it as `source_ref` and never parses it. A `PW-` wall and a `W`+handle wall can be in one drawing (tested), and a `PW-` wall that stops being recorded is listed as "no longer in the drawing" and kept.
+4. **Round trip: done, one real mismatch found (below).**
+
+**Brick take-off walls now get their thickness from the layer.** `MEASURE-FULLBRICK` is 230 mm and `MEASURE-HALFBRICK` is 115 mm (the 4.5 in wall, which AQC measures as its 110 mm build and says so in the preview). Other layers with no `thickness_mm` are still 230 mm, flagged "assumed, check it". This answers request 4 of section 8 above for the layers you use; sending `thickness_mm` on brick rows is still the cleaner fix.
+
+**Mismatch found: the `.vdb` file your file mode writes cannot be opened by `shilpid`.** `takeoff.record { path }` writes an `aad-vdb` file with format **version 2**; the installed `shilpid` (0.2.0) reads only its own **version 1** and answers `unsupported data file version 2`. The record layout is the same (magic, version, count, records; your grid trailer is ignored), only the number differs. Consequences and what O-CoreOp did:
+
+- O-CoreOp now reads `.vdb` files **itself** (`VdbFile`, versions 1 and 2) with no server, so a file O-Draft saves opens in the Take-off page. Checked in the real app against your file.
+- **For you:** anything else that serves your file with `shilpid` fails. Either write version 1 in file mode when the payloads are take-off JSON text, or tell the ShilpiDB owner that `shilpid` should accept version 2 (it ignores the trailer already). Server mode is unaffected: records you send to a running `shilpid` are saved in its own format.
+- **File mode writes slot 0** (ids `(kind << 56) | handle`, the original one-drawing-per-file layout) while server mode uses the hashed slot. O-CoreOp accepts slot 0 for a file that holds one drawing. Do not use slot 0 on the shared server: two drawings would collide.
+
+**Also seen in the same run:** the parametric wall's record has the box of its face lines, the row `{ ref "PW-wall-1", level, length_mm 5000.0, height_mm 3000.0, thickness_mm 230.0, layer "A-WALL" }`, and imports as one masonry row (230 mm, 5000 by 3000) with no warning. The header carried `state: complete`. The warnings your command printed (no saved revision, no rooms, no openings) are correct for that drawing.
+
+**Still open for you:** `wall_ref` on openings, room level and size, and the real annotated PDF (sections 2 and 8 above). Room level and size and `wall_ref` are still guessed here from boxes and flagged "check it".
