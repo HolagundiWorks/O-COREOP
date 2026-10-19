@@ -109,6 +109,24 @@ public class SharedCompanyTests : IDisposable
     }
 
     [Fact]
+    public void Watching_shows_the_other_apps_save_without_reading_the_document()
+    {
+        if (!Available) return;
+        var path = NewCompany();
+        using var studio = Open(path, "app-studio");
+        using var coreop = Open(path, "app-coreop");
+        var project = studio.CreateProject("Villa", studio.CreateClient("Acme"));
+        var before = coreop.Watch(project);
+        Assert.Equal(0, before.Revision);
+        Assert.True(before.SchemaOk);
+        studio.SaveDocument(project, 0, "{\"levels\":2}");
+        var after = coreop.Watch(project);
+        Assert.NotEqual(before.Version, after.Version);
+        Assert.Equal(1, after.Revision);
+        Assert.Equal(0, coreop.Watch(null).Revision);
+    }
+
+    [Fact]
     public void A_wrong_password_is_refused_with_a_message()
     {
         if (!Available) return;

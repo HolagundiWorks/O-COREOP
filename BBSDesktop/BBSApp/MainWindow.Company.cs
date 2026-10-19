@@ -44,8 +44,17 @@ public sealed partial class MainWindow
         _companyPolling = true;
         try
         {
-            if (await CompanyService.PollAsync())
-                AppNotify.Warning("Changed in another app", "This project was saved in another app. Saving here will ask you to reload it first, so nothing is overwritten.", 9000);
+            switch (await CompanyService.PollAsync())
+            {
+                case CompanyService.PollResult.ReloadNow:
+                    var message = await CompanyService.ReloadOpenAsync();
+                    AfterProjectLoaded();
+                    AppNotify.Info("Updated from the other app", message, 5000);
+                    break;
+                case CompanyService.PollResult.ConflictPending:
+                    AppNotify.Warning("Changed in another app", "This project was saved in another app and you have unsaved changes here. Saving will ask you to reload first, so nothing is overwritten.", 9000);
+                    break;
+            }
         }
         catch (OfficeException ex)
         {

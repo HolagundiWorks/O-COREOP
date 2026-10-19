@@ -105,6 +105,16 @@ public sealed class SharedCompany : IDisposable
         return Array(list).Where(d => Text(d, "kind") == kind).Select(d => Long(d, "revision")).FirstOrDefault();
     }
 
+    /// <summary>
+    /// What to poll: the change counter, whether this build still understands the file, and the revision of the project's document now
+    /// (0 when there is none or no project is given). It does not count as activity, so polling never keeps an idle session from locking.
+    /// </summary>
+    public (long Version, bool SchemaOk, long Revision) Watch(long? projectId)
+    {
+        var w = _session.Call("watch", new JsonObject { ["project_id"] = projectId, ["kind"] = DocumentKind })!;
+        return (Long(w, "version"), w["schema_ok"]?.GetValue<bool>() ?? false, Long(w, "revision"));
+    }
+
     /// <summary>A number that goes up whenever another app writes to the company file. Poll it to know when to look again.</summary>
     public long DataVersion() => Long(_session.Call("data_version")!, "version");
 
