@@ -127,6 +127,21 @@ public sealed class PartyBook
     /// <summary>Counterparty of the given role (PM ↔ Contractor).</summary>
     public Party Counterparty(PartyRole role) => role == PartyRole.Contractor ? Pm : Contractor;
 
+    /// <summary>
+    /// The firm printed on documents is the company in the company file (kept in OSAS), so the PM party takes its name, address, contacts
+    /// and registrations from there each time they are read, instead of keeping the copy made the first time. The signatory stays as set.
+    /// </summary>
+    public void FollowCompanyFile(ProjectInfo info)
+    {
+        if (!info.FromCompanyFile) return;
+        Pm.Company = info.CompanyName;
+        Pm.Address = info.Address;
+        Pm.Phone = info.ContactPhone;
+        Pm.Email = info.ContactEmail;
+        Pm.Gstin = info.Gstin;
+        Pm.Pan = info.Pan;
+    }
+
     /// <summary>Seed missing PM identity from the project's own company/prepared-by, first-run defaults.</summary>
     public void EnsureDefaults(ProjectInfo info)
     {

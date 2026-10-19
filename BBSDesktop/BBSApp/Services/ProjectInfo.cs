@@ -110,6 +110,33 @@ public sealed class ProjectInfo
         AormsHeadSeq = 0;
         TakeoffVdbPath = "";
         AnnotatedDrawings.Clear();
+        FromCompanyFile = false;
+    }
+
+    /// <summary>
+    /// True while the project is linked to the shared company file: the company's name, address, contacts and registrations come from
+    /// OSAS, and the project's name, site and client come from O-Studio. They are read for every document and are not edited here.
+    /// Not saved with the project; it is true only after a read of the company file.
+    /// </summary>
+    public bool FromCompanyFile { get; private set; }
+
+    /// <summary>Takes the company's and the project's details from the company file. Registrations that O-CoreOp alone keeps (CIN, logo) stay as they are.</summary>
+    public void ApplyCompanyFile(Office.Shared.DocumentContext context)
+    {
+        var c = context.Company;
+        if (!string.IsNullOrWhiteSpace(c.Name)) CompanyName = c.Name;
+        Address = c.Address;
+        ContactPhone = c.Phone;
+        ContactEmail = c.Email;
+        Gstin = c.Gstin;
+        Pan = c.Pan;
+        if (context.Project is { } p)
+        {
+            if (!string.IsNullOrWhiteSpace(p.Name)) Name = p.Name;
+            Location = p.SiteAddress;
+            ClientName = p.ClientName;
+        }
+        FromCompanyFile = true;
     }
 
     /// <summary>"GSTIN: … · CIN: … · PAN: …" for the present IDs, or empty.</summary>

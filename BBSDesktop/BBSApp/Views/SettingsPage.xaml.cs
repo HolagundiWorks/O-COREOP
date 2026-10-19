@@ -49,6 +49,31 @@ public sealed partial class SettingsPage : Page
         ConsultingPctBox.Value = m.ConsultingFeePct;
     }
 
+    /// <summary>
+    /// When the project is linked to the company file, the project's name, site and client are kept in O-Studio and the company's
+    /// name, contacts and registrations in OSAS. They are shown here for reference and every report prints them from there.
+    /// </summary>
+    private void ShowWhereDetailsAreKept(bool linked)
+    {
+        (TextBox Box, string Header, string Where)[] fields =
+        [
+            (ProjectNameBox, "Project name", "O-Studio"),
+            (ProjectLocationBox, "Project location", "O-Studio"),
+            (ClientNameBox, "Client name", "O-Studio"),
+            (CompanyNameBox, "Company name", "OSAS"),
+            (ContactPhoneBox, "Contact number", "OSAS"),
+            (ContactEmailBox, "Email", "OSAS"),
+            (AddressBox, "Address", "OSAS"),
+            (GstinBox, "GSTIN", "OSAS"),
+            (PanBox, "PAN", "OSAS"),
+        ];
+        foreach (var (box, header, where) in fields)
+        {
+            box.IsReadOnly = linked;
+            box.Header = linked ? $"{header} (change it in {where})" : header;
+        }
+    }
+
     private void LoadProjectFields()
     {
         var info = ProjectStore.Current.Info;
@@ -66,6 +91,7 @@ public sealed partial class SettingsPage : Page
         GstinBox.Text = info.Gstin;
         CinBox.Text = info.Cin;
         PanBox.Text = info.Pan;
+        ShowWhereDetailsAreKept(info.FromCompanyFile);
         _pendingLogoPath = info.LogoPath ?? "";
         HubProjectIdBox.Text = info.HubProjectId ?? "";
         RefreshLogoPreview();

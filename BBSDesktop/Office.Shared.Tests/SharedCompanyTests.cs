@@ -72,6 +72,24 @@ public class SharedCompanyTests : IDisposable
     }
 
     [Fact]
+    public void A_document_is_printed_from_the_company_and_project_details_the_other_apps_keep()
+    {
+        if (!Available) return;
+        var path = NewCompany();
+        using var studio = Open(path, "app-studio");
+        using var coreop = Open(path, "app-coreop");
+        var project = studio.CreateProject("Villa", studio.CreateClient("Acme"), "Hospet");
+        var context = coreop.DocumentContext(project);
+        Assert.Equal("Studio One", context.Company.Name);
+        Assert.Equal(10, context.PreparedOn.Length);
+        Assert.NotNull(context.Project);
+        Assert.Equal(("Villa", "Hospet", "Acme"), (context.Project!.Name, context.Project.SiteAddress, context.Project.ClientName));
+        Assert.Contains("\"project_id\"", context.Project.ProjectRef);
+        Assert.Null(coreop.DocumentContext(null).Project);
+        Assert.ThrowsAny<Exception>(() => coreop.DocumentContext(project + 1000));
+    }
+
+    [Fact]
     public void A_project_document_is_saved_by_revision_and_a_stale_save_is_refused()
     {
         if (!Available) return;

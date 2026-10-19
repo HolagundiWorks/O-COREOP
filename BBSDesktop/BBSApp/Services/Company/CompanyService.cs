@@ -181,6 +181,7 @@ public static class CompanyService
             store.Info.ClientName = project.ClientName;
             store.Info.Location = project.SiteAddress;
             store.Shared = new SharedProjectLink(project.Id, 0);
+            await RefreshDetailsAsync();
             store.IsDirty = true;
             return $"{project.Name} is new here; it is saved to the company file when you save.";
         }
@@ -189,8 +190,26 @@ public static class CompanyService
         store.LoadFrom(root);
         store.FilePath = null;
         store.Shared = new SharedProjectLink(project.Id, document.Revision);
+        await RefreshDetailsAsync();
         store.IsDirty = false;
         return $"{project.Name}, revision {document.Revision}, last saved by {document.UpdatedBy}.";
+    }
+
+    /// <summary>
+    /// Takes the company's details (kept in OSAS) and the project's details (kept in O-Studio) from the company file for the open project,
+    /// so reports and title blocks print what those apps hold now. Does nothing when the project is not linked to the company file.
+    /// </summary>
+    public static async Task RefreshDetailsAsync()
+    {
+        var store = ProjectStore.Current;
+        var link = store.Shared;
+        var company = _company;
+        if (company is null || link is null)
+            return;
+        var context = await Task.Run(() => company.DocumentContext(link.ProjectId));
+        store.Info.ApplyCompanyFile(context);
+        store.Parties.FollowCompanyFile(store.Info);
+        store.Name = store.Info.Name;
     }
 
     /// <summary>
@@ -237,7 +256,23 @@ public static class CompanyService
             var watch = company.Watch(link?.ProjectId);
             if (!watch.SchemaOk)
                 throw new OfficeException(1, "Another app has upgraded this company file. Update O-CoreOp to keep working with it.");
+            var changed = watch.Version != _lastDataVersion;
             _lastDataVersion = watch.Version;
+            if (changed && link is not null)
+            {
+                // Someone changed the company file: OSAS may have changed the company's details or O-Studio the project's.
+                try
+                {
+                    var store = ProjectStore.Current;
+                    store.Info.ApplyCompanyFile(company.DocumentContext(link.ProjectId));
+                    store.Parties.FollowCompanyFile(store.Info);
+                    store.Name = store.Info.Name;
+                }
+                catch (OfficeException)
+                {
+                    // The project may have been archived or removed in O-Studio; the open document is left as it is.
+                }
+            }
             if (link is null || watch.Revision == link.Revision || watch.Revision == 0)
                 return PollResult.None;
             if (!ProjectStore.Current.IsDirty)
@@ -259,6 +294,7 @@ public static class CompanyService
         store.LoadFrom(root);
         store.FilePath = null;
         store.Shared = new SharedProjectLink(link.ProjectId, document.Revision);
+        await RefreshDetailsAsync();
         store.IsDirty = false;
         return $"{store.Name}, revision {document.Revision}, saved by {document.UpdatedBy}.";
     }

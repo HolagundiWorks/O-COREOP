@@ -166,3 +166,8 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 - `origin/main` (project sync, O-Draft reading, annotated drawings, debug pass) was merged into the company-live-sync branch with no conflicts, and the result went to `main` as a fast-forward (`b67710a`). After the merge `Office.Shared.Tests` (6) and `AQC.CadImport.Tests` (65) pass and the app builds in Release. `Aorms.Connect.Tests` was not re-run after the merge.
 - O-CoreOp 1.1.0 was built and installed on the development machine, with `office.dll` copied in by hand (see 2.6).
 - **Not done:** a run of the installed app against the company file after the merge (the merged sync host and the shared-company code were not driven together); `uia-sync-e2e.ps1` was not re-run.
+
+**2026-10-19 (documents print from the company file):**
+
+- For a project linked to the company file, `ProjectInfo.ApplyCompanyFile` takes the company's name, address, phone, email, GSTIN and PAN (kept in OSAS) and the project's name, site and client (kept in O-Studio) from the engine's `document_context` call, through `SharedCompany.DocumentContext`. It runs when a project is opened, reloaded, and whenever the data version moves. The PM party follows (`PartyBook.FollowCompanyFile`), so reports, estimates and purchase orders print the current firm. Settings fields for these are read-only and name where to change them. 7 `Office.Shared` tests, including this call against the real engine.
+- **Not checked:** the Settings page and a report in the running app; a PDF made after changing the company details in OSAS. The CIN, logo and signatory are still O-CoreOp's own. Projects not linked to a company file are unchanged.

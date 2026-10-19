@@ -141,6 +141,23 @@ public sealed class SharedCompany : IDisposable
     /// <summary>False when another app has upgraded the file past what this build understands; the app should stop and ask for an update.</summary>
     public bool SchemaOk() => _session.Call("data_version")!["schema_ok"]!.GetValue<bool>();
 
+    /// <summary>
+    /// The company's details and, when <paramref name="projectId"/> is given, that project's details, in one read. This is what a document
+    /// is printed from; the company's details are changed in OSAS and a project's in O-Studio, never here.
+    /// </summary>
+    public DocumentContext DocumentContext(long? projectId)
+    {
+        var c = _session.Call("document_context", new JsonObject { ["project_id"] = projectId })!;
+        var co = c["company"]!;
+        var company = new CompanyDetails(Text(co, "name"), Text(co, "address"), Text(co, "email"), Text(co, "phone"), Text(co, "pan"), Text(co, "gstin"),
+            Text(co, "coa_registration"), Text(co, "architect_name"), Text(co, "letterhead_style"), Text(co, "accent_hex"));
+        ProjectDetails? project = null;
+        if (c["project"] is JsonNode p && p["project"] is JsonNode pr)
+            project = new ProjectDetails(Long(pr, "id"), Text(pr, "code"), Text(pr, "name"), Text(pr, "site_address"), Text(pr, "client_name"),
+                Text(p, "consultancy_label"), Text(pr, "status"), p["project_ref"]?.ToJsonString() ?? "");
+        return new DocumentContext(company, Text(c, "prepared_on"), project);
+    }
+
     /// <summary>The suite's reference to a project (docs/contracts/refs.md in the O-Studio repository), as JSON text.</summary>
     public string ProjectRef(long projectId) =>
         _session.Call("project_ref", new JsonObject { ["project_id"] = projectId })!.ToJsonString();
