@@ -98,6 +98,13 @@ public sealed class SharedCompany : IDisposable
         return (Long(r, "revision"), Text(r, "checksum_sha256"));
     }
 
+    /// <summary>The revision the project's document is at now, or 0 when it has none. Cheap: it does not read the document.</summary>
+    public long DocumentRevision(long projectId, string kind = DocumentKind)
+    {
+        var list = _session.Call("doc_list", new JsonObject { ["project_id"] = projectId });
+        return Array(list).Where(d => Text(d, "kind") == kind).Select(d => Long(d, "revision")).FirstOrDefault();
+    }
+
     /// <summary>A number that goes up whenever another app writes to the company file. Poll it to know when to look again.</summary>
     public long DataVersion() => Long(_session.Call("data_version")!, "version");
 

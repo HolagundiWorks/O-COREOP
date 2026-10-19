@@ -59,12 +59,16 @@
                 <MenuBarItem Title="File" AccessKey="F">
                     <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N"/>
                     <MenuFlyoutItem Text="Open…" Click="Open_Click" AccessKey="O"/>
+                    <MenuFlyoutItem Text="Open company file…" Click="CompanyOpen_Click"/>
+                    <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click"/>
                     <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
                     <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
                     <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
                     <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
+                    <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click"/>
+                    <MenuFlyoutItem Text="Close company file" Click="CompanyClose_Click"/>
                     <MenuFlyoutItem Text="Publish project status" Click="PublishStatus_Click"/>
                     <MenuFlyoutSeparator/>
                     <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
@@ -220,6 +224,13 @@
                                     ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
                             <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
                                     ToolTipService.ToolTip="Flush outbox to hub"/>
+                            <Border x:Name="CompanyBadge" Padding="10,0" Height="32" CornerRadius="8"
+                                    Background="{StaticResource HcwFogBrush}" Tapped="CompanyBadge_Tapped"
+                                    ToolTipService.ToolTip="The company file shared with O-Studio — tap for its projects">
+                                <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="12"
+                                           Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                           Text="Company · not open"/>
+                            </Border>
                             <Border x:Name="ConnectBadge" Padding="10,0" Height="32" CornerRadius="8"
                                     Background="{StaticResource HcwFogBrush}" Tapped="ConnectBadge_Tapped"
                                     ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">

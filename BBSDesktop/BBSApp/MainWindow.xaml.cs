@@ -68,6 +68,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         _ = ProjectSyncService.StatusSummary();
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
         StartClockPomodoro();
+        StartCompanyPolling();
         AppNotify.Raised += OnAppNotify;
         ProjectStore.Current.Changed += OnStoreChanged;
         Closed += (_, _) =>
@@ -1616,6 +1617,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         }
         ProjectStore.Current.LoadFrom(root);
         ProjectStore.Current.FilePath = file.Path;
+        ProjectStore.Current.Shared = null;
         RefreshWindowTitle();
         UpdatePersonaBadge();
         RefreshSyncBadge();
@@ -1625,6 +1627,11 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (ProjectStore.Current.Shared is not null)
+        {
+            _ = SaveToCompanyAsync();
+            return;
+        }
         if (string.IsNullOrEmpty(ProjectStore.Current.FilePath))
         {
             SaveAs_Click(sender, e);
