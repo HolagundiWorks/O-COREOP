@@ -30,6 +30,7 @@ add_library(bbs_engine SHARED ${CORE_SOURCES} ${API_SOURCES})
 target_compile_definitions(bbs_engine PRIVATE BBS_ENGINE_EXPORTS)
 target_include_directories(bbs_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set_target_properties(bbs_engine PROPERTIES
+    PREFIX ""   # MinGW would otherwise name it libbbs_engine.dll; the app loads bbs_engine.dll
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")

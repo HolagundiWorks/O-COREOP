@@ -8,12 +8,13 @@
 #include "Json.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 
 namespace bbs {
 
 bool write_text_file(const std::wstring& path, const std::string& utf8, std::string& err) {
-    std::ofstream f(path, std::ios::binary);  // MSVC accepts wide paths
+    std::ofstream f(std::filesystem::path(path), std::ios::binary);  // path overload: wide paths work on MSVC and libc++
     if (!f) { err = "Could not open file for writing."; return false; }
     f.write(utf8.data(), static_cast<std::streamsize>(utf8.size()));
     if (!f) { err = "Write failed."; return false; }
@@ -21,7 +22,7 @@ bool write_text_file(const std::wstring& path, const std::string& utf8, std::str
 }
 
 bool read_text_file(const std::wstring& path, std::string& out, std::string& err) {
-    std::ifstream f(path, std::ios::binary);
+    std::ifstream f(std::filesystem::path(path), std::ios::binary);
     if (!f) { err = "Could not open file for reading."; return false; }
     out.assign((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     return true;
