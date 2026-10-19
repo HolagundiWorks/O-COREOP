@@ -133,3 +133,26 @@ Close the running app before rebuilding to the same folder; Windows keeps `AQCCo
 - **Read with this reader, and it agrees:** header, ids, slot (two independent `SlotFor` agree), 7 rows, nothing skipped. **Four gaps** in what O-Draft records (rooms have no level, length or breadth; openings have no `wall_ref`; walls have no thickness; the schedule uses kind `Ventilator`), each handled in O-CoreOp and flagged in the preview, and each sent back to O-Draft as a request ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) section 8; details in [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10).
 - Regression fixture `fixtures/odraft-takeoff-records.json` and `ODraftOutputTests` (10 tests); `AQC.CadImport.Tests` is 64 passed.
 - **Not checked:** O-Draft's real annotated PDF (its tests use a stand-in plotter), two drawings from O-Draft in one database, a linked project, several floors.
+
+**Debug pass 2026-10-19 (tests, review and driving the real app):**
+
+The app was driven through Windows UI Automation for the first time (`BBSDesktop/tests/e2e/`, see its README), against a real shared take-off server (with what O-Draft really wrote) and a scripted fake AORMS. Sign-in, Online projects, Push online, Pull latest and the Take-off page had never been clicked before. **Bugs found and fixed** (each with a test where the code is testable, and each re-checked in the real app):
+
+| # | Bug | How it showed | Fix |
+|---|---|---|---|
+| 1 | **Pull latest failed**: the project was rebuilt in memory and handed to `LoadFrom`, which cannot read typed values (`Int32 cannot be converted to Double`); the change was never applied | an error toast after Pull in the real app | the document goes through JSON text first (`ProjectSyncHost.ApplyPull`) |
+| 2 | **`ApplyPull` was not atomic**: it dropped outbox entries and adopted the server's hashes before loading, so a failed load would make the next sync push a stale value over the other computer's change | code review, then confirmed by #1 | load first, restore the project if it fails, adopt only after success |
+| 3 | After a pull the app **re-sent rows it had not changed** (it tidies rows on reload: adds default fields, rebuilds shuttering), which two computers could bounce back and forth | `ROWS 3` right after the catch-up in the fake server's log | the baseline is taken from the project as it is after a pull |
+| 4 | **Derived rows churned**: shuttering (and link-rule rows) are rebuilt from scratch whenever quantities are calculated, so every rebuild gave every row a new random id and the server saw all of them deleted and re-inserted (17 rows sent for one pull) | the fake server's log | derived rows (`source` starting `auto`) get a stable id from what they derive from (`ProjectMapper.DerivedRowId`); 6 tests |
+| 5 | **Local paths went to the server** (take-off file path, stored PDF paths, logo path) inside the settings, and the head moved on every sync so settings looked changed every time (an endless settings push) | code review | `ProjectMapper.SyncSettings` strips the local-only keys on push online, on settings push and in the change hash; 6 tests |
+| 6 | **Settings changed on another computer never came in** on a pull | code review | the catch-up returns the server's settings and `ApplyDelta` merges them (local paths kept) |
+| 7 | The catch-up **advanced the head before the rows were applied**, so a failure while applying lost them | code review | the head moves only when there is nothing to apply, or when the caller adopts it after applying |
+| 8 | The change check **ran every second while typing** and rebuilt the whole project each time (0.3 to 0.5 s of UI time on 10 000 rows) | measured | it waits for 1.5 s of quiet; `ToSync` no longer deep-clones every row only to empty it (181 to 59 ms) |
+| 9 | A drawing O-Draft recorded **without a name** showed an empty title and messages like ": no annotated drawing" | the Take-off page in the real app | `ShilpiDrawing.DisplayName` ("drawing <slot>") |
+| 10 | A compiler null warning in `ConnectClient` (the guard was a level up; made explicit) | build | none needed beyond `!` |
+
+**Checked in the real app (24 checks, all passing):** sign in (wrong password first, with its message), the chip naming the studio, a take-off imported through the UI, push online (54 rows, no local paths), the chip going to `synced`, a changed take-off reaching AORMS as exactly one row by itself, a catch-up applied (the wall then shows as changed locally) with nothing sent back, sign-out. Also on the Take-off page: the drawing list from the shared server, Read take-off and its preview, Fetch annotated drawing (PDF verified, stored, listed with Open).
+
+**Test totals:** `AQC.CadImport.Tests` 65, `Aorms.Connect.Tests` 127, `Office.Shared.Tests` 5, engine `bbs_tests` 0 failures (MSVC and clang), all passing. **Timing, 10 000 rows (release build):** a change check costs about 0.14 s, settings 0.06 s, building the JSON 0.06 s; the baseline file is written in under 0.1 s.
+
+**Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.

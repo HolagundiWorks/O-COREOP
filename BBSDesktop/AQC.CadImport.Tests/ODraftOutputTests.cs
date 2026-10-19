@@ -126,6 +126,19 @@ public class ODraftOutputTests
     }
 
     [Fact]
+    public void An_unsaved_drawing_with_no_name_is_called_by_its_slot_in_every_message()
+    {
+        var d = Assert.Single(ShilpiTakeoff.ListDrawings(Real()));
+        Assert.Equal("", d.Drawing);
+        Assert.Equal("drawing 11694033", d.DisplayName);
+        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(Real(), d.Slot));
+        Assert.StartsWith("drawing 11694033:", ex.Message);   // not ": no annotated drawing ..."
+        var recording = Real();
+        recording[0] = recording[0] with { PayloadText = recording[0].PayloadText!.Replace("\"state\":\"complete\"", "\"state\":\"recording\"") };
+        Assert.Contains("drawing 11694033", Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.Read(recording)).Message);
+    }
+
+    [Fact]
     public void A_ventilator_is_imported_as_a_window()
     {
         var recs = Edited(x => ShilpiTakeoff.KindOf(x.Id) == ShilpiTakeoff.KindOpening && x.PayloadText!.Contains("\"W3\"")

@@ -163,13 +163,16 @@ public sealed class ProjectStore
         };
 
     /// <summary>Every take-off sheet that syncs, by the key it has in the project file (the same names as ProjectMapper's take-off sections).</summary>
-    private IEnumerable<ObservableCollection<Dictionary<string, string>>> SyncedSheets()
+    private IEnumerable<(string Section, ObservableCollection<Dictionary<string, string>> Rows)> SyncedSheets()
     {
-        yield return Columns; yield return Beams; yield return Pedestals; yield return Lintels; yield return Slabs; yield return Footings;
-        yield return Walls; yield return Stairs; yield return MasonryWalls; yield return MasonryOpenings; yield return Plaster;
-        yield return FinishPropose; yield return PccBeds; yield return Earthwork; yield return SizeStone; yield return Shuttering;
-        yield return Flooring; yield return Painting; yield return Waterproofing; yield return Dpc; yield return Coping; yield return Screed;
-        yield return Vdf; yield return Skirting; yield return Parapet; yield return PlinthProtection; yield return Doors; yield return Windows;
+        yield return ("columns", Columns); yield return ("beams", Beams); yield return ("pedestals", Pedestals); yield return ("lintels", Lintels);
+        yield return ("slabs", Slabs); yield return ("footings", Footings); yield return ("walls", Walls); yield return ("stairs", Stairs);
+        yield return ("masonry", MasonryWalls); yield return ("masonry_openings", MasonryOpenings); yield return ("plaster", Plaster);
+        yield return ("finish_propose", FinishPropose); yield return ("pcc", PccBeds); yield return ("earthwork", Earthwork);
+        yield return ("ssm", SizeStone); yield return ("shuttering", Shuttering); yield return ("flooring", Flooring);
+        yield return ("painting", Painting); yield return ("waterproofing", Waterproofing); yield return ("dpc", Dpc); yield return ("coping", Coping);
+        yield return ("screed", Screed); yield return ("vdf", Vdf); yield return ("skirting", Skirting); yield return ("parapet", Parapet);
+        yield return ("plinth_protection", PlinthProtection); yield return ("doors", Doors); yield return ("windows", Windows);
     }
 
     /// <summary>
@@ -178,18 +181,7 @@ public sealed class ProjectStore
     /// </summary>
     public int MintRowIds()
     {
-        int minted = 0;
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var sheet in SyncedSheets())
-            foreach (var row in sheet)
-            {
-                if (row.TryGetValue(Aorms.Connect.ProjectMapper.RowIdKey, out var id) && !string.IsNullOrEmpty(id) && seen.Add(id)) continue;
-                var fresh = Aorms.Connect.ProjectMapper.NewRowId();
-                row[Aorms.Connect.ProjectMapper.RowIdKey] = fresh;
-                seen.Add(fresh);
-                minted++;
-            }
-        return minted;
+        return Aorms.Connect.ProjectMapper.MintRowIds(SyncedSheets().SelectMany(s => s.Rows.Select(r => (s.Section, (IDictionary<string, string>)r))));
     }
 
     public string[] LevelIds() => Levels.Select(l => l.Id).ToArray();

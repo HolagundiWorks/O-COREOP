@@ -51,13 +51,66 @@ public static class ProjectMapper
 
     public static string NewRowId() => Guid.NewGuid().ToString("N");
 
+    /// <summary>
+    /// Gives every row a <c>_rid</c> that is unique within <paramref name="rows"/>: a row with none, an empty one, or one another row already has
+    /// (a duplicated row copies its original's) gets a new id. The first holder of an id keeps it, so ids already on the server stay put.
+    /// Two rows sharing an id would collapse into one on the server. Returns how many ids were minted.
+    /// </summary>
+    public static int MintRowIds(IEnumerable<IDictionary<string, string>> rows) => MintRowIds(rows.Select(r => ("", r)));
+
+    /// <summary>A row the application derives from other rows (shuttering from RCC members, link-rule rows): its <c>source</c> starts with "auto".</summary>
+    public static bool IsDerived(IDictionary<string, string> row) =>
+        row.TryGetValue("source", out var s) && s.StartsWith("auto", StringComparison.OrdinalIgnoreCase)
+        && row.TryGetValue("mark", out var m) && !string.IsNullOrWhiteSpace(m);
+
+    /// <summary>
+    /// A stable id for a derived row, worked out from what it is (its sheet, source, mark, level and the member it comes from) and not from a
+    /// random number. Derived sheets are rebuilt from scratch whenever quantities are calculated; with random ids every rebuild would delete and
+    /// re-insert every row on the server.
+    /// </summary>
+    public static string DerivedRowId(string section, IDictionary<string, string> row)
+    {
+        static string G(IDictionary<string, string> r, string k) => r.TryGetValue(k, out var v) ? v.Trim() : "";
+        var key = string.Join("|", "derived", section, G(row, "source"), G(row, "mark"), G(row, "level"), G(row, "rcc_mark"), G(row, "source_ref"));
+        return Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key)), 0, 16).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// <see cref="MintRowIds(IEnumerable{IDictionary{string, string}})"/> for rows that know their sheet: a derived row gets <see cref="DerivedRowId"/>
+    /// (overwriting a random one, so its id stops changing); the rest are as before. A derived row whose stable id is already taken gets a random one.
+    /// </summary>
+    public static int MintRowIds(IEnumerable<(string Section, IDictionary<string, string> Row)> rows)
+    {
+        int minted = 0;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (section, row) in rows)
+        {
+            if (section.Length > 0 && IsDerived(row))
+            {
+                var stable = DerivedRowId(section, row);
+                if (row.TryGetValue(RowIdKey, out var cur) && cur == stable && seen.Add(stable)) continue;
+                if (!seen.Contains(stable)) { row[RowIdKey] = stable; seen.Add(stable); minted++; continue; }
+            }
+            else if (row.TryGetValue(RowIdKey, out var id) && !string.IsNullOrEmpty(id) && seen.Add(id)) continue;
+            var fresh = NewRowId();
+            row[RowIdKey] = fresh;
+            seen.Add(fresh);
+            minted++;
+        }
+        return minted;
+    }
+
     /// <summary>Splits a project document into settings + rows. Mints <c>_rid</c> on take-off rows that lack one (mutates <paramref name="doc"/>).</summary>
     public static SyncProject ToSync(JsonObject doc)
     {
         var rows = new List<SyncRow>();
-        var settings = (JsonObject)doc.DeepClone();
-        settings.Remove("last_estimate");
-        settings.Remove("takeoff");
+        // Built key by key so the take-off rows (thousands of them) are not deep-cloned only to be emptied again.
+        var settings = new JsonObject();
+        foreach (var kv in doc)
+        {
+            if (kv.Key is "last_estimate" or "takeoff") continue;
+            settings[kv.Key] = kv.Value is JsonArray && Array.IndexOf(TakeoffSections, kv.Key) >= 0 ? new JsonArray() : kv.Value?.DeepClone();
+        }
 
         foreach (var s in TakeoffSections)
         {
@@ -145,7 +198,7 @@ public static class ProjectMapper
     /// is rebuilt, so line numbering and ordering follow <see cref="FromSync"/>. Settings, <c>takeoff</c> and <c>last_estimate</c> stay as they were.
     /// <paramref name="doc"/> is not modified apart from minted row ids.
     /// </summary>
-    public static JsonObject ApplyDelta(JsonObject doc, IEnumerable<SyncRow> delta)
+    public static JsonObject ApplyDelta(JsonObject doc, IEnumerable<SyncRow> delta, JsonObject? serverSettings = null)
     {
         var sync = ToSync(doc);
         var merged = new Dictionary<(string, string), SyncRow>();
@@ -168,13 +221,42 @@ public static class ProjectMapper
             }
         }
         var rows = order.Where(merged.ContainsKey).Select(k => merged[k]).ToList();
-        var result = FromSync(sync.Settings, rows);
+        var result = FromSync(serverSettings is null ? sync.Settings : MergeSettings(sync.Settings, serverSettings), rows);
         foreach (var keep in new[] { "takeoff", "last_estimate" })
             if (doc[keep] is { } v) result[keep] = v.DeepClone();
         return result;
     }
 
     static string ParentOf(string lineSection) => ParentLineSections.First(p => p.Line == lineSection).Parent;
+    /// <summary>
+    /// Keys of the <c>project</c> block that belong to this computer and must never go to the server or come back from it: where a take-off file is,
+    /// where stored PDFs are, the logo path, and how far this file has caught up. Sending them would leak local paths to other users and would make
+    /// every sync look like a settings change (the head moves each time).
+    /// </summary>
+    public static readonly string[] LocalOnlyProjectKeys = { "aorms_head_seq", "takeoff_vdb_path", "annotated_drawings", "logo_path" };
+
+    /// <summary>A copy of the settings skeleton without the keys that are local to this computer.</summary>
+    public static JsonObject SyncSettings(JsonObject settings)
+    {
+        var copy = (JsonObject)settings.DeepClone();
+        if (copy["project"] is JsonObject p)
+            foreach (var k in LocalOnlyProjectKeys) p.Remove(k);
+        return copy;
+    }
+
+    /// <summary>Server settings with this computer's local-only project keys put back from <paramref name="local"/>.</summary>
+    public static JsonObject MergeSettings(JsonObject local, JsonObject server)
+    {
+        var merged = SyncSettings(server);
+        if (local["project"] is JsonObject lp)
+        {
+            if (merged["project"] is not JsonObject mp) { mp = new JsonObject(); merged["project"] = mp; }
+            foreach (var k in LocalOnlyProjectKeys)
+                if (lp[k] is { } v) mp[k] = v.DeepClone();
+        }
+        return merged;
+    }
+
     /// <summary>Contract wire shape for <c>POST /projects/{id}/rows</c> and <c>POST /projects</c>.</summary>
     public static JsonArray ToWire(IEnumerable<SyncRow> rows)
     {

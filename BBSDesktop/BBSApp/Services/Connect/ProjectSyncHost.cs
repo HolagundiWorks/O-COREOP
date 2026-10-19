@@ -7,7 +7,7 @@ using Aorms.Connect;
 namespace BBSApp.Services.Connect;
 
 /// <summary>What a pull-latest found.</summary>
-public sealed record PullPreview(int Incoming, int UnsentLocal, bool NeedsReview, long HeadSeq, List<SyncRow> Rows);
+public sealed record PullPreview(int Incoming, int UnsentLocal, bool NeedsReview, long HeadSeq, List<SyncRow> Rows, JsonObject? Settings = null);
 
 /// <summary>
 /// Keeps the open project in step with its online project at AORMS (handoff items 4.1 and 4.3). The open project is the source of truth for
@@ -23,7 +23,7 @@ public static class ProjectSyncHost
     static FileOutboxStore? _outboxStore;
     static string _aqcId = "";
     static string _settingsHash = "";
-    static bool _dirty, _busy;
+    static bool _dirty, _busy, _checkSettings;
     static string? _notice;
 
     public static bool Active => _sync is not null;
@@ -31,7 +31,14 @@ public static class ProjectSyncHost
     public static event Action? Changed;
 
     /// <summary>Marks the project as edited; the next tick works out what changed.</summary>
-    public static void MarkDirty() => _dirty = true;
+    public static void MarkDirty() { _dirty = true; _lastEdit = DateTime.UtcNow; }
+
+    /// <summary>
+    /// Working out what changed costs a pass over the whole project (about 0.2 s for 10 000 rows), so it waits until the user has stopped
+    /// editing for this long instead of running every second while they type.
+    /// </summary>
+    static readonly TimeSpan QuietPeriod = TimeSpan.FromSeconds(1.5);
+    static DateTime _lastEdit = DateTime.MinValue;
 
     public static string OutboxFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AQCCore", "outbox");
 
@@ -99,9 +106,15 @@ public static class ProjectSyncHost
         {
             await EnsureStartedAsync().ConfigureAwait(true);
             if (_sync is null || _baseline is null) return;
-            if (_dirty) { _dirty = false; Enqueue(); }
+            if (_dirty && DateTime.UtcNow - _lastEdit >= QuietPeriod) { _dirty = false; _checkSettings = true; Enqueue(); }
             await _sync.TickAsync().ConfigureAwait(true);
-            if (_sync.State is SyncState.Synced && SettingsChanged()) await PushSettingsAsync().ConfigureAwait(true);
+            // Settings are one block. They are looked at only after an edit (hashing the project every second would cost a whole ToJson each
+            // time) and only once the rows are away; the flag stays set until they have been sent or found unchanged.
+            if (_checkSettings && _sync.State is SyncState.Synced)
+            {
+                if (SettingsChanged()) await PushSettingsAsync().ConfigureAwait(true);
+                _checkSettings = false;
+            }
             ProjectStore.Current.Info.AormsHeadSeq = _sync.HeadSeq;
         }
         catch (ConnectException e) { _notice = ConnectService.Describe(e); }
@@ -124,15 +137,17 @@ public static class ProjectSyncHost
 
     // ---- settings (levels, markups, covers, personas …) are one block, sent when it changes and the rows are flushed ----
 
+    static JsonObject SharedSettings() => ProjectMapper.SyncSettings(ProjectMapper.ToSync(ProjectStore.Current.ToJson()).Settings);
+
     static string HashSettings() => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-        System.Text.Encoding.UTF8.GetBytes(ProjectMapper.ToSync(ProjectStore.Current.ToJson()).Settings.ToJsonString())));
+        System.Text.Encoding.UTF8.GetBytes(SharedSettings().ToJsonString())));
 
     static bool SettingsChanged() => HashSettings() != _settingsHash;
 
     static async Task PushSettingsAsync()
     {
-        var settings = ProjectMapper.ToSync(ProjectStore.Current.ToJson()).Settings;
-        var h = HashSettings();
+        var settings = SharedSettings();
+        var h = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(settings.ToJsonString())));
         await _sync!.PushSettingsAsync(settings).ConfigureAwait(true);
         _settingsHash = h;
     }
@@ -180,7 +195,12 @@ public static class ProjectSyncHost
         if (_sync is null) throw new InvalidOperationException("This project is not synced with AORMS. Push it online or link it to an online project first.");
         if (_dirty) { _dirty = false; Enqueue(); }
         var catchUp = await _sync.CatchUpAsync().ConfigureAwait(true);
-        return new PullPreview(catchUp.Rows.Count, _sync.Outbox.Count, catchUp.NeedsReview, catchUp.HeadSeq, catchUp.Rows);
+        // settings changed elsewhere count as an incoming change when they differ from ours (and ours are not waiting to be sent)
+        JsonObject? theirs = null;
+        if (catchUp.Settings is { } s && !SettingsChanged() && ProjectMapper.SyncSettings(s).ToJsonString() != SharedSettings().ToJsonString())
+            theirs = s;
+        var incoming = catchUp.Rows.Count + (theirs is null ? 0 : 1);
+        return new PullPreview(incoming, _sync.Outbox.Count, catchUp.NeedsReview, catchUp.HeadSeq, catchUp.Rows, theirs);
     }
 
     /// <summary>
@@ -193,12 +213,31 @@ public static class ProjectSyncHost
         if (_sync is null || _baseline is null) return;
         var store = ProjectStore.Current;
         store.MintRowIds();
-        var newDoc = ProjectMapper.ApplyDelta(store.ToJson(), pull.Rows);
-        foreach (var r in pull.Rows) _sync.Outbox.Drop(r.Section, r.RowId);
-        _baseline.Adopt(pull.Rows);
+        var current = store.ToJson();
+        var newDoc = ProjectMapper.ApplyDelta(current, pull.Rows, pull.Settings);
         var keepPath = store.FilePath;
-        store.LoadFrom(newDoc);
+
+        // LoadFrom reads numbers the way a parsed file has them; a document built in memory has typed values (int, double) that it cannot read
+        // (found by driving Pull latest in the real app: "Int32 cannot be converted to Double"), so both documents go through JSON text first.
+        var reparsed = (JsonObject)JsonNode.Parse(newDoc.ToJsonString())!;
+        var backup = (JsonObject)JsonNode.Parse(current.ToJsonString())!;
+        try { store.LoadFrom(reparsed); }
+        catch
+        {
+            // put the project back as it was and leave the sync state alone, so nothing the other computer sent is treated as already in
+            store.LoadFrom(backup);
+            store.FilePath = keepPath;
+            throw;
+        }
         store.FilePath = keepPath;
+        // only now that the project holds the incoming rows is it safe to treat them as in step with the server
+        foreach (var r in pull.Rows) _sync.Outbox.Drop(r.Section, r.RowId);
+        // After a reload the application tidies rows it did not touch (adds default fields, rebuilds derived sheets), so the project no longer
+        // matches the hashes taken before it. Taking the baseline from the project as it is now keeps those tidy-ups from being sent back as
+        // edits (found in the real app: two untouched masonry rows and a shuttering row were re-sent right after a pull). Unsent edits are not
+        // lost by this: they wait in the outbox.
+        store.MintRowIds();
+        _baseline.Reset(ProjectMapper.ToSync(store.ToJson()).Rows);
         _sync.AdoptHead(pull.HeadSeq);
         store.Info.AormsHeadSeq = _sync.HeadSeq;
         _settingsHash = HashSettings();

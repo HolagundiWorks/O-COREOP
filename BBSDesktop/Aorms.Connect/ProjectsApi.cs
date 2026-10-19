@@ -59,7 +59,7 @@ public sealed class ProjectsApi
         {
             projectOfficeId,
             formatVersion = ProjectMapper.FormatVersion,
-            settings = sync.Settings,
+            settings = ProjectMapper.SyncSettings(sync.Settings),
             rows = ProjectMapper.ToWire(first),
         }, ct);
         var id = j.GetProperty("aqcProjectId").GetString()!;

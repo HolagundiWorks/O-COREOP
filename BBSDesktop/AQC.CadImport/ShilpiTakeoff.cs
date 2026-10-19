@@ -19,6 +19,8 @@ public sealed record ShilpiDrawing(
     IReadOnlyDictionary<byte, int> Counts, AnnotatedPdfInfo? Annotated, string? Problem)
 {
     public bool IsComplete => State == "complete";
+    /// <summary>The drawing's name, or "drawing &lt;slot&gt;" when O-Draft recorded an unsaved drawing that has no name.</summary>
+    public string DisplayName => string.IsNullOrWhiteSpace(Drawing) ? $"drawing {Slot}" : Drawing;
     public int Rows => Counts.Where(kv => kv.Key != ShilpiTakeoff.KindHeader && kv.Key != ShilpiTakeoff.KindAnnotatedChunk).Sum(kv => kv.Value);
 }
 
@@ -125,7 +127,7 @@ public static class ShilpiTakeoff
         var drawing = ListDrawings(mine).First();
         if (drawing.Problem is not null) throw new BridgeFormatException(drawing.Problem);
         if (!drawing.IsComplete)
-            throw new BridgeFormatException($"The take-off for {drawing.Drawing} is still being recorded in O-Draft (state: {drawing.State}). Try again when it is complete.");
+            throw new BridgeFormatException($"The take-off for {drawing.DisplayName} is still being recorded in O-Draft (state: {drawing.State}). Try again when it is complete.");
 
         var h = ParseObject(header, "header");
         var root = new JsonObject
@@ -230,21 +232,21 @@ public static class ShilpiTakeoff
     {
         var mine = records.Where(r => SlotOf(r.Id) == slot).ToList();
         var drawing = ListDrawings(mine).FirstOrDefault() ?? throw new BridgeFormatException($"Drawing slot {slot} has no header.");
-        var info = drawing.Annotated ?? throw new BridgeFormatException($"{drawing.Drawing}: no annotated drawing has been recorded yet.");
+        var info = drawing.Annotated ?? throw new BridgeFormatException($"{drawing.DisplayName}: no annotated drawing has been recorded yet.");
         var chunks = mine.Where(r => KindOf(r.Id) == KindAnnotatedChunk).OrderBy(r => NOf(r.Id)).ToList();
         if (chunks.Count != info.Chunks || chunks.Select((c, i) => NOf(c.Id) == (uint)i).Contains(false))
-            throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is incomplete ({chunks.Count} of {info.Chunks} parts). Try again when O-Draft has finished.");
+            throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is incomplete ({chunks.Count} of {info.Chunks} parts). Try again when O-Draft has finished.");
         using var ms = new MemoryStream();
         foreach (var c in chunks)
         {
-            if (string.IsNullOrEmpty(c.PayloadHex)) throw new BridgeFormatException($"{drawing.Drawing}: annotated drawing part {NOf(c.Id)} has no data.");
+            if (string.IsNullOrEmpty(c.PayloadHex)) throw new BridgeFormatException($"{drawing.DisplayName}: annotated drawing part {NOf(c.Id)} has no data.");
             ms.Write(Convert.FromHexString(c.PayloadHex));
         }
         var bytes = ms.ToArray();
-        if (bytes.LongLength != info.Bytes) throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is {bytes.LongLength} bytes, the header says {info.Bytes}.");
+        if (bytes.LongLength != info.Bytes) throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is {bytes.LongLength} bytes, the header says {info.Bytes}.");
         var sha = Convert.ToHexString(SHA256.HashData(bytes));
-        if (!string.Equals(sha, info.Sha256, StringComparison.OrdinalIgnoreCase)) throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing does not match its checksum; it was changed while being read.");
-        if (bytes.Length < 5 || bytes[0] != '%' || bytes[1] != 'P' || bytes[2] != 'D' || bytes[3] != 'F') throw new BridgeFormatException($"{drawing.Drawing}: the annotated drawing is not a PDF.");
+        if (!string.Equals(sha, info.Sha256, StringComparison.OrdinalIgnoreCase)) throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing does not match its checksum; it was changed while being read.");
+        if (bytes.Length < 5 || bytes[0] != '%' || bytes[1] != 'P' || bytes[2] != 'D' || bytes[3] != 'F') throw new BridgeFormatException($"{drawing.DisplayName}: the annotated drawing is not a PDF.");
         return bytes;
     }
 

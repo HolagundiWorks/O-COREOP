@@ -134,6 +134,8 @@ public class HostFlowTests : IDisposable
 
         var pull = await sync.CatchUpAsync();
         Assert.False(pull.NeedsReview);
+        Assert.Equal(5, sync.HeadSeq);   // not advanced until the rows are applied
+        sync.AdoptHead(pull.HeadSeq);
         Assert.Equal(8, sync.HeadSeq);
         var newDoc = ProjectMapper.ApplyDelta(doc, pull.Rows);
         baseline.Adopt(pull.Rows);

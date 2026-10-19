@@ -115,7 +115,7 @@ public sealed class Outbox
 }
 
 public sealed record FlushResult(int Sent, int Remaining, SyncState State);
-public sealed record CatchUpResult(List<SyncRow> Rows, long HeadSeq, bool NeedsReview);
+public sealed record CatchUpResult(List<SyncRow> Rows, long HeadSeq, bool NeedsReview, JsonObject? Settings = null);
 
 /// <summary>
 /// One open online project: edit lease, debounced outbox flush and delta catch-up (AQC-CLIENT-SPEC §4). The host calls
@@ -240,11 +240,13 @@ public sealed class ProjectSync
     public async Task<CatchUpResult> CatchUpAsync(CancellationToken ct = default)
     {
         var rows = new List<SyncRow>();
+        JsonObject? settings = null;
         long head = HeadSeq, cursor = HeadSeq;
         while (true)
         {
             var j = await _c.GetAsync<JsonElement>($"api/aqc/v1/projects/{AqcId}/rows?since={cursor}", ct);
             foreach (var r in j.GetProperty("rows").EnumerateArray()) rows.Add(ProjectMapper.FromWire(r));
+            if (j.TryGetProperty("settings", out var st) && st.ValueKind == JsonValueKind.Object) settings = (JsonObject)JsonNode.Parse(st.GetRawText())!;
             if (j.TryGetProperty("headSeq", out var h)) head = h.GetInt64();
             if (!(j.TryGetProperty("more", out var m) && m.ValueKind == JsonValueKind.True)) break;
             var next = j.GetProperty("nextSince").GetInt64();
@@ -252,8 +254,10 @@ public sealed class ProjectSync
             cursor = next;
         }
         bool review = Outbox.Count > 0 && rows.Count > 0;
-        if (!review) HeadSeq = head;
-        return new CatchUpResult(rows, head, review);
+        // The head moves only when there is nothing to apply; otherwise the caller adopts it (AdoptHead) after the rows are in,
+        // so a failure while applying cannot lose changes.
+        if (rows.Count == 0) HeadSeq = Math.Max(HeadSeq, head);
+        return new CatchUpResult(rows, head, review, settings);
     }
 
     /// <summary>Accepts a reviewed catch-up (after the user reapplied or discarded local changes).</summary>
@@ -263,7 +267,7 @@ public sealed class ProjectSync
     public async Task PushSettingsAsync(JsonObject settings, CancellationToken ct = default)
     {
         if (!HasLease && !await AcquireLeaseAsync(ct)) throw new ConnectException(423, "lease_required", "Someone else is editing this project.");
-        await _c.PutAsync<JsonElement>($"api/aqc/v1/projects/{AqcId}/settings", new { settings }, ct);
+        await _c.PutAsync<JsonElement>($"api/aqc/v1/projects/{AqcId}/settings", new { settings = ProjectMapper.SyncSettings(settings) }, ct);
     }
 
     /// <summary>Drives timers: renews the lease every 60 s (or retries every 30 s when read-only) and flushes after the debounce.</summary>

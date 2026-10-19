@@ -153,6 +153,6 @@ Take-off from drawings and PDFs is done in **O-Draft** (earlier AADT), recorded 
 | Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF; embedded in the project report and the estimate PDF | ✅ run in a scratch program; not yet in the app with a real project |
 | AORMS sign-in | Credential Manager stores, status chip, File > Sign in / Sign out, take-over prompt | ✅ built; live sign-in not yet tried |
 | Online projects | File > Online projects…: list, link, import the CAD take-off published to the portal | ✅ built; not yet run |
-| Project sync | `FileOutboxStore`, `RowBaseline`, `ProjectSyncHost`: edits are queued, sent under the edit lease, survive a restart; File > Push project online / Pull latest from AORMS | ✅ 29 library tests; not run against AORMS, dialogs not clicked through |
+| Project sync | `FileOutboxStore`, `RowBaseline`, `ProjectSyncHost`: edits are queued, sent under the edit lease, survive a restart; File > Push project online / Pull latest from AORMS | ✅ 50+ library tests; **driven in the real app against a scripted fake AORMS (24 checks, seven bugs fixed)**; not run against the real AORMS |
 | O-Draft writes the take-off | `takeoff.record` and `takeoff.annotate` built in O-Draft (read 2026-10-19; four requests sent back); `aqcexport` and PDF underlay not yet | 🚧 O-Draft repository |
 | Home screen, rate books | see the Backlog | 🔭 |
