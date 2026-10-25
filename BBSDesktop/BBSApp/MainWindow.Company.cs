@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
+using System.Linq;
 using BBSApp.Services;
 using BBSApp.Services.Company;
 using Microsoft.UI.Xaml;
@@ -20,9 +21,8 @@ public sealed partial class MainWindow
     bool _companyPolling;
 
     /// <summary>
-    /// OSAS, the suite app, chooses the company file and signs the person in once. It starts this app with the file in OSAS_COMPANY and, when
-    /// someone is signed in there, a one-time ticket in OSAS_TICKET. With a ticket the company opens already signed in; without one the
-    /// usual sign-in box appears for that file.
+    /// OSAS chooses the company and signs the person in once. Opens only with OSAS_COMPANY + one-time OSAS_TICKET.
+    /// O-CoreOp never asks for a company password.
     /// </summary>
     async Task StartFromSuiteAsync()
     {
@@ -31,22 +31,22 @@ public sealed partial class MainWindow
         Environment.SetEnvironmentVariable("OSAS_TICKET", null);
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path) || !CompanyService.EngineAvailable)
             return;
+        if (string.IsNullOrWhiteSpace(ticket))
+        {
+            AppNotify.Info("Company file", "Sign in to the company in OSAS, then open O-CoreOp from OSAS. This app does not ask for a password.");
+            return;
+        }
         await Task.Delay(800);
         try
         {
-            if (!string.IsNullOrWhiteSpace(ticket))
-            {
-                await CompanyService.OpenWithTicketAsync(path, ticket);
-                AppNotify.Success("Company file", $"{CompanyService.Current!.Name} is open, signed in as {CompanyService.Current.User}.");
-                CompanyProjects_Click(this, new RoutedEventArgs());
-                return;
-            }
+            await CompanyService.OpenWithTicketAsync(path, ticket);
+            AppNotify.Success("Company file", $"{CompanyService.Current!.Name} is open, signed in as {CompanyService.Current.User}.");
+            CompanyProjects_Click(this, new RoutedEventArgs());
         }
         catch (OfficeException ex)
         {
-            AppNotify.Warning("Company file", ex.Message);
+            AppNotify.Warning("Company file", ex.Message + " Open O-CoreOp again from OSAS while signed in.");
         }
-        await OpenCompanyPathAsync(path);
     }
 
     void StartCompanyPolling()
@@ -107,54 +107,21 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The company is chosen in OSAS, the suite app, and nowhere else. This opens the one OSAS chose (it still asks for the sign-in when OSAS
-    /// did not hand over a ticket); when none is chosen yet it starts OSAS.
+    /// The company is chosen and signed in only in OSAS. This never asks for a password — it starts OSAS so the person can open O-CoreOp from there.
     /// </summary>
     async void CompanyOpen_Click(object sender, RoutedEventArgs e)
     {
         if (!EngineReady()) return;
-        if (CompanyService.SuitePath() is { } path)
+        if (CompanyService.IsOpen)
         {
-            await OpenCompanyPathAsync(path);
+            AppNotify.Info("Company file", $"{CompanyService.Current!.Name} is already open.");
             return;
         }
         if (CompanyService.StartOsas())
-            AppNotify.Info("Company file", "No company is chosen yet. Choose or create it in OSAS, then open O-CoreOp from OSAS.");
+            AppNotify.Info("Company file", "Sign in to the company in OSAS, then open O-CoreOp from OSAS. This app does not ask for a password.");
         else
-            AppNotify.Warning("Company file", "OSAS, the suite app, is not installed. The company is chosen there.");
-    }
-
-    /// <summary>Asks for the user name and password for a company file, then opens it.</summary>
-    async Task OpenCompanyPathAsync(string path)
-    {
-        var user = new TextBox { Header = "User name", Text = "owner" };
-        var password = new PasswordBox { Header = "Password" };
-        var filePassword = new PasswordBox { Header = "File password (only if the company file is protected)" };
-        var panel = new StackPanel { Spacing = 10, MinWidth = 360 };
-        panel.Children.Add(new TextBlock { Text = Path.GetFileName(path), TextWrapping = TextWrapping.Wrap });
-        panel.Children.Add(user);
-        panel.Children.Add(password);
-        panel.Children.Add(filePassword);
-        var dialog = new ContentDialog
-        {
-            Title = "Open company file",
-            Content = panel,
-            PrimaryButtonText = "Open",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = Content.XamlRoot,
-        };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-        try
-        {
-            var protectedFile = filePassword.Password.Length > 0;
-            await CompanyService.OpenAsync(path, user.Text.Trim(), password.Password, protectedFile ? filePassword.Password : "", protectedFile ? "password" : "");
-            AppNotify.Success("Company file", $"{CompanyService.Current!.Name} is open. O-Studio can have it open at the same time.");
-        }
-        catch (OfficeException ex)
-        {
-            AppNotify.Error("Company file", ex.Message);
-        }
+            AppNotify.Warning("Company file", "OSAS, the suite app, is not installed. Sign-in happens only there.");
+        await Task.CompletedTask;
     }
 
     void CompanyClose_Click(object sender, RoutedEventArgs e)
@@ -190,7 +157,8 @@ public sealed partial class MainWindow
         {
             var line = new StackPanel();
             line.Children.Add(new TextBlock { Text = p.Name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-            line.Children.Add(new TextBlock { Text = $"{p.ClientName}{(p.SiteAddress.Length > 0 ? " · " + p.SiteAddress : "")}", FontSize = 12, Opacity = 0.8 });
+            var sub = string.Join(" · ", new[] { p.Summary, p.ClientName, p.SiteAddress }.Where(s => !string.IsNullOrWhiteSpace(s)));
+            line.Children.Add(new TextBlock { Text = sub, FontSize = 12, Opacity = 0.8 });
             list.Items.Add(new ListViewItem { Content = line, Tag = p });
         }
         var empty = new TextBlock { Text = "The company file has no projects yet. Make one with New project, or in O-Studio.", TextWrapping = TextWrapping.Wrap, Visibility = projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed };

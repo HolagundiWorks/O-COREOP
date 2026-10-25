@@ -17,7 +17,7 @@ public sealed record CompanyDetails(
     string AccentHex);
 
 /// <summary>A project's details, as O-Studio holds them: the project, its client, and the service in words.</summary>
-public sealed record ProjectDetails(long Id, string Code, string Name, string SiteAddress, string ClientName, string Consultancy, string Status, string ProjectRef);
+public sealed record ProjectDetails(long Id, string Code, string Name, string SiteAddress, string Summary, string ClientName, string Consultancy, string Status, string ProjectRef);
 
 /// <summary>
 /// What a document needs, read in one call: the company's details (kept in OSAS), today's date, and, when a project was named,

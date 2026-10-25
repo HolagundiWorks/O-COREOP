@@ -42,6 +42,7 @@ public sealed partial class DashboardPage : Page
         var info = s.Info;
         NameText.Text = info.Name;
         var meta = new List<string>();
+        if (!string.IsNullOrWhiteSpace(info.Summary)) meta.Add(info.Summary.Trim());
         if (!string.IsNullOrWhiteSpace(info.Location)) meta.Add(info.Location);
         if (!string.IsNullOrWhiteSpace(info.ClientName)) meta.Add($"Client: {info.ClientName}");
         if (!string.IsNullOrWhiteSpace(info.CompanyName)) meta.Add(info.CompanyDisplay);

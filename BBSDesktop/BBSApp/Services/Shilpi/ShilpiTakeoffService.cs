@@ -29,14 +29,35 @@ public static class ShilpiTakeoffService
     public static string SharedDataFile => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "takeoff", "takeoff.vdb");
 
-    /// <summary>Where shilpid.exe and shilpi-http.exe are: SHILPIDB_BIN, then %LocalAppData%\ShilpiDB\bin, then PATH.</summary>
+    /// <summary>
+    /// Where shilpid.exe and shilpi-http.exe are: beside this app (engine bundle), then SHILPIDB_BIN,
+    /// %LocalAppData%\ShilpiDB\bin, then PATH.
+    /// </summary>
     public static string? FindBinDirectory()
     {
         var candidates = new List<string>();
-        if (Environment.GetEnvironmentVariable("SHILPIDB_BIN") is { Length: > 0 } env) candidates.Add(env);
-        candidates.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShilpiDB", "bin"));
+        static void AddDir(List<string> list, string? dir)
+        {
+            if (string.IsNullOrWhiteSpace(dir)) return;
+            dir = Path.GetFullPath(dir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            if (!list.Contains(dir, StringComparer.OrdinalIgnoreCase)) list.Add(dir);
+        }
+
+        AddDir(candidates, AppContext.BaseDirectory);
+        try
+        {
+            var exe = Environment.ProcessPath;
+            if (!string.IsNullOrEmpty(exe)) AddDir(candidates, Path.GetDirectoryName(exe));
+        }
+        catch { /* ignore */ }
+
+        if (Environment.GetEnvironmentVariable("SHILPIDB_BIN") is { Length: > 0 } env) AddDir(candidates, env);
+        AddDir(candidates, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "O-CoreOp"));
+        AddDir(candidates, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "O-Draft"));
+        AddDir(candidates, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "OSAS", "shilpidb"));
+        AddDir(candidates, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShilpiDB", "bin"));
         foreach (var p in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
-            candidates.Add(p.Trim());
+            AddDir(candidates, p.Trim());
         return candidates.FirstOrDefault(d => File.Exists(Path.Combine(d, "shilpid.exe")) && File.Exists(Path.Combine(d, "shilpi-http.exe")));
     }
 
@@ -130,7 +151,7 @@ public static class ShilpiTakeoffService
     }
 
     static InvalidOperationException NotInstalled() =>
-        new("ShilpiDB is not installed. Install shilpid and shilpi-http (github.com/HolagundiWorks/shilpidb), or set SHILPIDB_BIN to the folder that holds them.");
+        new("ShilpiDB engine binaries (shilpid, shilpi-http) were not found beside O-CoreOp. Reinstall O-CoreOp, or set SHILPIDB_BIN to the folder that holds them.");
 
     static void Launch(string exe, string args) =>
         (Process.Start(new ProcessStartInfo(exe, args) { CreateNoWindow = true, UseShellExecute = false })

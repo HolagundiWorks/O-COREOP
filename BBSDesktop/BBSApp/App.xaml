@@ -26,19 +26,9 @@
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-            <!-- HCW soft-square · productive hits (DESKTOP-WINUI-UX) -->
-            <x:Double x:Key="ControlContentThemeFontSize">13</x:Double>
-            <x:Double x:Key="TextControlThemeMinHeight">35</x:Double>
-            <x:Double x:Key="TextControlThemeMinWidth">48</x:Double>
-            <x:Double x:Key="ListViewItemMinHeight">44</x:Double>
-            <x:Double x:Key="TreeViewItemMinHeight">36</x:Double>
-            <Thickness x:Key="TextControlThemePadding">10,6,10,6</Thickness>
-            <Thickness x:Key="ComboBoxPadding">10,6,10,6</Thickness>
-            <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
-            <!-- Dropdown / flyout surfaces — square items (no pill corners) -->
-            <CornerRadius x:Key="OverlayCornerRadius">0</CornerRadius>
-            <CornerRadius x:Key="ComboBoxItemCornerRadius">0</CornerRadius>
-            <CornerRadius x:Key="MenuFlyoutItemCornerRadius">0</CornerRadius>
+            <!-- Scale comes from Hcw.Ui SuiteStyles (36 hit · 16,6 pad · radius 2 · icons 0.6×). Do not redefine here. -->
+            <CornerRadius x:Key="ComboBoxItemCornerRadius">2</CornerRadius>
+            <CornerRadius x:Key="MenuFlyoutItemCornerRadius">2</CornerRadius>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

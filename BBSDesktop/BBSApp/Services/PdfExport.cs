@@ -903,16 +903,7 @@ public static class PdfExport
                         c.Item().Text(info.RegistrationLine).FontSize(7).FontColor(Colors.Grey.Darken1);
                 });
 
-                row.ConstantItem(200).AlignRight().Column(c =>
-                {
-                    c.Item().Text(info.Name).SemiBold().FontSize(10);
-                    if (!string.IsNullOrWhiteSpace(info.Location))
-                        c.Item().Text(info.Location).FontSize(8).FontColor(Colors.Grey.Darken1);
-                    if (!string.IsNullOrWhiteSpace(info.ClientName))
-                        c.Item().Text($"Client: {info.ClientName}").FontSize(8).FontColor(Colors.Grey.Darken1);
-                    c.Item().Text(info.PreparedByLine).FontSize(8).FontColor(Colors.Grey.Darken1);
-                    c.Item().Text(DateTime.Now.ToString("dd MMM yyyy HH:mm")).FontSize(7).FontColor(Colors.Grey.Darken1);
-                });
+                row.ConstantItem(200).AlignRight().Column(c => ProjectHeaderColumn(c, info, includePreparedBy: true));
             });
             col.Item().PaddingTop(6).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
         });
@@ -948,18 +939,24 @@ public static class PdfExport
                     if (!string.IsNullOrWhiteSpace(reg))
                         c.Item().Text(reg).FontSize(7).FontColor(Colors.Grey.Darken1);
                 });
-                row.ConstantItem(200).AlignRight().Column(c =>
-                {
-                    c.Item().Text(info.Name).SemiBold().FontSize(10);
-                    if (!string.IsNullOrWhiteSpace(info.Location))
-                        c.Item().Text(info.Location).FontSize(8).FontColor(Colors.Grey.Darken1);
-                    if (!string.IsNullOrWhiteSpace(info.ClientName))
-                        c.Item().Text($"Client: {info.ClientName}").FontSize(8).FontColor(Colors.Grey.Darken1);
-                    c.Item().Text(DateTime.Now.ToString("dd MMM yyyy HH:mm")).FontSize(7).FontColor(Colors.Grey.Darken1);
-                });
+                row.ConstantItem(200).AlignRight().Column(c => ProjectHeaderColumn(c, info, includePreparedBy: false));
             });
             col.Item().PaddingTop(6).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
         });
+    }
+
+    private static void ProjectHeaderColumn(ColumnDescriptor c, ProjectInfo info, bool includePreparedBy)
+    {
+        c.Item().Text(info.Name).SemiBold().FontSize(10);
+        if (!string.IsNullOrWhiteSpace(info.Summary))
+            c.Item().Text(info.Summary.Trim()).FontSize(8).FontColor(Colors.Grey.Darken1);
+        if (!string.IsNullOrWhiteSpace(info.Location))
+            c.Item().Text(info.Location).FontSize(8).FontColor(Colors.Grey.Darken1);
+        if (!string.IsNullOrWhiteSpace(info.ClientName))
+            c.Item().Text($"Client: {info.ClientName}").FontSize(8).FontColor(Colors.Grey.Darken1);
+        if (includePreparedBy)
+            c.Item().Text(info.PreparedByLine).FontSize(8).FontColor(Colors.Grey.Darken1);
+        c.Item().Text(DateTime.Now.ToString("dd MMM yyyy HH:mm")).FontSize(7).FontColor(Colors.Grey.Darken1);
     }
 
     private static void ReportFooter(IContainer container, ProjectStore store)

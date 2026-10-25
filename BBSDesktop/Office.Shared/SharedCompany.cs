@@ -7,7 +7,7 @@ namespace Office.Shared;
 
 public sealed record SharedClient(long Id, string Name);
 
-public sealed record SharedProject(long Id, string Code, string Name, long ClientId, string ClientName, string SiteAddress, string Status);
+public sealed record SharedProject(long Id, string Code, string Name, long ClientId, string ClientName, string SiteAddress, string Summary, string Status);
 
 /// <summary>A document an app keeps for a project in the company file, with the revision it was saved at.</summary>
 public sealed record SharedDocument(long Revision, string Body, string ChecksumSha256, string UpdatedBy, string UpdatedAt);
@@ -92,7 +92,7 @@ public sealed class SharedCompany : IDisposable
 
     public IReadOnlyList<SharedProject> Projects(bool includeArchived = false) =>
         Array(_session.Call("project_list", new JsonObject { ["client_id"] = null, ["include_archived"] = includeArchived }))
-            .Select(p => new SharedProject(Long(p, "id"), Text(p, "code"), Text(p, "name"), Long(p, "client_id"), Text(p, "client_name"), Text(p, "site_address"), Text(p, "status")))
+            .Select(p => new SharedProject(Long(p, "id"), Text(p, "code"), Text(p, "name"), Long(p, "client_id"), Text(p, "client_name"), Text(p, "site_address"), Text(p, "summary"), Text(p, "status")))
             .ToList();
 
     public long CreateProject(string name, long clientId, string siteAddress = "") =>
@@ -153,7 +153,7 @@ public sealed class SharedCompany : IDisposable
             Text(co, "coa_registration"), Text(co, "architect_name"), Text(co, "letterhead_style"), Text(co, "accent_hex"));
         ProjectDetails? project = null;
         if (c["project"] is JsonNode p && p["project"] is JsonNode pr)
-            project = new ProjectDetails(Long(pr, "id"), Text(pr, "code"), Text(pr, "name"), Text(pr, "site_address"), Text(pr, "client_name"),
+            project = new ProjectDetails(Long(pr, "id"), Text(pr, "code"), Text(pr, "name"), Text(pr, "site_address"), Text(pr, "summary"), Text(pr, "client_name"),
                 Text(p, "consultancy_label"), Text(pr, "status"), p["project_ref"]?.ToJsonString() ?? "");
         return new DocumentContext(company, Text(c, "prepared_on"), project);
     }

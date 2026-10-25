@@ -12,12 +12,10 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Windows.Foundation;
 using Windows.System;
 using Windows.Storage.Pickers;
 using Windows.UI;
 using WinRT.Interop;
-using Line = Microsoft.UI.Xaml.Shapes.Line;
 
 namespace BBSApp;
 
@@ -34,16 +32,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private string _activeTag = "dashboard";
     private readonly DispatcherTimer _syncTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DispatcherTimer? _toastTimer;
-    private DispatcherTimer? _clockTimer;
-    private DispatcherTimer? _pomodoroClickTimer;
     private int _toastGeneration;
-    private int _clockTicks;
-    private int _pomodoroDurationSec = 25 * 60;
-    private int _pomodoroLeftSec = 25 * 60;
-    private bool _pomodoroRunning;
-    private bool _pomodoroDragging;
-    private bool _pomodoroPressActive;
-    private Point _pomodoroPressOrigin;
     private AssistantService? _assistant;
     private bool _assistantBusy;
 
@@ -68,7 +57,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         // Warm Connect session into firm.db for Flush readiness.
         _ = ProjectSyncService.StatusSummary();
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
-        StartClockPomodoro();
         StartCompanyPolling();
         _ = StartFromSuiteAsync();
         AppNotify.Raised += OnAppNotify;
@@ -80,8 +68,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
-            _clockTimer?.Stop();
-            _pomodoroClickTimer?.Stop();
         };
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
@@ -101,243 +87,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             UiScaleTransform.ScaleX = UiScale;
             UiScaleTransform.ScaleY = UiScale;
         }
-    }
-
-    void StartClockPomodoro()
-    {
-        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _clockTimer.Tick += (_, _) =>
-        {
-            TickClock();
-            TickPomodoro();
-            _clockTicks++;
-            if (_clockTicks % 15 == 0)
-                RefreshSyncBadge();
-        };
-        _clockTimer.Start();
-        TickClock();
-        UpdatePomodoroUi();
-    }
-
-    void TickClock()
-    {
-        if (ClockHour is null) return;
-        var now = DateTime.Now;
-        const double cx = 50.0;
-        const double cy = 50.0;
-        SetHand(ClockHour, cx, cy, (now.Hour % 12 + now.Minute / 60.0) * 30.0, 22);
-        SetHand(ClockMinute, cx, cy, now.Minute * 6.0, 32);
-        ClockSecond.Opacity = _pomodoroRunning ? 0 : 1;
-        if (!_pomodoroRunning)
-            SetHand(ClockSecond, cx, cy, now.Second * 6.0, 36);
-    }
-
-    static void SetHand(Line line, double cx, double cy, double degrees, double length)
-    {
-        var rad = (degrees - 90) * Math.PI / 180.0;
-        line.X1 = cx;
-        line.Y1 = cy;
-        line.X2 = cx + Math.Cos(rad) * length;
-        line.Y2 = cy + Math.Sin(rad) * length;
-    }
-
-    void TickPomodoro()
-    {
-        if (!_pomodoroRunning || _pomodoroDragging) return;
-        if (_pomodoroLeftSec <= 0)
-        {
-            _pomodoroRunning = false;
-            _pomodoroLeftSec = 0;
-            UpdatePomodoroUi();
-            AppNotify.Success("Pomodoro", "Focus block complete.");
-            return;
-        }
-        _pomodoroLeftSec--;
-        UpdatePomodoroUi();
-    }
-
-    void UpdatePomodoroUi()
-    {
-        if (PomodoroLabel is null) return;
-        var active = _pomodoroRunning || _pomodoroLeftSec < _pomodoroDurationSec || _pomodoroDragging;
-        var label = FormatPomodoro(_pomodoroLeftSec);
-        PomodoroLabel.Text = _pomodoroDragging
-            ? $"{label} · set"
-            : !_pomodoroRunning && !active
-                ? $"{label} · Pomodoro"
-                : _pomodoroRunning
-                    ? $"{label} · running"
-                    : $"{label} · paused";
-        PomodoroLabel.Foreground = active
-            ? BrushRes("HcwAccentBrush", Color.FromArgb(255, 0xFF, 0x4F, 0x18))
-            : BrushRes("HcwMutedBrush", Color.FromArgb(255, 0x5C, 0x63, 0x70));
-
-        var frac = Math.Clamp(_pomodoroLeftSec / 3600.0, 0, 1);
-        UpdatePomodoroRing(frac);
-    }
-
-    void UpdatePomodoroRing(double frac)
-    {
-        if (PomodoroArm is null) return;
-        const double outer = 127;
-        const double cx = outer / 2;
-        const double cy = outer / 2;
-        const double r = outer * (72.5 / 165);
-
-        var (hx, hy) = PointOnRing(cx, cy, r, frac);
-        PomodoroArm.X1 = cx;
-        PomodoroArm.Y1 = cy;
-        PomodoroArm.X2 = hx;
-        PomodoroArm.Y2 = hy;
-        Canvas.SetLeft(PomodoroCrown, hx - 5);
-        Canvas.SetTop(PomodoroCrown, hy - 5);
-        Canvas.SetLeft(PomodoroCrownHit, hx - 14);
-        Canvas.SetTop(PomodoroCrownHit, hy - 14);
-
-        if (frac <= 0.001)
-        {
-            PomodoroArc.Data = null;
-            return;
-        }
-
-        var (sx, sy) = PointOnRing(cx, cy, r, 0);
-        var (ex, ey) = PointOnRing(cx, cy, r, Math.Min(frac, 0.9999));
-        var fig = new PathFigure
-        {
-            StartPoint = new Point(sx, sy),
-            IsClosed = false,
-            IsFilled = false,
-        };
-        fig.Segments.Add(new ArcSegment
-        {
-            Point = new Point(ex, ey),
-            Size = new Size(r, r),
-            IsLargeArc = frac > 0.5,
-            SweepDirection = SweepDirection.Clockwise,
-            RotationAngle = 0,
-        });
-        var geo = new PathGeometry();
-        geo.Figures.Add(fig);
-        PomodoroArc.Data = geo;
-    }
-
-    static (double x, double y) PointOnRing(double cx, double cy, double r, double frac)
-    {
-        var a = (-90 + frac * 360) * Math.PI / 180.0;
-        return (cx + r * Math.Cos(a), cy + r * Math.Sin(a));
-    }
-
-    static string FormatPomodoro(int seconds)
-    {
-        var s = Math.Max(0, seconds);
-        return $"{s / 60:00}:{s % 60:00}";
-    }
-
-    void PomodoroToggle_Click(object sender, RoutedEventArgs e) => TogglePomodoro();
-
-    void Pomodoro_Tapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (_pomodoroDragging || _pomodoroPressActive) return;
-        _pomodoroClickTimer?.Stop();
-        _pomodoroClickTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(280) };
-        _pomodoroClickTimer.Tick += (_, _) =>
-        {
-            _pomodoroClickTimer?.Stop();
-            _pomodoroClickTimer = null;
-            TogglePomodoro();
-        };
-        _pomodoroClickTimer.Start();
-        e.Handled = true;
-    }
-
-    void Pomodoro_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-    {
-        _pomodoroClickTimer?.Stop();
-        _pomodoroClickTimer = null;
-        ResetPomodoro();
-        e.Handled = true;
-    }
-
-    void TogglePomodoro()
-    {
-        if (_pomodoroLeftSec <= 0)
-        {
-            _pomodoroLeftSec = _pomodoroDurationSec;
-            _pomodoroRunning = true;
-        }
-        else
-        {
-            _pomodoroRunning = !_pomodoroRunning;
-        }
-        UpdatePomodoroUi();
-        AppNotify.Info("Pomodoro", _pomodoroRunning ? "Running" : "Paused");
-    }
-
-    void ResetPomodoro()
-    {
-        _pomodoroRunning = false;
-        _pomodoroDragging = false;
-        _pomodoroPressActive = false;
-        _pomodoroLeftSec = _pomodoroDurationSec;
-        UpdatePomodoroUi();
-        AppNotify.Info("Pomodoro", "Reset to focus block.");
-    }
-
-    void PomodoroCrown_PointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        if (_pomodoroRunning) return;
-        _pomodoroPressActive = true;
-        _pomodoroDragging = false;
-        _pomodoroPressOrigin = e.GetCurrentPoint(PomodoroCanvas).Position;
-        PomodoroCrownHit.CapturePointer(e.Pointer);
-        e.Handled = true;
-    }
-
-    void PomodoroCrown_PointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_pomodoroPressActive || _pomodoroRunning) return;
-        var pt = e.GetCurrentPoint(PomodoroCanvas).Position;
-        var dx = pt.X - _pomodoroPressOrigin.X;
-        var dy = pt.Y - _pomodoroPressOrigin.Y;
-        if (!_pomodoroDragging && (dx * dx + dy * dy) < 36) return;
-        _pomodoroDragging = true;
-        ApplyPomodoroDrag(pt);
-        e.Handled = true;
-    }
-
-    void PomodoroCrown_PointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_pomodoroPressActive) return;
-        var wasDragging = _pomodoroDragging;
-        _pomodoroPressActive = false;
-        _pomodoroDragging = false;
-        try { PomodoroCrownHit.ReleasePointerCapture(e.Pointer); } catch { /* ignore */ }
-
-        if (wasDragging)
-        {
-            var minutes = Math.Max(5, Math.Min(60, (int)Math.Round(_pomodoroLeftSec / 60.0 / 5.0) * 5));
-            _pomodoroDurationSec = minutes * 60;
-            _pomodoroLeftSec = _pomodoroDurationSec;
-            UpdatePomodoroUi();
-            AppNotify.Info("Pomodoro", $"Set · {minutes} min");
-        }
-        else
-        {
-            TogglePomodoro();
-        }
-        e.Handled = true;
-    }
-
-    void ApplyPomodoroDrag(Point pt)
-    {
-        const double cx = 63.5;
-        const double cy = 63.5;
-        var deg = Math.Atan2(pt.Y - cy, pt.X - cx) * 180.0 / Math.PI;
-        var fromTop = (deg + 90) % 360;
-        if (fromTop < 0) fromTop += 360;
-        var frac = Math.Max(5.0 / 60.0, Math.Min(1.0, fromTop / 360.0));
-        _pomodoroLeftSec = (int)Math.Round(frac * 3600);
-        UpdatePomodoroUi();
     }
 
     private void OnStoreChanged()
@@ -553,7 +302,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             Width = size + 6,
             Height = size + 6,
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(2),
             Background = BrushRes("HcwSoftBrush", Color.FromArgb(255, 0xEC, 0xEE, 0xF2)),
             BorderBrush = BrushRes("HcwEdgeBrush", Color.FromArgb(255, 0xD0, 0xD4, 0xDC)),
             BorderThickness = new Thickness(1),
@@ -576,7 +325,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         if (!Application.Current.Resources.TryGetValue(key, out var src) || src is null)
             return null;
-        return new ImageIcon { Source = (ImageSource)src, Width = 16, Height = 16 };
+        return new ImageIcon { Source = (ImageSource)src, Width = 10, Height = 10 };
     }
 
     private bool _navSyncing;
@@ -592,9 +341,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             {
                 var icon = cmd.Icon switch
                 {
-                    FontIcon fi => (IconElement)CloneFontIcon(fi, 16),
-                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 16, Height = 16 },
-                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = 16, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
+                    FontIcon fi => (IconElement)CloneFontIcon(fi, 10),
+                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 10, Height = 10 },
+                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = 10, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
                 };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
                 AppNav.MenuItems.Add(new NavigationViewItem { Content = cmd.Label, Tag = cmd.Tag, MinHeight = 32, FontSize = 13, Icon = icon });
@@ -607,7 +356,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         var minimal = sender.DisplayMode == NavigationViewDisplayMode.Minimal;
         PageLine.Margin = new Thickness(minimal ? 56 : 24, 12, 24, 4);
-        ClockPomodoroHost.Visibility = sender.DisplayMode == NavigationViewDisplayMode.Expanded ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void AppNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -627,7 +375,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Navigate(first.Tag);
     }
 
-    private static FontIcon CloneFontIcon(FontIcon src, double size = 16) => new()
+    private static FontIcon CloneFontIcon(FontIcon src, double size = 10) => new()
     {
         Glyph = src.Glyph,
         FontSize = size,
@@ -645,7 +393,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         return LetterIcon("?", size);
     }
 
-    private static FontIcon Glyph(string g, double size = 16) => new()
+    private static FontIcon Glyph(string g, double size = 10) => new()
     {
         Glyph = g,
         FontSize = size,
@@ -1424,10 +1172,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     void ApplyBrandingChrome()
     {
-        // Product name once — top ribbon only. Caption shows the open document.
+        // Product name once in the window title; caption shows the open document. No pane logo.
         Title = Branding.AppName;
-        if (BrandTitleText != null) BrandTitleText.Text = Branding.AppName;
-        if (BrandSubText != null) BrandSubText.Text = Branding.FullName;
         if (TitleBarText != null)
             TitleBarText.Text = ProjectStore.Current.Name;
     }
@@ -1454,7 +1200,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             Width = 72,
             Height = 72,
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(2),
             Background = new SolidColorBrush(Microsoft.UI.Colors.White),
             BorderBrush = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
             BorderThickness = new Thickness(1),

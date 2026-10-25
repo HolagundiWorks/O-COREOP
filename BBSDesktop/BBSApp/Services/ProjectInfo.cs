@@ -10,6 +10,8 @@ public sealed class ProjectInfo
 {
     public string Name { get; set; } = "Untitled Project";
     public string Location { get; set; } = "";
+    /// <summary>Short project description from O-Studio (title plates, estimate covers, report headers).</summary>
+    public string Summary { get; set; } = "";
     public string ClientName { get; set; } = "";
     /// <summary>Engineer, Architect, or PMC.</summary>
     public string PreparedByRole { get; set; } = "Engineer";
@@ -44,6 +46,7 @@ public sealed class ProjectInfo
     {
         ["name"] = Name,
         ["location"] = Location,
+        ["summary"] = Summary,
         ["client_name"] = ClientName,
         ["prepared_by_role"] = PreparedByRole,
         ["prepared_by_name"] = PreparedByName,
@@ -68,6 +71,7 @@ public sealed class ProjectInfo
         if (o is null) return;
         Name = o["name"]?.GetValue<string>() ?? Name;
         Location = o["location"]?.GetValue<string>() ?? "";
+        Summary = o["summary"]?.GetValue<string>() ?? "";
         ClientName = o["client_name"]?.GetValue<string>() ?? "";
         PreparedByRole = o["prepared_by_role"]?.GetValue<string>() ?? "Engineer";
         PreparedByName = o["prepared_by_name"]?.GetValue<string>() ?? "";
@@ -93,6 +97,7 @@ public sealed class ProjectInfo
     {
         Name = "Untitled Project";
         Location = "";
+        Summary = "";
         ClientName = "";
         PreparedByRole = "Engineer";
         PreparedByName = "";
@@ -134,6 +139,7 @@ public sealed class ProjectInfo
         {
             if (!string.IsNullOrWhiteSpace(p.Name)) Name = p.Name;
             Location = p.SiteAddress;
+            Summary = p.Summary;
             ClientName = p.ClientName;
         }
         FromCompanyFile = true;

@@ -22,7 +22,7 @@
               Background="{StaticResource HcwFogBrush}">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                         IsHitTestVisible="False">
-                <Border Width="16" Height="16" CornerRadius="4"
+                <Border Width="10" Height="10" CornerRadius="2"
                         Background="{StaticResource HcwSoftBrush}">
                     <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="2"/>
                 </Border>
@@ -47,140 +47,61 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-        <!-- MenuBar row — proper dedicated strip (not title bar) -->
-        <Border Grid.Row="0" Margin="16,8,16,0" Padding="8,0" Height="36"
-                Background="{StaticResource HcwWhiteBrush}"
-                BorderBrush="{StaticResource HcwEdgeBrush}"
-                BorderThickness="1" CornerRadius="8"
-                AutomationProperties.Name="Menu bar">
-            <MenuBar x:Name="AppMenuBar" Height="32" VerticalAlignment="Center"
-                     Background="Transparent"
-                     Foreground="{StaticResource HcwInkBrush}">
-                <MenuBarItem Title="File" AccessKey="F">
-                    <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N"/>
-                    <MenuFlyoutItem Text="Open…" Click="Open_Click" AccessKey="O"/>
-                    <MenuFlyoutItem Text="Open the company OSAS chose…" Click="CompanyOpen_Click"/>
-                    <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click"/>
-                    <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff"/>
-                    <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
-                    <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
-                    <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>
-                    <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
-                    <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
-                    <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click"/>
-                    <MenuFlyoutItem Text="Close company file" Click="CompanyClose_Click"/>
-                    <MenuFlyoutItem Text="Publish project status" Click="PublishStatus_Click"/>
-                    <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
-                    <MenuFlyoutItem Text="Online projects…" Click="OnlineProjects_Click"/>
-                    <MenuFlyoutItem Text="Push project online&#8230;" Click="PushOnline_Click"/>
-                    <MenuFlyoutItem Text="Pull latest from AORMS" Click="PullLatest_Click"/>
-                    <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
-                    <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>
-                </MenuBarItem>
-                <MenuBarItem Title="Edit" AccessKey="E">
-                    <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project"/>
-                    <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering"/>
-                    <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost"/>
-                    <MenuFlyoutSeparator/>
-                    <MenuFlyoutItem Text="Bind from Connect…" Click="BindProject_Click"/>
-                </MenuBarItem>
-                <MenuBarItem Title="Help" AccessKey="H">
-                    <MenuFlyoutItem Text="About…" Click="About_Click"/>
-                </MenuBarItem>
-            </MenuBar>
-        </Border>
+        <!-- Suite menu strip — flat like O-Studio (File · Edit · Help). -->
+        <MenuBar x:Name="AppMenuBar" Grid.Row="0" Height="36" VerticalAlignment="Center"
+                 Background="{StaticResource HcwSoftBrush}"
+                 Foreground="{StaticResource HcwInkBrush}"
+                 FontSize="13"
+                 AutomationProperties.Name="Menu bar">
+            <!-- Company first → work → Exit (same File shape as O-Studio / OSAS). -->
+            <MenuBarItem Title="File" AccessKey="F">
+                <MenuFlyoutItem Text="Open company from OSAS…" Click="CompanyOpen_Click" AccessKey="O"/>
+                <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click"/>
+                <MenuFlyoutItem Text="Close company" Click="CompanyClose_Click" AccessKey="C"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N"/>
+                <MenuFlyoutItem Text="Open…" Click="Open_Click"/>
+                <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
+                <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
+                <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff"/>
+                <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
+                <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
+                <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>
+                <MenuFlyoutItem Text="Publish project status" Click="PublishStatus_Click"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
+                <MenuFlyoutItem Text="Online projects…" Click="OnlineProjects_Click"/>
+                <MenuFlyoutItem Text="Push project online…" Click="PushOnline_Click"/>
+                <MenuFlyoutItem Text="Pull latest from AORMS" Click="PullLatest_Click"/>
+                <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>
+            </MenuBarItem>
+            <MenuBarItem Title="Edit" AccessKey="E">
+                <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project"/>
+                <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering"/>
+                <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Bind from Connect…" Click="BindProject_Click"/>
+            </MenuBarItem>
+            <MenuBarItem Title="Help" AccessKey="H">
+                <MenuFlyoutItem Text="About" Click="About_Click"/>
+            </MenuBarItem>
+        </MenuBar>
 
 
         <!-- Same structure as AOS: a menu bar, then a left navigation pane grouped by job, then the work area -->
-        <NavigationView x:Name="AppNav" Grid.Row="1" PaneDisplayMode="Auto" OpenPaneLength="232" CompactModeThresholdWidth="560" ExpandedModeThresholdWidth="900"
+        <!-- Cursor-style: 56 px icon rail; expand for labels (OpenPaneLength 260). -->
+        <NavigationView x:Name="AppNav" Grid.Row="1"
+                        PaneDisplayMode="LeftCompact" CompactPaneLength="56" OpenPaneLength="260"
+                        CompactModeThresholdWidth="0" ExpandedModeThresholdWidth="10000"
+                        IsPaneOpen="False"
                         IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="True"
                         Background="{StaticResource HcwFogBrush}"
                         SelectionChanged="AppNav_SelectionChanged" DisplayModeChanged="AppNav_DisplayModeChanged"
                         AutomationProperties.Name="Sections">
-            <NavigationView.PaneHeader>
-                <StackPanel Orientation="Horizontal" Spacing="10" Margin="8,4,8,8">
-                    <Border Width="28" Height="28" CornerRadius="6" Background="{StaticResource HcwWhiteBrush}">
-                        <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="3"
-                               AutomationProperties.Name="Product logo"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center" Spacing="0">
-                        <TextBlock x:Name="BrandTitleText" Text="O-CoreOp" FontSize="14" FontWeight="SemiBold"
-                                   FontFamily="{StaticResource HcwFontFamily}" Foreground="{StaticResource HcwInkBrush}"/>
-                        <TextBlock x:Name="BrandSubText" Text="Quantities, estimates and billing" FontSize="10"
-                                   Foreground="{StaticResource HcwMutedBrush}" TextTrimming="CharacterEllipsis" MaxWidth="170"/>
-                    </StackPanel>
-                </StackPanel>
-            </NavigationView.PaneHeader>
-            <NavigationView.PaneFooter>
-            <!-- Analogue clock + Pomodoro — design 100/127; shell ScaleHost 0.8× → face ~80 -->
-            <StackPanel x:Name="ClockPomodoroHost"
-                        VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                        Margin="0,8,0,8" Spacing="4" IsHitTestVisible="True"
-                        AutomationProperties.Name="Clock and Pomodoro">
-                <Viewbox Width="96" Height="96" Stretch="Uniform" HorizontalAlignment="Center">
-                    <Grid x:Name="PomodoroDial" Width="127" Height="127"
-                          ToolTipService.ToolTip="Pomodoro — click start/pause · double-click reset · drag orange crown to set">
-                        <Ellipse x:Name="PomodoroHitPlate" Width="127" Height="127"
-                                 Fill="#01F2F4F7" Stroke="Transparent"
-                                 Tapped="Pomodoro_Tapped" DoubleTapped="Pomodoro_DoubleTapped"/>
-                        <Grid Width="100" Height="100" HorizontalAlignment="Center" VerticalAlignment="Center"
-                              IsHitTestVisible="False">
-                            <Ellipse Fill="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
-                            <Ellipse Fill="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
-                            <Border x:Name="ClockFace" Width="100" Height="100" CornerRadius="50"
-                                    Background="{StaticResource HcwSoftBrush}" BorderThickness="0">
-                                <Grid>
-                                    <Canvas Width="100" Height="100">
-                                        <Line x:Name="ClockHour" X1="50" Y1="50" X2="50" Y2="28"
-                                              Stroke="{StaticResource HcwInkBrush}" StrokeThickness="3" StrokeLineJoin="Round"/>
-                                        <Line x:Name="ClockMinute" X1="50" Y1="50" X2="50" Y2="18"
-                                              Stroke="{StaticResource HcwInkBrush}" StrokeThickness="2"/>
-                                        <Line x:Name="ClockSecond" X1="50" Y1="50" X2="50" Y2="14"
-                                              Stroke="{StaticResource HcwAccentBrush}" StrokeThickness="1"/>
-                                    </Canvas>
-                                    <Image Source="ms-appx:///Assets/logo.png" Width="14" Height="14"
-                                           Stretch="Uniform"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                        <Ellipse Width="116" Height="116" Stroke="#FFD4C4" StrokeThickness="2.4"
-                                 Fill="Transparent" IsHitTestVisible="False"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Path x:Name="PomodoroArc" Width="127" Height="127" Stretch="None"
-                              Stroke="{StaticResource HcwAccentBrush}"
-                              StrokeThickness="2.4" StrokeLineJoin="Round" StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round" IsHitTestVisible="False"/>
-                        <Canvas x:Name="PomodoroCanvas" Width="127" Height="127" IsHitTestVisible="True">
-                            <Line x:Name="PomodoroArm" X1="63.5" Y1="63.5" X2="63.5" Y2="8"
-                                  Stroke="{StaticResource HcwAccentBrush}" StrokeThickness="1.2"
-                                  Opacity="0.9" IsHitTestVisible="False"/>
-                            <Ellipse x:Name="PomodoroCrownHit" Width="28" Height="28"
-                                     Fill="#01FFFFFF" Canvas.Left="49.5" Canvas.Top="-5"
-                                     PointerPressed="PomodoroCrown_PointerPressed"
-                                     PointerMoved="PomodoroCrown_PointerMoved"
-                                     PointerReleased="PomodoroCrown_PointerReleased"
-                                     PointerCaptureLost="PomodoroCrown_PointerReleased"/>
-                            <Ellipse x:Name="PomodoroCrown" Width="10" Height="10"
-                                     Fill="{StaticResource HcwAccentBrush}" Stroke="White" StrokeThickness="1"
-                                     Canvas.Left="58.5" Canvas.Top="3" IsHitTestVisible="False"/>
-                        </Canvas>
-                    </Grid>
-                </Viewbox>
-                <Button x:Name="PomodoroToggleBtn" Style="{StaticResource HcwGhostButton}"
-                        Height="28" MinHeight="28" MaxHeight="28" Padding="8,0"
-                        HorizontalAlignment="Center" Click="PomodoroToggle_Click"
-                        ToolTipService.ToolTip="Start / pause Pomodoro">
-                    <TextBlock x:Name="PomodoroLabel" Text="25:00 · Pomodoro"
-                               FontSize="12" FontWeight="SemiBold"
-                               Foreground="{StaticResource HcwMutedBrush}"/>
-                </Button>
-            </StackPanel>
-            </NavigationView.PaneFooter>
-
             <Grid x:Name="WorkArea" Background="{StaticResource HcwFogBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -200,7 +121,7 @@
                                VerticalAlignment="Center" ToolTipService.ToolTip="Active persona — Edit → Project settings"/>
                 </StackPanel>
 
-                <Frame x:Name="ContentFrame" Grid.Row="2" Margin="24,0,24,8">
+                <Frame x:Name="ContentFrame" Grid.Row="2" Margin="20,0,20,12">
                     <Frame.ContentTransitions>
                         <TransitionCollection>
                             <NavigationThemeTransition/>
@@ -209,9 +130,9 @@
                 </Frame>
 
                 <!-- Status strip: calculator, the hub tools and the two status chips -->
-                <Border Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="44"
+                <Border Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteHeaderHeight}"
                         Background="{StaticResource HcwWhiteBrush}" BorderBrush="{StaticResource HcwEdgeBrush}"
-                        BorderThickness="1" CornerRadius="8" AutomationProperties.Name="Status">
+                        BorderThickness="0" CornerRadius="{StaticResource SuiteCornerControl}" AutomationProperties.Name="Status">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -227,24 +148,24 @@
                                     ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
                             <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
                                     ToolTipService.ToolTip="Flush outbox to hub"/>
-                            <Border x:Name="CompanyBadge" Padding="10,0" Height="32" CornerRadius="8"
+                            <Border x:Name="CompanyBadge" Padding="12,0" Height="{StaticResource SuiteControlMinHeight}" CornerRadius="{StaticResource SuiteCornerChip}"
                                     Background="{StaticResource HcwFogBrush}" Tapped="CompanyBadge_Tapped"
                                     ToolTipService.ToolTip="The company file shared with O-Studio — tap for its projects">
-                                <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="12"
+                                <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
                                            Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
                                            Text="Company · not open"/>
                             </Border>
-                            <Border x:Name="ConnectBadge" Padding="10,0" Height="32" CornerRadius="8"
+                            <Border x:Name="ConnectBadge" Padding="12,0" Height="{StaticResource SuiteControlMinHeight}" CornerRadius="{StaticResource SuiteCornerChip}"
                                     Background="{StaticResource HcwFogBrush}" Tapped="ConnectBadge_Tapped"
                                     ToolTipService.ToolTip="AORMS sign-in — tap to sign in or see your account">
-                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="12"
+                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
                                            Foreground="{StaticResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
                                            Text="AORMS · signed out"/>
                             </Border>
-                            <Border x:Name="SyncBadge" Padding="10,0" Height="32" CornerRadius="8"
+                            <Border x:Name="SyncBadge" Padding="12,0" Height="{StaticResource SuiteControlMinHeight}" CornerRadius="{StaticResource SuiteCornerChip}"
                                     Background="{StaticResource HcwFogBrush}" Tapped="SyncBadge_Tapped"
                                     ToolTipService.ToolTip="Hub sync status — tap for project settings">
-                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="12"
+                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
                                            Foreground="{StaticResource HcwInkBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"
                                            Text="Sync…"/>
                             </Border>
@@ -258,9 +179,9 @@
                   Visibility="Collapsed"
                   AutomationProperties.LiveSetting="Polite"
                   AutomationProperties.Name="Notification">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="4,4,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,4,4"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="4">
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwNeuDarkBrush}" Margin="4,4,0,0"/>
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,4,4"/>
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwSoftBrush}" Padding="4">
                     <InfoBar x:Name="ToastBar"
                              IsOpen="False" IsClosable="True"
                              Background="Transparent" BorderThickness="0"
@@ -279,19 +200,19 @@
             <Grid x:Name="FloatingCalcPanel" Grid.Row="3" Margin="24,0,24,8"
                   MaxWidth="480" Visibility="Collapsed" HorizontalAlignment="Left"
                   AutomationProperties.Name="Floating calculator">
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="12">
-                    <StackPanel Spacing="8">
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwNeuDarkBrush}" Margin="5,5,0,0"/>
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,5,5"/>
+                <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{StaticResource HcwSoftBrush}" Padding="12">
+                    <StackPanel Spacing="{StaticResource SuiteStackGap}">
                         <Grid>
                             <TextBlock Text="Calculator · Ask"
-                                       FontSize="13" FontWeight="SemiBold"
+                                       FontSize="{StaticResource SuiteFontBody}" FontWeight="SemiBold"
                                        FontFamily="{StaticResource HcwFontFamily}"
                                        Foreground="{StaticResource HcwInkBrush}"
                                        VerticalAlignment="Center"/>
                             <Button HorizontalAlignment="Right"
                                     Style="{StaticResource HcwGhostButton}"
-                                    MinWidth="35" Width="35" Padding="0"
+                                    MinWidth="{StaticResource SuiteControlMinHeight}" Width="{StaticResource SuiteControlMinHeight}" Padding="0"
                                     Click="CalcClose_Click"
                                     ToolTipService.ToolTip="Close">
                                 <FontIcon Glyph="&#xE711;" FontSize="12"
@@ -301,13 +222,13 @@
                         </Grid>
                         <TextBox x:Name="CalcInput"
                                  PlaceholderText="Calculate or ask a question"
-                                 FontSize="13" MinHeight="35"
+                                 FontSize="{StaticResource SuiteFontBody}" MinHeight="{StaticResource SuiteControlMinHeight}"
                                  AcceptsReturn="False" TextWrapping="NoWrap"
                                  KeyDown="CalcInput_KeyDown"
                                  TextChanged="CalcInput_TextChanged"/>
                         <TextBox x:Name="CalcResult"
                                  PlaceholderText="Result"
-                                 FontSize="13" MinHeight="35"
+                                 FontSize="{StaticResource SuiteFontBody}" MinHeight="{StaticResource SuiteControlMinHeight}"
                                  IsReadOnly="True" AcceptsReturn="False"
                                  Foreground="{StaticResource HcwAccentTextBrush}"/>
                         <Grid x:Name="AssistantReplyHost" Visibility="Collapsed">

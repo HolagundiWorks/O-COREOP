@@ -22,7 +22,7 @@ A store of **records**: a `u64` id, a bounding box (two corners, `f64` each) and
 | Gateway | `shilpi-http` on `127.0.0.1:7421`, backend `127.0.0.1:7420` |
 | Data file | `%LocalAppData%\OSAS\takeoff\takeoff.vdb` |
 | Who starts it | **Whichever app needs it first.** Check `GET /health` on 7421; if nothing answers, start both programs (they bind fixed ports, so a second starter fails harmlessly and uses the one that is up). O-CoreOp has a **Start the shared server** button. The OSAS launcher may start it at logon; that is the owner's call |
-| Finding the programs | `SHILPIDB_BIN`, then `%LocalAppData%\ShilpiDB\bin`, then `PATH` |
+| Finding the programs | **Beside the app first** (engine bundle shipped with O-Draft / O-CoreOp), then `SHILPIDB_BIN`, then `%LocalAppData%\ShilpiDB\bin`, then `PATH`. ShilpiDB is not a separate product install for this path. |
 
 It is **one database for all projects and drawings on the machine** (section 4 keeps them apart). Take-off data is derived (the drawing is the source), so losing the file loses nothing that cannot be recorded again; do not back it up as the system of record.
 

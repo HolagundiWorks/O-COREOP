@@ -1,6 +1,6 @@
 <!--
   The app's HCW keys, now aliases of the suite colours in Hcw.Ui (Themes/SuiteColors.xaml). Change colours there, not here.
-  NEU_RAISED: fill #ECEEF2 · dual shadow 6/6 (no border, no ThemeShadow/blur).
+  Glass soft-UI: cool stage from SuiteColors, white cards, navy ink, large radii.
   Heights: ribbon 56 · footer/dock tray 60 · dock hit 44 · taskbar hit 35.
 -->
 <ResourceDictionary
@@ -38,22 +38,25 @@
     <x:Double x:Key="HcwDockBottom">92</x:Double>
     <!-- Visual clock face = 100 × 0.8 (Viewbox on dial) -->
     <x:Double x:Key="HcwClockSize">80</x:Double>
+    <!-- Dock / taskbar hits stay on the suite control floor (36) and header (44). -->
     <x:Double x:Key="HcwHitDock">44</x:Double>
-    <x:Double x:Key="HcwHitTaskbar">35</x:Double>
-    <x:Double x:Key="HcwRadius">8</x:Double>
-    <CornerRadius x:Key="HcwCorner8">8</CornerRadius>
+    <x:Double x:Key="HcwHitTaskbar">36</x:Double>
+    <x:Double x:Key="HcwRadius">2</x:Double>
+    <CornerRadius x:Key="HcwCornerButton">2</CornerRadius>
+    <CornerRadius x:Key="HcwCorner8">2</CornerRadius>
+    <CornerRadius x:Key="HcwCornerCard">2</CornerRadius>
     <CornerRadius x:Key="HcwCorner0">0</CornerRadius>
 
     <FontFamily x:Key="HcwFontFamily">Segoe UI Variable, Segoe UI</FontFamily>
     <FontFamily x:Key="HcwIconFont">Segoe Fluent Icons</FontFamily>
 
-    <!-- Flat stage card — Layer 1 (information at rest). Light edge only. -->
+    <!-- Glass card — white surface on the cool stage. -->
     <Style x:Key="HcwFlatCard" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource HcwWhiteBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource HcwEdgeBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
-        <Setter Property="Padding" Value="16"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerCard}"/>
+        <Setter Property="Padding" Value="12,10"/>
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
     </Style>
 
@@ -81,24 +84,24 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0,0,0,2"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
-        <Setter Property="Height" Value="35"/>
-        <Setter Property="MinHeight" Value="35"/>
-        <Setter Property="MaxHeight" Value="35"/>
-        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
+        <Setter Property="Height" Value="{StaticResource SuiteControlMinHeight}"/>
+        <Setter Property="MinHeight" Value="{StaticResource SuiteControlMinHeight}"/>
+        <Setter Property="MaxHeight" Value="{StaticResource SuiteControlMinHeight}"/>
+        <Setter Property="Padding" Value="16,0"/>
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
-    <!-- Soft raised chrome tray (NEU_RAISED peer — dual offset, no ThemeShadow) -->
+    <!-- Soft frost tray (sidebar / brief). -->
     <Style x:Key="HcwSoftBrief" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource HcwSoftBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
-        <Setter Property="Padding" Value="16"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerCard}"/>
+        <Setter Property="Padding" Value="12,10"/>
         <Setter Property="HorizontalAlignment" Value="Stretch"/>
     </Style>
 
@@ -106,8 +109,9 @@
     <Style x:Key="HcwDockButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
         <Setter Property="Height" Value="44"/>
         <Setter Property="MinHeight" Value="44"/>
         <Setter Property="MaxHeight" Value="44"/>
@@ -149,8 +153,9 @@
     <Style x:Key="HcwPrimaryButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource HcwAccentBrush}"/>
         <Setter Property="Foreground" Value="{StaticResource HcwOnAccentBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
         <Setter Property="Height" Value="44"/>
         <Setter Property="MinHeight" Value="44"/>
         <Setter Property="MaxHeight" Value="44"/>
@@ -172,9 +177,9 @@
     <Style x:Key="HcwWellnessChip" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource HcwEdgeBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
         <Setter Property="Height" Value="36"/>
         <Setter Property="MinHeight" Value="36"/>
         <Setter Property="MaxHeight" Value="36"/>
