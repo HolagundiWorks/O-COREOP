@@ -1,5 +1,5 @@
 <!--
-  AQC-Core product tokens â€” HCW soft neu (Fog / Soft / White Â· 8px Â· Radiant Orange).
+  AQC-Core product tokens — HCW soft neu (Fog / Soft / White · 8px · Radiant Orange).
   Fluent* style keys kept for page compatibility; materials come from HcwFluentBridge.
   Canon: esti docs/esti/DESKTOP-WINUI-UX.md
 -->
@@ -24,7 +24,7 @@
     <Thickness x:Key="CardPaddingCompact">10,8</Thickness>
 
     <!-- Type scale -->
-    <!-- Hits: taskbar/ribbon 35 Â· dock/primary 44 (PORTAL_CHROME peer) -->
+    <!-- Hits: taskbar/ribbon 35 · dock/primary 44 (PORTAL_CHROME peer) -->
     <x:Double x:Key="ControlFontSize">13</x:Double>
     <x:Double x:Key="ControlMinHeight">35</x:Double>
     <x:Double x:Key="HitTaskbar">35</x:Double>
@@ -37,7 +37,11 @@
     <x:Double x:Key="TitleFontSize">22</x:Double>
     <x:Double x:Key="RibbonTabFontSize">13</x:Double>
     <x:Double x:Key="RibbonCommandCaptionSize">12</x:Double>
-    <x:Double x:Key="RibbonCommandIconSize">13</x:Double>
+    <x:Double x:Key="RibbonCommandIconSize">15</x:Double>
+    <x:Double x:Key="SuiteIconSize">15</x:Double>
+    <x:Double x:Key="SuiteIconStroke">1.5</x:Double>
+    <x:Double x:Key="SuiteToolTile">36</x:Double>
+    <x:Double x:Key="SuiteDividerThickness">1</x:Double>
     <x:Double x:Key="BrandBarHeight">56</x:Double>
 
     <!-- Suite radius 2 px on every chrome control -->
@@ -52,8 +56,8 @@
 
     <!-- Layer 1 flat white card -->
     <Style x:Key="FluentCardStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource HcwWhiteBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource HcwEdgeBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwWhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource HcwEdgeBrush}"/>
         <Setter Property="BorderThickness" Value="{StaticResource CardStrokeThickness}"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
         <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
@@ -65,7 +69,7 @@
 
     <!-- Soft raised layer (chrome peer) -->
     <Style x:Key="FluentLayerStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource HcwSoftBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwSoftBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}"/>
@@ -77,7 +81,7 @@
         <Setter Property="FontSize" Value="{StaticResource TitleFontSize}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="LineHeight" Value="28"/>
     </Style>
@@ -86,7 +90,7 @@
         <Setter Property="FontSize" Value="{StaticResource BodyFontSize}"/>
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="Margin" Value="0,2,0,0"/>
         <Setter Property="LineHeight" Value="18"/>
@@ -97,7 +101,7 @@
         <Setter Property="FontSize" Value="{StaticResource SectionFontSize}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="NoWrap"/>
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         <Setter Property="Margin" Value="0,0,0,6"/>
@@ -107,7 +111,7 @@
     <Style x:Key="FormSectionStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FormGroupFontSize}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="NoWrap"/>
         <Setter Property="Margin" Value="0,12,0,4"/>
         <Setter Property="CharacterSpacing" Value="20"/>
@@ -116,7 +120,7 @@
     <Style x:Key="BodyTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource BodyFontSize}"/>
         <Setter Property="FontWeight" Value="Normal"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="LineHeight" Value="18"/>
     </Style>
@@ -124,7 +128,7 @@
     <Style x:Key="BodyStrongStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource BodyFontSize}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="LineHeight" Value="18"/>
     </Style>
@@ -132,7 +136,7 @@
     <Style x:Key="CaptionSecondaryStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource CaptionFontSize}"/>
         <Setter Property="FontWeight" Value="Normal"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="LineHeight" Value="16"/>
     </Style>
@@ -140,7 +144,7 @@
     <Style x:Key="MetaTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource MetaFontSize}"/>
         <Setter Property="FontWeight" Value="Normal"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="Opacity" Value="0.85"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="LineHeight" Value="14"/>
@@ -149,13 +153,13 @@
     <Style x:Key="ToolbarLabelStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource MetaFontSize}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Margin" Value="0,0,6,0"/>
         <Setter Property="CharacterSpacing" Value="30"/>
     </Style>
 
-    <!-- Ribbon tabs â€” soft merge into Soft command tray -->
+    <!-- Ribbon tabs — soft merge into Soft command tray -->
     <Style x:Key="RibbonTabStyle" TargetType="ToggleButton">
         <Setter Property="MinHeight" Value="{StaticResource HitTaskbar}"/>
         <Setter Property="Height" Value="{StaticResource HitTaskbar}"/>
@@ -167,7 +171,7 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="Margin" Value="0,0,4,0"/>
         <Setter Property="VerticalAlignment" Value="Bottom"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -180,8 +184,8 @@
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Background" Value="{StaticResource HcwAccentBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwOnAccentBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwAccentBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwOnAccentBrush}"/>
     </Style>
 
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
@@ -274,7 +278,7 @@
         <EntranceThemeTransition FromVerticalOffset="6" IsStaggeringEnabled="True"/>
     </TransitionCollection>
 
-    <!-- Construction element icons â€” light / dark SVG (see Assets/Icons/ATTRIBUTION.md) -->
+    <!-- Construction element icons — light / dark SVG (see Assets/Icons/ATTRIBUTION.md) -->
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Default">
             <SvgImageSource x:Key="NavIconColumn" UriSource="ms-appx:///Assets/Icons/column.svg"/>

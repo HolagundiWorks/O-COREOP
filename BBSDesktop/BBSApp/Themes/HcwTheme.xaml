@@ -7,29 +7,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <StaticResource x:Key="HcwFogColor" ResourceKey="SuiteBackground"/>
-    <StaticResource x:Key="HcwSoftColor" ResourceKey="SuiteSidebar"/>
-    <StaticResource x:Key="HcwWhiteColor" ResourceKey="SuiteSurface"/>
-    <StaticResource x:Key="HcwInkColor" ResourceKey="SuiteInk"/>
-    <StaticResource x:Key="HcwAccentColor" ResourceKey="SuiteAccent"/>
-    <StaticResource x:Key="HcwEdgeColor" ResourceKey="SuiteEdge"/>
-    <StaticResource x:Key="HcwMutedColor" ResourceKey="SuiteInkSoft"/>
-    <StaticResource x:Key="HcwDangerColor" ResourceKey="SuiteDanger"/>
-    <Color x:Key="HcwNeuDarkColor">#00000000</Color>
-    <Color x:Key="HcwNeuLightColor">#00000000</Color>
-
-    <SolidColorBrush x:Key="HcwFogBrush" Color="{StaticResource HcwFogColor}"/>
-    <SolidColorBrush x:Key="HcwSoftBrush" Color="{StaticResource HcwSoftColor}"/>
-    <SolidColorBrush x:Key="HcwWhiteBrush" Color="{StaticResource HcwWhiteColor}"/>
-    <SolidColorBrush x:Key="HcwInkBrush" Color="{StaticResource HcwInkColor}"/>
-    <SolidColorBrush x:Key="HcwAccentBrush" Color="{StaticResource HcwAccentColor}"/>
-    <SolidColorBrush x:Key="HcwEdgeBrush" Color="{StaticResource HcwEdgeColor}"/>
-    <SolidColorBrush x:Key="HcwMutedBrush" Color="{StaticResource HcwMutedColor}"/>
-    <SolidColorBrush x:Key="HcwDangerBrush" Color="{StaticResource HcwDangerColor}"/>
-    <SolidColorBrush x:Key="HcwOnAccentBrush" Color="{StaticResource SuiteOnAccent}"/>
-    <SolidColorBrush x:Key="HcwAccentTextBrush" Color="{StaticResource SuiteAccentText}"/>
-    <SolidColorBrush x:Key="HcwNeuDarkBrush" Color="{StaticResource HcwNeuDarkColor}"/>
-    <SolidColorBrush x:Key="HcwNeuLightBrush" Color="{StaticResource HcwNeuLightColor}"/>
+    <!-- Hcw* brushes live in HcwFluentBridge ThemeDictionaries (Light/Dark). Use ThemeResource in styles. -->
 
     <x:Double x:Key="HcwRibbonHeight">56</x:Double>
     <x:Double x:Key="HcwFooterHeight">60</x:Double>
@@ -52,8 +30,8 @@
 
     <!-- Glass card — white surface on the cool stage. -->
     <Style x:Key="HcwFlatCard" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource HcwWhiteBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource HcwEdgeBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwWhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource HcwEdgeBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerCard}"/>
         <Setter Property="Padding" Value="12,10"/>
@@ -82,7 +60,7 @@
     <!-- Taskbar / Focus tab peer — underline active (web navSx), not orange fill -->
     <Style x:Key="HcwGhostButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwMutedBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
@@ -98,7 +76,7 @@
 
     <!-- Soft frost tray (sidebar / brief). -->
     <Style x:Key="HcwSoftBrief" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource HcwSoftBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwSoftBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerCard}"/>
         <Setter Property="Padding" Value="12,10"/>
@@ -108,7 +86,7 @@
     <!-- ActionDock pill (kit actionDockButtonSx) — flat transparent · 44 hit · accent on primary -->
     <Style x:Key="HcwDockButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
@@ -125,12 +103,12 @@
     </Style>
 
     <Style x:Key="HcwDockPrimary" TargetType="Button" BasedOn="{StaticResource HcwDockButton}">
-        <Setter Property="Foreground" Value="{StaticResource HcwAccentTextBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwAccentTextBrush}"/>
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
     <Style x:Key="HcwDockDanger" TargetType="Button" BasedOn="{StaticResource HcwDockButton}">
-        <Setter Property="Foreground" Value="{StaticResource HcwDangerBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwDangerBrush}"/>
     </Style>
 
     <!-- Vertical groove between dock zones (NEU_GROOVE_VERTICAL peer) -->
@@ -151,8 +129,8 @@
 
     <!-- Primary / commit — Radiant Orange scarce; 44 dock / override to 35 on ribbon -->
     <Style x:Key="HcwPrimaryButton" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource HcwAccentBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwOnAccentBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwAccentBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwOnAccentBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
@@ -169,14 +147,14 @@
 
     <!-- Ribbon compact — 35px -->
     <Style x:Key="HcwRibbonButton" TargetType="Button" BasedOn="{StaticResource HcwGhostButton}">
-        <Setter Property="Background" Value="{StaticResource HcwSoftBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwSoftBrush}"/>
         <Setter Property="Padding" Value="12,0"/>
     </Style>
 
     <!-- Wellness panel chips — web WellnessPanel pattern/tab hits (36px) -->
     <Style x:Key="HcwWellnessChip" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCornerButton}"/>
@@ -192,15 +170,15 @@
     </Style>
 
     <Style x:Key="HcwWellnessChipActive" TargetType="Button" BasedOn="{StaticResource HcwWellnessChip}">
-        <Setter Property="Background" Value="{StaticResource HcwAccentBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwOnAccentBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwAccentBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwOnAccentBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="FontWeight" Value="Bold"/>
     </Style>
 
     <!-- Inset neu search field face -->
     <Style x:Key="HcwNeuInput" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource HcwSoftBrush}"/>
+        <Setter Property="Background" Value="{ThemeResource HcwSoftBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="{StaticResource HcwCorner8}"/>
         <Setter Property="Height" Value="35"/>
@@ -215,13 +193,13 @@
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
     </Style>
 
     <Style x:Key="HcwBodyMuted" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="Opacity" Value="0.7"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
@@ -229,7 +207,7 @@
     <Style x:Key="HcwLabel" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Foreground" Value="{StaticResource HcwInkBrush}"/>
+        <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="Opacity" Value="0.7"/>
     </Style>
 </ResourceDictionary>

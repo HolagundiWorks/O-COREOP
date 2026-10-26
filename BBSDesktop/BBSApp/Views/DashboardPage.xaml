@@ -2,25 +2,25 @@
     x:Class="BBSApp.Views.DashboardPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="{StaticResource HcwFogBrush}">
+    Background="{ThemeResource HcwFogBrush}">
     <ScrollViewer>
         <StackPanel Spacing="16"
                     MaxWidth="960"
                     Padding="{StaticResource PagePadding}"
                     Transitions="{StaticResource PageContentTransitions}">
 
-            <!-- Soft brief â€” brand -->
+            <!-- Soft brief — brand -->
             <Grid>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuDarkBrush}" Margin="6,6,0,0"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwNeuLightBrush}" Margin="0,0,6,6"/>
-                <Border CornerRadius="8" Background="{StaticResource HcwSoftBrush}" Padding="16">
+                <Border CornerRadius="8" Background="{ThemeResource HcwNeuDarkBrush}" Margin="6,6,0,0"/>
+                <Border CornerRadius="8" Background="{ThemeResource HcwNeuLightBrush}" Margin="0,0,6,6"/>
+                <Border CornerRadius="8" Background="{ThemeResource HcwSoftBrush}" Padding="16">
                     <Grid ColumnSpacing="14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Width="56" Height="56" CornerRadius="8"
-                                Background="{StaticResource HcwWhiteBrush}"
+                                Background="{ThemeResource HcwWhiteBrush}"
                                 VerticalAlignment="Top">
                             <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="5"
                                    AutomationProperties.Name="O-CoreOp logo"/>
@@ -58,7 +58,7 @@
                 <StackPanel Spacing="6">
                     <TextBlock Text="Take-off" Style="{StaticResource SectionHeaderStyle}" Margin="0"/>
                     <TextBlock Style="{StaticResource CaptionSecondaryStyle}" TextWrapping="Wrap"
-                               Text="Project â†’ Take-off (O-Draft): drawings are measured in O-Draft and recorded in ShilpiDB; read the take-off here, review, then import. Formwork is auto from RCC. Yields and beamâ€“slab deduct are under Settings. Open Quantities for a concrete / formwork / steel preview."/>
+                               Text="Project ? Take-off (O-Draft): drawings are measured in O-Draft and recorded in ShilpiDB; read the take-off here, review, then import. Formwork is auto from RCC. Yields and beam–slab deduct are under Settings. Open Quantities for a concrete / formwork / steel preview."/>
                 </StackPanel>
             </Border>
 

@@ -1,8 +1,7 @@
 <Application
     x:Class="BBSApp.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    RequestedTheme="Light">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -20,13 +19,23 @@
                         <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteLight.Blue.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
+                <ResourceDictionary x:Key="Default">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteDark.Blue.xaml"/>
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteDark.Blue.xaml"/>
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
                     <ResourceDictionary.MergedDictionaries>
                         <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteHighContrast.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-            <!-- Scale comes from Hcw.Ui SuiteStyles (36 hit · 16,6 pad · radius 2 · icons 0.6×). Do not redefine here. -->
+            <!-- Scale comes from Hcw.Ui SuiteStyles. Do not redefine here. -->
             <CornerRadius x:Key="ComboBoxItemCornerRadius">2</CornerRadius>
             <CornerRadius x:Key="MenuFlyoutItemCornerRadius">2</CornerRadius>
         </ResourceDictionary>

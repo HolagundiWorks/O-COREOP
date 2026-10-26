@@ -97,7 +97,7 @@ public sealed partial class MainWindow
         }
     }
 
-    void CompanyBadge_Tapped(object sender, TappedRoutedEventArgs e) => CompanyProjects_Click(sender, e);
+    void CompanyBadge_Click(object sender, RoutedEventArgs e) => CompanyProjects_Click(sender, e);
 
     bool EngineReady()
     {

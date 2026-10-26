@@ -7,6 +7,7 @@ using BBSApp.Services;
 using BBSApp.Services.Ai;
 using BBSApp.Views;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -44,6 +45,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         SystemBackdrop = null;
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        Hcw.Ui.SuiteMotion.RespectSystemPreference("PageContentTransitions", "CardContentTransitions");
+        Hcw.Ui.SuiteMotion.ApplyToFrame(ContentFrame);
+        ThemeSwitch.Attach(this);
+        Hcw.Ui.SuiteAppearance.Changed += OnSuiteThemeChanged;
         ApplyBrandingChrome();
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
@@ -66,11 +71,26 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         _syncTimer.Start();
         Closed += (_, _) =>
         {
+            Hcw.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
         };
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
+    }
+
+    private void OnSuiteThemeChanged(Microsoft.UI.Xaml.ElementTheme _)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            Hcw.Ui.SuiteAppearance.Apply(this);
+            if (Content is FrameworkElement root)
+                root.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
+            AppNav.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
+            Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
+            BuildNavigation();
+            ApplyBrandingChrome();
+        });
     }
 
     // Was 0.8; user asked 1.2× of that → 0.96 of design.
@@ -325,8 +345,12 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         if (!Application.Current.Resources.TryGetValue(key, out var src) || src is null)
             return null;
-        return new ImageIcon { Source = (ImageSource)src, Width = 10, Height = 10 };
+        return new ImageIcon { Source = (ImageSource)src, Width = SuiteIconPx, Height = SuiteIconPx };
     }
+
+    /// <summary>Suite icon glyph size (10) and tile hit (36) — matches Hcw.Ui / O-Draft.</summary>
+    private const double SuiteIconPx = 15;
+    private const double SuiteTilePx = 36;
 
     private bool _navSyncing;
 
@@ -334,19 +358,30 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void BuildNavigation()
     {
         AppNav.MenuItems.Clear();
+        var first = true;
         foreach (var tab in _tabs)
         {
+            if (!first)
+                AppNav.MenuItems.Add(new NavigationViewItemSeparator());
+            first = false;
             AppNav.MenuItems.Add(new NavigationViewItemHeader { Content = tab.Title, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
             foreach (var cmd in tab.Commands)
             {
                 var icon = cmd.Icon switch
                 {
-                    FontIcon fi => (IconElement)CloneFontIcon(fi, 10),
-                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = 10, Height = 10 },
-                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = 10, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
+                    FontIcon fi => (IconElement)CloneFontIcon(fi, SuiteIconPx),
+                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = SuiteIconPx, Height = SuiteIconPx },
+                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = SuiteIconPx, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
                 };
                 Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
-                AppNav.MenuItems.Add(new NavigationViewItem { Content = cmd.Label, Tag = cmd.Tag, MinHeight = 32, FontSize = 13, Icon = icon });
+                AppNav.MenuItems.Add(new NavigationViewItem
+                {
+                    Content = cmd.Label,
+                    Tag = cmd.Tag,
+                    MinHeight = SuiteTilePx,
+                    FontSize = 13,
+                    Icon = icon,
+                });
             }
         }
     }
@@ -375,7 +410,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Navigate(first.Tag);
     }
 
-    private static FontIcon CloneFontIcon(FontIcon src, double size = 10) => new()
+    private static FontIcon CloneFontIcon(FontIcon src, double size = SuiteIconPx) => new()
     {
         Glyph = src.Glyph,
         FontSize = size,
@@ -393,7 +428,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         return LetterIcon("?", size);
     }
 
-    private static FontIcon Glyph(string g, double size = 10) => new()
+    private static FontIcon Glyph(string g, double size = SuiteIconPx) => new()
     {
         Glyph = g,
         FontSize = size,
@@ -618,8 +653,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private void RefreshConnectBadge()
     {
         if (ConnectBadgeText is null) return;
-        var sync = BBSApp.Services.Connect.ProjectSyncHost.Active ? " Â· " + BBSApp.Services.Connect.ProjectSyncHost.StateText : "";
+        var sync = BBSApp.Services.Connect.ProjectSyncHost.Active ? " · " + BBSApp.Services.Connect.ProjectSyncHost.StateText : "";
         ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText + sync;
+        AutomationProperties.SetName(ConnectBadge, ConnectBadgeText.Text);
         var notice = BBSApp.Services.Connect.ProjectSyncHost.Notice;
         ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details + (notice is null ? "" : "\n" + notice));
     }
@@ -732,7 +768,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         catch (Exception ex) { AppNotify.Error("Pull latest", BBSApp.Services.Connect.ConnectService.Describe(ex)); }
     }
 
-    private void ConnectBadge_Tapped(object sender, TappedRoutedEventArgs e) => _ = ConnectFlowAsync();
+    private void ConnectBadge_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
     private void ConnectSignIn_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
 
     private void ConnectSignOut_Click(object sender, RoutedEventArgs e)
@@ -833,7 +869,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             AppNotify.Success("AORMS", BBSApp.Services.Connect.ConnectService.Details);
     }
 
-    private void SyncBadge_Tapped(object sender, TappedRoutedEventArgs e)
+    private void SyncBadge_Click(object sender, RoutedEventArgs e)
     {
         RefreshSyncBadge();
         NavigateTo("settings_project");
@@ -850,6 +886,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             SyncBadgeText.Text = "Sync unavailable";
         }
+        AutomationProperties.SetName(SyncBadge, SyncBadgeText.Text);
     }
 
     private async Task PullJointMeasurementsAsync()
@@ -885,6 +922,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     static Brush BrushRes(string key, Color fallback)
     {
+        var themed = Hcw.Ui.SuiteAppearance.TryBrush(key);
+        if (themed != null)
+            return themed;
         if (Application.Current.Resources.TryGetValue(key, out var v) && v is Brush b)
             return b;
         return new SolidColorBrush(fallback);
@@ -1176,6 +1216,33 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         Title = Branding.AppName;
         if (TitleBarText != null)
             TitleBarText.Text = ProjectStore.Current.Name;
+        PaintTitleBar();
+    }
+
+    void PaintTitleBar()
+    {
+        if (!Microsoft.UI.Windowing.AppWindowTitleBar.IsCustomizationSupported())
+            return;
+        var dark = Hcw.Ui.SuiteAppearance.IsDark;
+        var bar = AppWindow.TitleBar;
+        Windows.UI.Color Bg(byte r, byte g, byte b) => Windows.UI.Color.FromArgb(255, r, g, b);
+        var background = dark ? Bg(0x1B, 0x1B, 0x1B) : Bg(0xE4, 0xEA, 0xF2);
+        var foreground = dark ? Bg(0xF3, 0xF3, 0xF3) : Bg(0x1A, 0x23, 0x32);
+        var hover = dark ? Bg(0x2F, 0x2F, 0x2F) : Bg(0xF1, 0xF5, 0xFA);
+        var pressed = dark ? Bg(0x38, 0x38, 0x38) : Bg(0xD8, 0xDE, 0xE8);
+        var inactive = dark ? Bg(0x9A, 0x9A, 0x9A) : Bg(0x4A, 0x56, 0x68);
+        bar.BackgroundColor = background;
+        bar.ForegroundColor = foreground;
+        bar.InactiveBackgroundColor = background;
+        bar.InactiveForegroundColor = inactive;
+        bar.ButtonBackgroundColor = background;
+        bar.ButtonForegroundColor = foreground;
+        bar.ButtonHoverBackgroundColor = hover;
+        bar.ButtonHoverForegroundColor = foreground;
+        bar.ButtonPressedBackgroundColor = pressed;
+        bar.ButtonPressedForegroundColor = foreground;
+        bar.ButtonInactiveBackgroundColor = background;
+        bar.ButtonInactiveForegroundColor = inactive;
     }
 
     private void SetWindowTitle(string text)
