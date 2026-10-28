@@ -80,7 +80,7 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 **Run it for real first (nothing below is trustworthy until these are done)**
 
-1. Add the repository secret `HCW_UI_TOKEN` so CI builds (2.1).
+1. ~~Add the repository secret `HCW_UI_TOKEN` so CI builds (2.1).~~ Done: CI clones public `HolagundiWorks/O-UI` (no token).
 2. Click through Import from CAD, Export for CAD and the Take-off page with a real take-off; CadImport and Office.Shared tests pass, the screens need a desktop click-through (2.4). Needs O-Draft to record a take-off first.
 3. Install the new installer on a clean machine and check the in-place upgrade (2.5).
 

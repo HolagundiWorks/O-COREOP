@@ -108,7 +108,7 @@
   </Target>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\hcw-ui\Hcw.Ui\Hcw.Ui.csproj" />
+    <ProjectReference Include="..\..\..\o-ui\Hcw.Ui\Hcw.Ui.csproj" />
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
     <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
   </ItemGroup>
