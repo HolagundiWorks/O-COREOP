@@ -66,13 +66,14 @@ public sealed partial class ElementPage : Page
     private const double SheetColMinWidth = 112;
     private const double SheetComboColWidth = 128;
 
-    private static readonly SolidColorBrush SheetGridBrush = new(Windows.UI.Color.FromArgb(255, 180, 180, 180));
-    private static readonly SolidColorBrush SheetHeaderBg = new(Windows.UI.Color.FromArgb(255, 242, 242, 242));
-    private static readonly SolidColorBrush SheetCellBg = new(Windows.UI.Color.FromArgb(255, 255, 255, 255));
-    private static readonly SolidColorBrush SheetHeaderFg = new(Windows.UI.Color.FromArgb(255, 50, 50, 50));
-    private static readonly SolidColorBrush SheetCellFg = new(Windows.UI.Color.FromArgb(255, 30, 30, 30));
-    private static readonly SolidColorBrush SheetReadonlyBg = new(Windows.UI.Color.FromArgb(255, 245, 245, 245));
-    private static readonly SolidColorBrush SheetActiveRowBg = new(Windows.UI.Color.FromArgb(255, 255, 251, 235));
+    // Sheet chrome follows suite theme tokens (light soft-UI / dark graphite).
+    private Brush SheetGridBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 216, 222, 232));
+    private Brush SheetHeaderBg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 238, 242, 248));
+    private Brush SheetCellBg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 255, 255, 255));
+    private Brush SheetHeaderFg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 35, 50));
+    private Brush SheetCellFg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 35, 50));
+    private Brush SheetReadonlyBg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 241, 245, 250));
+    private Brush SheetActiveRowBg = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 241, 245, 250));
     private int _sheetEditRow = -1;
     private string _sheetFloorId = "Lvl0";
     private bool _suppressFloorCombo;
@@ -103,6 +104,18 @@ public sealed partial class ElementPage : Page
         _rows = rows;
         _rowsChanged = (_, _) => RefreshSheet();
         InitializeComponent();
+        ApplySheetTheme();
+        ActualThemeChanged += (_, _) =>
+        {
+            ApplySheetTheme();
+            BuildSheetHeader();
+            RefreshSheet();
+            if (_spec.Kind == "masonry")
+            {
+                BuildDeductSheetHeader();
+                RefreshDeductSheet();
+            }
+        };
         TitleText.Text = spec.Title;
         if (spec.IsCivilBoq)
         {
@@ -1767,6 +1780,24 @@ public sealed partial class ElementPage : Page
         "bearing" => "Bearing",
         _ => key
     };
+
+    private static Brush ThemeBrush(string key, Windows.UI.Color fallback)
+    {
+        if (Application.Current?.Resources.TryGetValue(key, out var value) == true && value is Brush brush)
+            return brush;
+        return new SolidColorBrush(fallback);
+    }
+
+    private void ApplySheetTheme()
+    {
+        SheetGridBrush = ThemeBrush("HcwEdgeBrush", Windows.UI.Color.FromArgb(255, 216, 222, 232));
+        SheetHeaderBg = ThemeBrush("HcwSoftBrush", Windows.UI.Color.FromArgb(255, 238, 242, 248));
+        SheetCellBg = ThemeBrush("HcwWhiteBrush", Windows.UI.Color.FromArgb(255, 255, 255, 255));
+        SheetHeaderFg = ThemeBrush("HcwInkBrush", Windows.UI.Color.FromArgb(255, 26, 35, 50));
+        SheetCellFg = ThemeBrush("HcwInkBrush", Windows.UI.Color.FromArgb(255, 26, 35, 50));
+        SheetReadonlyBg = ThemeBrush("SubtleFillColorSecondaryBrush", Windows.UI.Color.FromArgb(255, 241, 245, 250));
+        SheetActiveRowBg = ThemeBrush("SubtleFillColorSecondaryBrush", Windows.UI.Color.FromArgb(255, 241, 245, 250));
+    }
 
     private void RefreshSheet()
     {

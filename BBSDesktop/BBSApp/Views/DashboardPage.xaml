@@ -22,8 +22,12 @@
                         <Border Width="56" Height="56" CornerRadius="8"
                                 Background="{ThemeResource HcwWhiteBrush}"
                                 VerticalAlignment="Top">
-                            <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="5"
-                                   AutomationProperties.Name="O-CoreOp logo"/>
+                            <Image Stretch="Uniform" Margin="5"
+                                   AutomationProperties.Name="O-CoreOp logo">
+                                <Image.Source>
+                                    <SvgImageSource UriSource="ms-appx:///Assets/mark.svg"/>
+                                </Image.Source>
+                            </Image>
                         </Border>
                         <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                             <TextBlock x:Name="BrandNameText" Style="{StaticResource PageTitleStyle}"/>

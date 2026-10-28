@@ -8,6 +8,7 @@ using BBSApp.Services.Ai;
 using BBSApp.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -48,6 +49,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         Hcw.Ui.SuiteMotion.RespectSystemPreference("PageContentTransitions", "CardContentTransitions");
         Hcw.Ui.SuiteMotion.ApplyToFrame(ContentFrame);
         ThemeSwitch.Attach(this);
+        AutomationProperties.SetName(ThemeSwitch, "Colour theme");
+        AutomationProperties.SetLandmarkType(AppNav, AutomationLandmarkType.Navigation);
+        AutomationProperties.SetLandmarkType(ContentFrame, AutomationLandmarkType.Main);
         Hcw.Ui.SuiteAppearance.Changed += OnSuiteThemeChanged;
         ApplyBrandingChrome();
         TrySetAppIcon();
@@ -183,52 +187,53 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Cmd("doors", "Doors", NavIcon("doors")),
             Cmd("windows", "Windows", NavIcon("windows")),
         }));
+        // Unique Segoe Fluent glyphs per destination (no shared glyph across unrelated pages).
         _tabs.Add(new RibbonTab("schedule", "Schedule", new[]
         {
-            Cmd("schedule_activities", "Activities", Glyph("")),
-            Cmd("schedule_network", "Network", Glyph("")),
-            Cmd("schedule_gantt", "Gantt", Glyph("")),
+            Cmd("schedule_activities", "Activities", Glyph("\uE8FD")), // CalendarDay
+            Cmd("schedule_network", "Network", Glyph("\uE774")),       // Globe
+            Cmd("schedule_gantt", "Gantt", Glyph("\uE787")),           // CalendarWeek
         }));
         _tabs.Add(new RibbonTab("office", "Office", new[]
         {
-            Cmd("correspondence", "Correspondence", Glyph("")),
+            Cmd("correspondence", "Correspondence", Glyph("\uE715")), // Mail
         }));
         _tabs.Add(new RibbonTab("contracts", "Contracts", new[]
         {
-            Cmd("contracts_list", "Contracts", Glyph("")),
-            Cmd("contracts_rates", "Rate schedule", Glyph("")),
-            Cmd("contracts_terms", "Terms", Glyph("")),
+            Cmd("contracts_list", "Contracts", Glyph("\uE8C8")),       // PageList
+            Cmd("contracts_rates", "Rate schedule", Glyph("\uE8CB")),  // BulletedList2
+            Cmd("contracts_terms", "Terms", Glyph("\uE90F")),          // Page
         }));
         _tabs.Add(new RibbonTab("accounts", "Accounts", new[]
         {
-            Cmd("accounts_bills", "Running bills", Glyph("")),
-            Cmd("accounts_cash", "Cash book", Glyph("")),
-            Cmd("accounts_ledger", "Ledger", Glyph("")),
+            Cmd("accounts_bills", "Running bills", Glyph("\uE8C9")),   // DockLeft (bill strip)
+            Cmd("accounts_cash", "Cash book", Glyph("\uE8EF")),        // Money
+            Cmd("accounts_ledger", "Ledger", Glyph("\uE8F1")),         // Dictionary
         }));
         _tabs.Add(new RibbonTab("stores", "Stores", new[]
         {
-            Cmd("stores_po", "Purchase orders", Glyph("")),
-            Cmd("stores_grn", "Goods receipt", Glyph("")),
-            Cmd("stores_inventory", "Inventory", Glyph("")),
-            Cmd("stores_masters", "Masters", Glyph("")),
+            Cmd("stores_po", "Purchase orders", Glyph("\uE7BF")),      // Shop
+            Cmd("stores_grn", "Goods receipt", Glyph("\uE7B8")),       // Package
+            Cmd("stores_inventory", "Inventory", Glyph("\uE81E")),     // ViewAll / boxes
+            Cmd("stores_masters", "Masters", Glyph("\uE8B7")),         // Repair
         }));
         _tabs.Add(new RibbonTab("hr", "HR & resources", new[]
         {
-            Cmd("org_sites", "Sites", Glyph("")),
-            Cmd("org_resources", "Resources", Glyph("")),
-            Cmd("org_employees", "Employees", Glyph("")),
-            Cmd("org_payroll", "Payroll", Glyph("")),
+            Cmd("org_sites", "Sites", Glyph("\uE707")),                // MapPin
+            Cmd("org_resources", "Resources", Glyph("\uE8F2")),        // OpenFile
+            Cmd("org_employees", "Employees", Glyph("\uE716")),        // Contact
+            Cmd("org_payroll", "Payroll", Glyph("\uE8EA")),            // PaymentCard
         }));
         _tabs.Add(new RibbonTab("outputs", "Outputs", new[]
         {
-            Cmd("quantities", "Quantities", Glyph("\uE9D2")),
-            Cmd("po", "Purchase orders", Glyph("\uE7BF")),
-            Cmd("estimate", "Estimate", Glyph("\uE8EF")),
-            Cmd("links", "Item links", Glyph("\uE71B")),
-            Cmd("datamodel", "Data model", Glyph("\uE8AB")),
-            Cmd("ratebook", "Rate book", Glyph("\uE8F1")),
-            Cmd("pull_jm", "Pull JM", Glyph("\uE8F2")),
-            Cmd("report", "Report", Glyph("\uE8A5")),
+            Cmd("quantities", "Quantities", Glyph("\uE9D2")),          // Switch
+            Cmd("po", "Purchase orders", Glyph("\uE719")),             // Shop (distinct from stores PO)
+            Cmd("estimate", "Estimate", Glyph("\uE8BC")),              // Work
+            Cmd("links", "Item links", Glyph("\uE71B")),               // Link
+            Cmd("datamodel", "Data model", Glyph("\uE8AB")),           // MapLayers
+            Cmd("ratebook", "Rate book", Glyph("\uE82D")),             // Bookmarks
+            Cmd("pull_jm", "Pull JM", Glyph("\uE896")),                // Download
+            Cmd("report", "Report", Glyph("\uE9F9")),                  // ReportDocument
         }));
 
         _navTags.Clear();
@@ -1274,7 +1279,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             HorizontalAlignment = HorizontalAlignment.Center,
             Child = new Image
             {
-                Source = new BitmapImage(new Uri("ms-appx:///Assets/logo.png")),
+                Source = new SvgImageSource(new Uri("ms-appx:///Assets/mark.svg")),
                 Stretch = Stretch.Uniform,
                 Margin = new Thickness(8)
             }

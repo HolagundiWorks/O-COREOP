@@ -108,36 +108,36 @@
                         </hcw:FlexBar>
                     </Grid>
 
-                    <!-- Excel-style sheet: light theme + full grid borders -->
+                    <!-- Excel-style sheet: suite tokens (follows dark/light) -->
                     <Border x:Name="SheetBorder" Grid.Row="1" Padding="0"
-                            Background="#FFFFFF"
-                            BorderBrush="#B4B4B4"
+                            Background="{ThemeResource HcwWhiteBrush}"
+                            BorderBrush="{ThemeResource HcwEdgeBrush}"
                             BorderThickness="1"
-                            CornerRadius="4"
-                            RequestedTheme="Light">
+                            CornerRadius="4">
                         <ScrollViewer x:Name="SheetHScroll"
-                                      Background="#FFFFFF"
+                                      Background="{ThemeResource HcwWhiteBrush}"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Disabled"
                                       HorizontalScrollMode="Enabled"
                                       VerticalScrollMode="Disabled"
                                       SizeChanged="SheetHScroll_SizeChanged">
-                            <Grid x:Name="SheetWide" Background="#FFFFFF">
+                            <Grid x:Name="SheetWide" Background="{ThemeResource HcwWhiteBrush}">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Border BorderBrush="#B4B4B4" BorderThickness="0,0,0,1" Background="#F2F2F2">
+                                <Border BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="0,0,0,1"
+                                        Background="{ThemeResource HcwSoftBrush}">
                                     <Grid x:Name="SheetHeader"/>
                                 </Border>
                                 <ScrollViewer x:Name="SheetVScroll" Grid.Row="1"
-                                              Background="#FFFFFF"
+                                              Background="{ThemeResource HcwWhiteBrush}"
                                               VerticalScrollBarVisibility="Auto"
                                               VerticalScrollMode="Enabled"
                                               HorizontalScrollBarVisibility="Disabled"
                                               HorizontalScrollMode="Disabled"
                                               AutomationProperties.Name="Element datasheet">
-                                    <StackPanel x:Name="SheetRowsHost" Background="#FFFFFF"/>
+                                    <StackPanel x:Name="SheetRowsHost" Background="{ThemeResource HcwWhiteBrush}"/>
                                 </ScrollViewer>
                             </Grid>
                         </ScrollViewer>
@@ -207,27 +207,27 @@
                         </StackPanel>
                     </Grid>
                     <Border Grid.Row="1" Padding="0"
-                            Background="#FFFFFF"
-                            BorderBrush="#B4B4B4"
+                            Background="{ThemeResource HcwWhiteBrush}"
+                            BorderBrush="{ThemeResource HcwEdgeBrush}"
                             BorderThickness="1"
-                            CornerRadius="4"
-                            RequestedTheme="Light">
+                            CornerRadius="4">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Disabled"
                                       HorizontalScrollMode="Enabled"
                                       VerticalScrollMode="Disabled">
-                            <Grid Background="#FFFFFF">
+                            <Grid Background="{ThemeResource HcwWhiteBrush}">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <Border BorderBrush="#B4B4B4" BorderThickness="0,0,0,1" Background="#F2F2F2">
+                                <Border BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="0,0,0,1"
+                                        Background="{ThemeResource HcwSoftBrush}">
                                     <Grid x:Name="DeductSheetHeader"/>
                                 </Border>
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                                               VerticalScrollMode="Enabled"
                                               HorizontalScrollBarVisibility="Disabled">
-                                    <StackPanel x:Name="DeductSheetRowsHost" Background="#FFFFFF"/>
+                                    <StackPanel x:Name="DeductSheetRowsHost" Background="{ThemeResource HcwWhiteBrush}"/>
                                 </ScrollViewer>
                             </Grid>
                         </ScrollViewer>

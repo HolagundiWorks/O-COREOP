@@ -23,9 +23,15 @@
               Background="{ThemeResource HcwFogBrush}">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                         IsHitTestVisible="False">
-                <Border Width="10" Height="10" CornerRadius="2"
+                <Border Width="18" Height="18" CornerRadius="2"
                         Background="{ThemeResource HcwSoftBrush}">
-                    <Image Source="ms-appx:///Assets/logo.png" Stretch="Uniform" Margin="2"/>
+                    <Image Stretch="Uniform" Margin="1"
+                           AutomationProperties.Name="O-CoreOp"
+                           AutomationProperties.AccessibilityView="Raw">
+                        <Image.Source>
+                            <SvgImageSource UriSource="ms-appx:///Assets/mark.svg"/>
+                        </Image.Source>
+                    </Image>
                 </Border>
                 <TextBlock x:Name="TitleBarText" Text="Untitled Project" FontSize="12"
                            FontFamily="{StaticResource HcwFontFamily}"
