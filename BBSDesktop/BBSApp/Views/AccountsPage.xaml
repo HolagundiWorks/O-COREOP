@@ -25,13 +25,13 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="New RA bill" Click="NewBill_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="Save" Click="SaveBill_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Certify &amp; number" Click="CertifyBill_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Issue payment certificate" Click="IssueCertificate_Click" Style="{StaticResource SecondaryButtonStyle}"
+                        <Button Content="New RA bill" Click="NewBill_Click" AutomationProperties.Name="New running-account bill" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Save" Click="SaveBill_Click" AutomationProperties.Name="Save running-account bill" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Certify &amp; number" Click="CertifyBill_Click" AutomationProperties.Name="Certify and number bill" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Issue payment certificate" Click="IssueCertificate_Click" AutomationProperties.Name="Issue payment certificate" Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTipService.ToolTip="Create a PM-issued Interim Payment Certificate in Office → Correspondence for this bill"/>
-                        <Button Content="Export PDF" Click="ExportBill_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Delete" Click="DeleteBill_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Export PDF" Click="ExportBill_Click" AutomationProperties.Name="Export bill PDF" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Delete" Click="DeleteBill_Click" AutomationProperties.Name="Delete running-account bill" Style="{StaticResource SecondaryButtonStyle}"/>
                         <TextBox x:Name="PrefixBox" Header="Doc prefix" Width="110" PlaceholderText="auto" LostFocus="Prefix_LostFocus"/>
                     </StackPanel>
 
@@ -81,9 +81,9 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Measured work" VerticalAlignment="Center" Style="{StaticResource CaptionSecondaryStyle}"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                <Button Content="Add line" Click="AddLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
-                                                <Button Content="Import from contract" Click="ImportFromContract_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
-                                                <Button Content="Delete line" Click="DeleteLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Add line" Click="AddLine_Click" AutomationProperties.Name="Add bill line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Import from contract" Click="ImportFromContract_Click" AutomationProperties.Name="Import lines from contract" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Delete line" Click="DeleteLine_Click" AutomationProperties.Name="Delete bill line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
                                             </StackPanel>
                                         </Grid>
                                         <controls:DataGrid x:Name="LinesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
@@ -164,9 +164,9 @@
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <NumberBox x:Name="OpeningCashBox" Header="Opening cash" SpinButtonPlacementMode="Hidden" Width="150" ValueChanged="Opening_Changed"/>
                         <NumberBox x:Name="OpeningBankBox" Header="Opening bank" SpinButtonPlacementMode="Hidden" Width="150" ValueChanged="Opening_Changed"/>
-                        <Button Content="Add receipt" Click="AddReceipt_Click" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"/>
-                        <Button Content="Add payment" Click="AddPayment_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
-                        <Button Content="Delete" Click="DeleteTxn_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+                        <Button Content="Add receipt" Click="AddReceipt_Click" AutomationProperties.Name="Add cash receipt" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"/>
+                        <Button Content="Add payment" Click="AddPayment_Click" AutomationProperties.Name="Add cash payment" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+                        <Button Content="Delete" Click="DeleteTxn_Click" AutomationProperties.Name="Delete cash transaction" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="12,6">
                         <TextBlock x:Name="CashSummary" Text="—"/>
@@ -197,7 +197,7 @@
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <ComboBox x:Name="LedgerPartyBox" Header="Party" MinWidth="240" SelectionChanged="LedgerParty_Changed"/>
-                        <Button Content="Refresh" Click="LedgerRefresh_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+                        <Button Content="Refresh" Click="LedgerRefresh_Click" AutomationProperties.Name="Refresh party ledger" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{ThemeResource SubtleFillColorSecondaryBrush}" CornerRadius="6" Padding="12,6">
                         <TextBlock x:Name="LedgerSummary" Text="Select a party to see its statement."/>

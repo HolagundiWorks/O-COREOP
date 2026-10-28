@@ -25,11 +25,11 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="New PO" Click="NewPo_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="Save" Click="SavePo_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Place &amp; number" Click="PlacePo_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Export PDF" Click="ExportPo_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Delete" Click="DeletePo_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="New PO" Click="NewPo_Click" AutomationProperties.Name="New purchase order" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Save" Click="SavePo_Click" AutomationProperties.Name="Save purchase order" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Place &amp; number" Click="PlacePo_Click" AutomationProperties.Name="Place and number purchase order" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Export PDF" Click="ExportPo_Click" AutomationProperties.Name="Export purchase order PDF" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Delete" Click="DeletePo_Click" AutomationProperties.Name="Delete purchase order" Style="{StaticResource SecondaryButtonStyle}"/>
                         <TextBox x:Name="PrefixBox" Header="Doc prefix" Width="110" PlaceholderText="auto" LostFocus="Prefix_LostFocus"/>
                     </StackPanel>
                     <Grid Grid.Row="1" ColumnSpacing="12">
@@ -77,8 +77,8 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Materials" VerticalAlignment="Center" Style="{StaticResource CaptionSecondaryStyle}"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                <Button Content="Add line" Click="AddPoLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
-                                                <Button Content="Delete line" Click="DeletePoLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Add line" Click="AddPoLine_Click" AutomationProperties.Name="Add purchase order line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Delete line" Click="DeletePoLine_Click" AutomationProperties.Name="Delete purchase order line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
                                             </StackPanel>
                                         </Grid>
                                         <controls:DataGrid x:Name="PoLinesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
@@ -112,10 +112,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="New GRN" Click="NewGrn_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="Save" Click="SaveGrn_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Receive &amp; number" Click="ReceiveGrn_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Delete" Click="DeleteGrn_Click" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="New GRN" Click="NewGrn_Click" AutomationProperties.Name="New goods receipt note" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Save" Click="SaveGrn_Click" AutomationProperties.Name="Save goods receipt note" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Receive &amp; number" Click="ReceiveGrn_Click" AutomationProperties.Name="Receive and number goods receipt" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Delete" Click="DeleteGrn_Click" AutomationProperties.Name="Delete goods receipt note" Style="{StaticResource SecondaryButtonStyle}"/>
                     </StackPanel>
                     <Grid Grid.Row="1" ColumnSpacing="12">
                         <Grid.ColumnDefinitions>
@@ -163,8 +163,8 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="Received materials" VerticalAlignment="Center" Style="{StaticResource CaptionSecondaryStyle}"/>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                                                <Button Content="Add line" Click="AddGrnLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
-                                                <Button Content="Delete line" Click="DeleteGrnLine_Click" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Add line" Click="AddGrnLine_Click" AutomationProperties.Name="Add goods receipt line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
+                                                <Button Content="Delete line" Click="DeleteGrnLine_Click" AutomationProperties.Name="Delete goods receipt line" Style="{StaticResource ToolbarButtonStyle}" Padding="8,2"/>
                                             </StackPanel>
                                         </Grid>
                                         <controls:DataGrid x:Name="GrnLinesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
@@ -195,8 +195,8 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <Button Content="Refresh" Click="RefreshInventory_Click" Style="{StaticResource SecondaryButtonStyle}"/>
-                        <Button Content="Issue material" Click="IssueMaterial_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Refresh" Click="RefreshInventory_Click" AutomationProperties.Name="Refresh inventory" Style="{StaticResource SecondaryButtonStyle}"/>
+                        <Button Content="Issue material" Click="IssueMaterial_Click" AutomationProperties.Name="Issue material" Style="{StaticResource PrimaryButtonStyle}"/>
                         <TextBlock Style="{StaticResource CaptionSecondaryStyle}" VerticalAlignment="Center"
                                    Text="Stock = received (GRNs) − issued."/>
                     </StackPanel>
@@ -228,8 +228,8 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="Suppliers" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center"/>
-                            <Button Content="Add" Click="AddSupplier_Click" Style="{StaticResource ToolbarButtonStyle}"/>
-                            <Button Content="Delete" Click="DeleteSupplier_Click" Style="{StaticResource ToolbarButtonStyle}"/>
+                            <Button Content="Add" Click="AddSupplier_Click" AutomationProperties.Name="Add supplier" Style="{StaticResource ToolbarButtonStyle}"/>
+                            <Button Content="Delete" Click="DeleteSupplier_Click" AutomationProperties.Name="Delete supplier" Style="{StaticResource ToolbarButtonStyle}"/>
                         </StackPanel>
                         <controls:DataGrid Grid.Row="1" x:Name="SuppliersGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
                                            GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single">
@@ -248,8 +248,8 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="Warehouses / stores" Style="{StaticResource SectionHeaderStyle}" VerticalAlignment="Center"/>
-                            <Button Content="Add" Click="AddWarehouse_Click" Style="{StaticResource ToolbarButtonStyle}"/>
-                            <Button Content="Delete" Click="DeleteWarehouse_Click" Style="{StaticResource ToolbarButtonStyle}"/>
+                            <Button Content="Add" Click="AddWarehouse_Click" AutomationProperties.Name="Add warehouse" Style="{StaticResource ToolbarButtonStyle}"/>
+                            <Button Content="Delete" Click="DeleteWarehouse_Click" AutomationProperties.Name="Delete warehouse" Style="{StaticResource ToolbarButtonStyle}"/>
                         </StackPanel>
                         <controls:DataGrid Grid.Row="1" x:Name="WarehousesGrid" AutoGenerateColumns="False" CanUserSortColumns="False"
                                            GridLinesVisibility="Horizontal" HeadersVisibility="Column" SelectionMode="Single">

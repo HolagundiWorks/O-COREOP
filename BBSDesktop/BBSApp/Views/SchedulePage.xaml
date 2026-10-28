@@ -25,11 +25,11 @@
                 <ComboBoxItem Content="6 days (no Sun)" Tag="6"/>
                 <ComboBoxItem Content="5 days (no Sat/Sun)" Tag="5"/>
             </ComboBox>
-            <Button Content="Add activity" Click="Add_Click" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"/>
-            <Button Content="Delete" Click="Delete_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
-            <Button Content="Seed from project" Click="Seed_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
-            <Button Content="Recalculate" Click="Recalc_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
-            <Button Content="Export PDF" Click="ExportPdf_Click" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+            <Button Content="Add activity" Click="Add_Click" AutomationProperties.Name="Add schedule activity" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom"/>
+            <Button Content="Delete" Click="Delete_Click" AutomationProperties.Name="Delete schedule activity" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+            <Button Content="Seed from project" Click="Seed_Click" AutomationProperties.Name="Seed schedule from project" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+            <Button Content="Recalculate" Click="Recalc_Click" AutomationProperties.Name="Recalculate schedule" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
+            <Button Content="Export PDF" Click="ExportPdf_Click" AutomationProperties.Name="Export schedule PDF" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom"/>
         </StackPanel>
 
         <Pivot Grid.Row="2" x:Name="SchedulePivot" SelectionChanged="Pivot_Changed">
@@ -66,7 +66,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock Style="{StaticResource CaptionSecondaryStyle}" VerticalAlignment="Center"
                                    Text="Drag a node to move it · drag from the dot on a node's right edge onto another node to link (Finish→Start) · click a node then Delete link."/>
-                        <Button Content="Delete link into selected" Click="DeleteLink_Click" Style="{StaticResource ToolbarButtonStyle}"/>
+                        <Button Content="Delete link into selected" Click="DeleteLink_Click" AutomationProperties.Name="Delete link into selected activity" Style="{StaticResource ToolbarButtonStyle}"/>
                     </StackPanel>
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollMode="Enabled" VerticalScrollMode="Enabled" ZoomMode="Enabled"
@@ -83,8 +83,8 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Content="Zoom −" Click="GanttZoomOut_Click" Style="{StaticResource ToolbarButtonStyle}"/>
-                        <Button Content="Zoom +" Click="GanttZoomIn_Click" Style="{StaticResource ToolbarButtonStyle}"/>
+                        <Button Content="Zoom −" Click="GanttZoomOut_Click" AutomationProperties.Name="Zoom out Gantt chart" Style="{StaticResource ToolbarButtonStyle}"/>
+                        <Button Content="Zoom +" Click="GanttZoomIn_Click" AutomationProperties.Name="Zoom in Gantt chart" Style="{StaticResource ToolbarButtonStyle}"/>
                         <TextBlock Style="{StaticResource CaptionSecondaryStyle}" VerticalAlignment="Center"
                                    Text="Red = critical path · dashed whisker = total float · green line = today."/>
                     </StackPanel>
