@@ -198,9 +198,11 @@ public static class ShilpiTakeoff
     }
 
     /// <summary>
-    /// An opening that does not say which wall it is in (O-Draft does not write <c>wall_ref</c> yet) is given the nearest wall on the same level
-    /// whose box, widened by 150 mm, meets the opening's box. The row carries a note so the preview tells the user to check it. If no wall
-    /// meets it the row is left without a wall and the importer flags that.
+    /// Fallback only: when an opening has no <c>wall_ref</c> (legacy recordings, or an opening O-Draft could not
+    /// place), assign the nearest wall on the same level whose box, widened by 150 mm, meets the opening's box.
+    /// Current O-Draft writes <c>wall_ref</c> when the opening sits on a measured wall; those rows skip this path.
+    /// The row carries a note so the preview tells the user to check it. If no wall meets it the row is left
+    /// without a wall and the importer flags that.
     /// </summary>
     static void AssignOpeningsToWalls(JsonArray openings, JsonArray walls, Dictionary<JsonObject, ShilpiRecord> boxes, List<string> notes)
     {
@@ -222,7 +224,7 @@ public static class ShilpiTakeoff
             }
             if (best is null) continue;
             op["wall_ref"] = Str(best, "ref");
-            op["_note"] = "wall chosen by position in the drawing (O-Draft did not say which wall); check it";
+            op["_note"] = "wall chosen by position in the drawing (the take-off did not name a wall); check it";
             notes.Add($"opening {(Str(op, "mark").Length > 0 ? Str(op, "mark") : Str(op, "ref"))}: placed in wall {Str(best, "ref")} by position");
         }
     }
