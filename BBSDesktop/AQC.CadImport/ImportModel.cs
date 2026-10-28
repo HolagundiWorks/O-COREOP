@@ -18,7 +18,7 @@ public sealed class ImportModel
     public IList<LevelRec> Levels { get; init; } = new List<LevelRec>();
     /// <summary>Keys: name, client_name, company_name, location, address.</summary>
     public IDictionary<string, string> Project { get; init; } = new Dictionary<string, string>();
-    /// <summary>Take-off sheets by category: masonry, masonry_openings, doors, windows, columns, lintels, flooring, slabs.</summary>
+    /// <summary>Take-off sheets by category: masonry, masonry_openings, doors, windows, columns, lintels, flooring, slabs, electrical, electrical_circuits.</summary>
     public IDictionary<string, IList<Dictionary<string, string>>> Sheets { get; init; } =
         new Dictionary<string, IList<Dictionary<string, string>>>(StringComparer.OrdinalIgnoreCase);
 

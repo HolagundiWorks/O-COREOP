@@ -232,6 +232,71 @@ public class ShilpiTakeoffTests
     }
 
     [Fact]
+    public void Electrical_board_and_circuit_kinds_read_and_import_onto_sheets()
+    {
+        const uint slot = 42;
+        var header = new JsonObject
+        {
+            ["format"] = ShilpiTakeoff.HeaderFormat, ["version"] = 1, ["units"] = "mm", ["state"] = "complete",
+            ["source"] = new JsonObject { ["drawing_id"] = "elec-demo", ["drawing"] = "elec.dwg" },
+            ["levels"] = new JsonArray { new JsonObject { ["name"] = "Ground", ["height_mm"] = 3150 } },
+        };
+        var board = new JsonObject
+        {
+            ["ref"] = "EBabc", ["switchboard"] = "SB-01", ["level"] = "Ground", ["height"] = null,
+            ["5amp_socket"] = 2, ["15amp_socket"] = 1, ["connected_fixture"] = 3,
+            ["two_way_switches"] = 0, ["one_way_switches"] = 1,
+        };
+        var circuit = new JsonObject
+        {
+            ["ref"] = "ECdef", ["switchboard"] = "SB-01", ["point"] = "LP-01", ["kind"] = "LP", ["level"] = "Ground",
+            ["height"] = null, ["5amp_socket"] = 0, ["15amp_socket"] = 0, ["connected_fixture"] = 1,
+            ["two_way_switches"] = 0, ["one_way_switches"] = 0,
+        };
+        var recs = new List<ShilpiRecord>
+        {
+            new(ShilpiTakeoff.HeaderId(slot), 0, 0, 0, 0, header.ToJsonString()),
+            new(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindElectricalBoard, slot, 1), 0, 0, 0, 0, board.ToJsonString()),
+            new(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindElectricalCircuit, slot, 2), 0, 0, 0, 0, circuit.ToJsonString()),
+        };
+        var read = ShilpiTakeoff.Read(recs, slot);
+        Assert.Single(read.File.Electrical);
+        Assert.Single(read.File.ElectricalCircuits);
+        Assert.Equal(2, read.File.Electrical[0]!["5amp_socket"]!.GetValue<int>());
+
+        var m = EmptyModel();
+        // Map the file's Ground floor onto the model's only storey.
+        m.Levels[0].Name = "Ground";
+        var plan = CadImporter.Plan(read.File, m);
+        CadImporter.Apply(plan, m);
+        Assert.Single(m.Sheet("electrical"));
+        Assert.Single(m.Sheet("electrical_circuits"));
+        Assert.Equal("SB-01", m.Sheet("electrical")[0]["switchboard"]);
+        Assert.Equal("2", m.Sheet("electrical")[0]["five_amp"]);
+        Assert.Equal("LP-01", m.Sheet("electrical_circuits")[0]["point"]);
+        // Second pass is idempotent on source_ref.
+        var again = CadImporter.Plan(read.File, m);
+        Assert.Equal(0, again.Count(PlanAction.Add));
+    }
+
+    [Fact]
+    public void Openings_that_already_name_their_wall_are_not_reassigned_by_position()
+    {
+        var read = ShilpiTakeoff.Read(RecordsFromFixture());
+        Assert.Equal(5, read.File.Openings.Count);
+        Assert.All(read.File.Openings, o => Assert.False(string.IsNullOrEmpty((string?)o["wall_ref"])));
+        Assert.DoesNotContain(read.Notes ?? [], n => n.Contains("placed in wall", StringComparison.OrdinalIgnoreCase));
+        Assert.All(read.File.Openings, o => Assert.Null(o["_note"]));
+
+        var m = EmptyModel();
+        CadImporter.Apply(CadImporter.Plan(read.File, m), m);
+        Assert.Equal(5, m.Sheet("masonry_openings").Count);
+        Assert.All(m.Sheet("masonry_openings"), r => Assert.False(string.IsNullOrEmpty(r.GetValueOrDefault("wall_mark"))));
+        // Door and window schedule rows upsert on source_ref; a second pass adds nothing.
+        Assert.Equal(0, CadImporter.Plan(read.File, m).Count(PlanAction.Add));
+    }
+
+    [Fact]
     public void Drawings_in_one_database_are_listed_separately_with_their_counts()
     {
         var list = ShilpiTakeoff.ListDrawings(TwoDrawings());
@@ -252,7 +317,7 @@ public class ShilpiTakeoffTests
         var r = ShilpiTakeoff.Read(recs, house.Slot);
         Assert.Equal(3, r.File.Walls.Count);
         Assert.Equal("small house.dwg", r.File.Drawing);
-        Assert.Empty(r.File.Levels.Where(l => l.Name == "First"));   // levels-only.json's floors belong to the other drawing
+        Assert.DoesNotContain(r.File.Levels, l => l.Name == "First");   // levels-only.json's floors belong to the other drawing
     }
 
     [Fact]

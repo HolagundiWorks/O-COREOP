@@ -25,6 +25,8 @@ public sealed class BridgeFile
     public List<JsonObject> Lintels { get; init; } = new();
     public List<JsonObject> Rooms { get; init; } = new();
     public List<JsonObject> Slabs { get; init; } = new();
+    public List<JsonObject> Electrical { get; init; } = new();
+    public List<JsonObject> ElectricalCircuits { get; init; } = new();
 
     public static BridgeFile Parse(string json)
     {
@@ -74,6 +76,8 @@ public sealed class BridgeFile
         Fill(root, "lintels", f.Lintels);
         Fill(root, "rooms", f.Rooms);
         Fill(root, "slabs", f.Slabs);
+        Fill(root, "electrical", f.Electrical);
+        Fill(root, "electrical_circuits", f.ElectricalCircuits);
         return f;
     }
 
