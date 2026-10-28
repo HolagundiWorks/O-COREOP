@@ -86,3 +86,7 @@ Existing project quantities document remains `aqc.project` (unchanged).
 | Studio approve / lock / revise-version | **Proposed** (Studio) |
 | CoreOp read-only while `pending_approval` / `approved` | **Proposed** (follow-up) |
 | Remove local Certify entirely | **Not done** — retained as interim local numbering; labelled “Certify locally” |
+
+## 7. CI note
+
+CoreOp CI applies a temporary post-checkout patch for O-UI widget accessibility (`WidgetWindow` public; Pomodoro `Path` qualified) until O-UI lands the same fix.
