@@ -550,7 +550,7 @@ public static class PdfExport
             string number = string.IsNullOrWhiteSpace(b.Number)
                 ? store.Accounts.PreviewBillNumber(b, info.CompanyDisplay) + "  (draft)"
                 : b.Number;
-            string raNo = b.BillNo > 0 ? $"RA Bill No. {b.BillNo}" : "RA Bill (draft)";
+            string raNo = b.BillNo > 0 ? $"RA Bill No. {b.BillNo} · {Office.Shared.RevisionLabels.Revision(b.Revision)}" : "RA Bill (draft)";
 
             Document.Create(container =>
             {

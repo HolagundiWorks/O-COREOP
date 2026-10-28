@@ -95,8 +95,9 @@ public static class CadImporter
             return null;
         }
 
-        void Upsert(string section, string refId, Dictionary<string, string> fields, string level, string? flag = null)
+        void Upsert(string section, string refId, Dictionary<string, string> fields, string level, string? flag = null, JsonObject? src = null)
         {
+            var phases = PhaseFields(src);
             if (!seen.TryGetValue(section, out var set)) seen[section] = set = new(StringComparer.OrdinalIgnoreCase);
             set.Add(refId);
             var sheet = model.Sheet(section);
@@ -111,6 +112,7 @@ public static class CadImporter
                 row["source"] = tag;
                 row["source_ref"] = refId;
                 row["source_hash"] = Hash(row, geo);
+                foreach (var kv in phases) row[kv.Key] = kv.Value;
                 if (!pending.TryGetValue(section, out var pl)) pending[section] = pl = new();
                 pl.Add(row["mark"]);
                 plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Add, Ref = refId, Mark = row["mark"], Reason = flag ?? "", Row = row });
@@ -122,6 +124,12 @@ public static class CadImporter
             var edited = Get(existing, "source_hash") != Hash(existing, geo);
             if (Hash(probe, geo) == Hash(existing, geo) && !edited)
             {
+                // Only the phases changed in the drawing: update them and leave the geometry hash alone.
+                if (src is not null && PhasesDiffer(existing, phases))
+                {
+                    plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Update, Ref = refId, Mark = mark, Reason = "phase changed in the drawing", Row = new(phases, StringComparer.OrdinalIgnoreCase), Target = existing });
+                    return;
+                }
                 plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Unchanged, Ref = refId, Mark = mark });
                 return;
             }
@@ -133,6 +141,7 @@ public static class CadImporter
             var change = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var k in geo) if (fields.TryGetValue(k, out var v)) change[k] = v;
             change["source_hash"] = Hash(probe, geo);
+            foreach (var kv in phases) change[kv.Key] = kv.Value;
             plan.Items.Add(new PlanItem { Section = section, Action = PlanAction.Update, Ref = refId, Mark = mark, Reason = flag ?? "", Row = change, Target = existing });
         }
 
@@ -167,7 +176,7 @@ public static class CadImporter
             var reason = wallNote.Length > 0 ? wallNote
                 : assumed ? thickNote
                 : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : thickNote;
-            Upsert(Masonry, r, f, lvl, reason);
+            Upsert(Masonry, r, f, lvl, reason, w);
             wallMarkByRef[r] = plan.Items.Last(i => i.Section == Masonry && i.Ref == r).Mark;
         }
 
@@ -188,7 +197,7 @@ public static class CadImporter
                 ["opening_l"] = N(BridgeFile.Num(o, "width_mm")), ["opening_h"] = N(BridgeFile.Num(o, "height_mm")),
                 ["opening_kind"] = IsWindowKind(kind) ? "Window" : "Door",
                 ["takeoff_id"] = tag + "/" + r,
-            }, lvl, flag.Length > 0 ? flag : null);
+            }, lvl, flag.Length > 0 ? flag : null, o);
         }
 
         // door / window schedule rows: one per mark and level
@@ -230,7 +239,7 @@ public static class CadImporter
             {
                 ["nos"] = "1", ["width"] = N(BridgeFile.Num(c, "width_mm")), ["depth"] = N(BridgeFile.Num(c, "depth_mm")),
                 ["notes"] = m.Length > 0 ? "CAD mark " + m : "",
-            }, lvl);
+            }, lvl, src: c);
         }
 
         foreach (var l in file.Lintels)
@@ -242,7 +251,7 @@ public static class CadImporter
                 ["nos"] = "1", ["opening"] = N(BridgeFile.Num(l, "opening_mm")), ["bearing"] = N(BridgeFile.Num(l, "bearing_mm") ?? 150),
                 ["width"] = N(BridgeFile.Num(l, "width_mm")), ["depth"] = N(BridgeFile.Num(l, "depth_mm")),
                 ["notes"] = m.Length > 0 ? "CAD mark " + m : "",
-            }, lvl);
+            }, lvl, src: l);
         }
 
         foreach (var rm in file.Rooms)
@@ -276,7 +285,7 @@ public static class CadImporter
             {
                 ["span_x"] = N(len), ["span_y"] = N(br), ["thickness"] = N(BridgeFile.Num(s, "thickness_mm") ?? 150),
                 ["slab_type"] = Math.Max(len.Value, br.Value) / Math.Min(len.Value, br.Value) <= 2 ? "Two-Way" : "One-Way",
-            }, lvl);
+            }, lvl, src: s);
         }
 
         foreach (var e in file.Electrical)
@@ -462,6 +471,26 @@ public static class CadImporter
                 max = Math.Max(max, n);
         return $"{needle}{(max + 1).ToString("000", CultureInfo.InvariantCulture)}";
     }
+
+    /// <summary>
+    /// The estimation and running-bill phase O-Draft put on a row (<c>phase</c>, <c>bill_phase</c>). A row without the
+    /// field says nothing, so a phase typed in AQC is kept; a phase cleared in the drawing is not carried over.
+    /// </summary>
+    static Dictionary<string, string> PhaseFields(JsonObject? src)
+    {
+        var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (src is null) return d;
+        foreach (var key in PhaseKeys)
+            if (BridgeFile.Str(src, key).Trim() is { Length: > 0 } v)
+                d[key] = v;
+        return d;
+    }
+
+    /// <summary>True when the drawing names a phase the row does not have.</summary>
+    static bool PhasesDiffer(Dictionary<string, string> row, Dictionary<string, string> phases) =>
+        phases.Any(kv => Get(row, kv.Key) != kv.Value);
+
+    static readonly string[] PhaseKeys = { "phase", "bill_phase" };
 
     static string Hash(Dictionary<string, string> row, string[] keys) => string.Join("|", keys.Select(k => Get(row, k)));
     static string Get(Dictionary<string, string> r, string k) => r.TryGetValue(k, out var v) ? v : "";

@@ -31,6 +31,8 @@
                                 ToolTipService.ToolTip="Writes this RA bill into the company file as a draft for Studio approval. Studio approval is the suite gate; local Certify is interim only."/>
                         <Button Content="Certify locally" Click="CertifyBill_Click" AutomationProperties.Name="Certify and number bill locally" Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTipService.ToolTip="Interim local lock and number only. Suite approval happens in Studio after Share draft to Studio."/>
+                        <Button Content="Revise" Click="ReviseBill_Click" AutomationProperties.Name="Revise certified bill" Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTipService.ToolTip="Open a certified bill for correction as its next revision. It keeps its number and must be certified again."/>
                         <Button Content="Issue payment certificate" Click="IssueCertificate_Click" AutomationProperties.Name="Issue payment certificate" Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTipService.ToolTip="Create a PM-issued Interim Payment Certificate in Office → Correspondence for this bill"/>
                         <Button Content="Export PDF" Click="ExportBill_Click" AutomationProperties.Name="Export bill PDF" Style="{StaticResource SecondaryButtonStyle}"/>

@@ -38,6 +38,8 @@ AQC rows are free-form string dictionaries; numbers may be written as strings or
 | `rooms[]` | `flooring` | `length` = `length_mm`, `breadth` = `breadth_mm`; the room name in `notes`. When length and breadth are absent, use the area (*check* whether AQC has an area-based flooring row). |
 | `slabs[]` | `slabs` | `thickness`; `span_x` and `span_y` from `length_mm` and `breadth_mm` when `rectangular` is true. A non-rectangular slab is added as an area-based row and flagged (*check* what AQC supports). |
 
+**Phases:** any row of `walls[]`, `openings[]`, `columns[]`, `lintels[]` or `slabs[]` may carry `phase` and `bill_phase`. They are copied to the AQC row's `phase` and `bill_phase`. On re-import a changed phase is its own update (the row's geometry hash is not touched and an edited row is not flagged for it); a row without the fields says nothing, so a phase typed in AQC stays; a phase cleared in the drawing is not carried over.
+
 **Never imported:** plaster, painting, skirting, shuttering, rebar, PCC, earthwork, waterproofing. AQC derives the first four from the masonry and RCC rows and owns the bar schedules. The file does not carry them.
 
 ## 4. Re-import rules

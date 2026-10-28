@@ -58,6 +58,8 @@
         "type": "object",
         "required": ["ref", "level", "length_mm", "height_mm", "thickness_mm"],
         "properties": {
+          "phase": { "type": "string", "description": "Estimation phase chosen in O-Draft (optional)." },
+          "bill_phase": { "type": "string", "description": "Running-bill phase chosen in O-Draft (optional)." },
           "ref": { "type": "string", "minLength": 1, "description": "The plugin's wall id, for example W0001." },
           "level": { "type": "string" },
           "length_mm": { "type": "number", "exclusiveMinimum": 0, "description": "Centre-line length." },
@@ -74,6 +76,8 @@
         "type": "object",
         "required": ["ref", "kind", "mark", "level", "width_mm", "height_mm"],
         "properties": {
+          "phase": { "type": "string", "description": "Estimation phase chosen in O-Draft (optional)." },
+          "bill_phase": { "type": "string", "description": "Running-bill phase chosen in O-Draft (optional)." },
           "ref": { "type": "string", "minLength": 1, "description": "The block's handle in the drawing." },
           "kind": { "enum": ["Door", "Window"] },
           "mark": { "type": "string", "description": "Standard marks: D1 800, D2 900, D3 1200; W1 600, W2 900, W3 1200, W4 1500, W5 2000; V1 600 (a ventilator is a window)." },
@@ -108,6 +112,8 @@
         "type": "object",
         "required": ["ref", "mark", "level", "width_mm", "depth_mm"],
         "properties": {
+          "phase": { "type": "string", "description": "Estimation phase chosen in O-Draft (optional)." },
+          "bill_phase": { "type": "string", "description": "Running-bill phase chosen in O-Draft (optional)." },
           "ref": { "type": "string", "minLength": 1 },
           "mark": { "type": "string" },
           "level": { "type": "string" },
@@ -122,6 +128,8 @@
         "type": "object",
         "required": ["ref", "level", "opening_mm", "width_mm", "depth_mm"],
         "properties": {
+          "phase": { "type": "string", "description": "Estimation phase chosen in O-Draft (optional)." },
+          "bill_phase": { "type": "string", "description": "Running-bill phase chosen in O-Draft (optional)." },
           "ref": { "type": "string", "minLength": 1 },
           "mark": { "type": "string" },
           "level": { "type": "string" },
@@ -153,6 +161,8 @@
         "type": "object",
         "required": ["ref", "level", "area_m2", "thickness_mm"],
         "properties": {
+          "phase": { "type": "string", "description": "Estimation phase chosen in O-Draft (optional)." },
+          "bill_phase": { "type": "string", "description": "Running-bill phase chosen in O-Draft (optional)." },
           "ref": { "type": "string", "minLength": 1 },
           "level": { "type": "string" },
           "area_m2": { "type": "number", "exclusiveMinimum": 0 },

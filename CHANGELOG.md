@@ -5,6 +5,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added (2026-10-29)
+- **Phases from O-Draft.** The estimation phase and running-bill phase a dimension was given in O-Draft (`phase`, `bill_phase` on the take-off row) are imported onto the masonry, column, lintel and slab rows and shown as the "Est. phase" and "Bill phase" columns. A phase changed in the drawing updates the row on re-import without touching its geometry hash or a row edited here; a file with no phases leaves a phase typed here alone. Openings take their wall's phases in O-Draft. Tests: `PhaseImportTests`.
+- **Estimate revision and phase split.** Every calculation of the estimate is a revision (Rev 0 for the first, then one more each time) shown beside the total and stored with it. The estimate lines keep their phases and the screen totals the civil items by estimation phase and by running-bill phase (materials and steel are derived and carry none).
+- **Running-bill revision.** A certified RA bill can be reopened as its next revision (Accounts > Revise): it keeps its number and bill number, is unlocked until certified again, and shows `Rev n` in the list, the page and the PDF. The bill also carries a `billing_phase` name (stored; no picker yet).
+- `Office.Shared.ProjectPhases`, `PhaseTotals` and `RevisionLabels`: work stages, billing phases, phase totals and revision labels, with tests (`ProjectPhasesTests`).
+
+### Changed (2026-10-29)
+- **Navigation is two ribbons of text tabs** instead of the left pane: the main ribbon lists the sections, the sub ribbon the pages of the open section. The open tab of each is the colour of what lies below it (the sub ribbon, the canvas). No icons. Ctrl+1 to 9 still jump to a section. Compiled; not yet looked at in the running app.
 ### Removed
 - **AORMS Connect and Bridge connectors** — sign-in, Online projects, Push/Pull, Bind/Flush, hub sync badges, `Aorms.Connect` / `Aorms.Bridge` libraries, FakeAorms e2e, and Bridge-only stub hosts (`AQC.BBS` / `AQC.Estimation` / `AQC.PM`). Company-file / OSAS ticket flow, local `.bbsproj`, CAD import, and ShilpiDB take-off remain. Orphan Credential Manager entries `AORMS/Connect*` (if any) can be deleted manually.
 

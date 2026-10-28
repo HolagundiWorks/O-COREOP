@@ -4,6 +4,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using Office.Shared;
 
 namespace BBSApp.Services;
 
@@ -90,6 +91,13 @@ public sealed class RunningBill
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string Number { get; set; } = "";
     public int BillNo { get; set; }
+    /// <summary>
+    /// Revision of this bill: 0 is the first issue. A certified bill that is revised keeps its number and bill number and
+    /// takes the next revision (see <see cref="AccountsBook.ReviseBill"/>).
+    /// </summary>
+    public int Revision { get; set; }
+    /// <summary>The running-bill phase this bill covers (a name from the project's billing phases); empty for none.</summary>
+    public string BillingPhase { get; set; } = "";
     /// <summary>Persona that raises this RA bill (normally the contractor).</summary>
     public PartyRole IssuedByRole { get; set; } = PartyRole.Contractor;
     public DateTime Date { get; set; } = DateTime.Today;
@@ -132,6 +140,8 @@ public sealed class RunningBill
             ["id"] = Id,
             ["number"] = Number,
             ["bill_no"] = BillNo,
+            ["revision"] = Revision,
+            ["billing_phase"] = BillingPhase,
             ["issued_by"] = IssuedByRole.ToToken(),
             ["date"] = Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             ["contract_id"] = ContractId,
@@ -157,6 +167,8 @@ public sealed class RunningBill
             Id = o["id"]?.GetValue<string>() ?? Guid.NewGuid().ToString("N"),
             Number = o["number"]?.GetValue<string>() ?? "",
             BillNo = o["bill_no"]?.GetValue<int>() ?? 0,
+            Revision = Math.Max(0, o["revision"]?.GetValue<int>() ?? 0),
+            BillingPhase = o["billing_phase"]?.GetValue<string>() ?? "",
             IssuedByRole = o["issued_by"] is null ? PartyRole.PM : PartyRoleX.Parse(o["issued_by"]!.GetValue<string>()),
             ContractId = o["contract_id"]?.GetValue<string>() ?? "",
             ContractLabel = o["contract_label"]?.GetValue<string>() ?? "",
@@ -209,9 +221,23 @@ public sealed class AccountsBook
         return $"{PartyPrefix(b, companyName)}/RA/{fy}/{next:000}";
     }
 
+    /// <summary>
+    /// Opens a certified bill for correction as its next revision. The number and the bill number stay; the bill is
+    /// unlocked until it is certified again. Returns false for a bill that is not certified (nothing to revise).
+    /// </summary>
+    public bool ReviseBill(RunningBill b)
+    {
+        if (!b.Certified || string.IsNullOrWhiteSpace(b.Number)) return false;
+        b.Revision = RevisionLabels.Next(b.Revision);
+        b.Certified = false;
+        return true;
+    }
+
     public void CertifyBill(RunningBill b, string companyName)
     {
         if (b.Certified && !string.IsNullOrWhiteSpace(b.Number)) return;
+        // A revised bill keeps the number it was certified with.
+        if (!string.IsNullOrWhiteSpace(b.Number)) { b.Certified = true; return; }
         string fy = OfficeRegister.FinancialYear(b.Date);
         string key = CounterKey(b, fy);
         int next = (_counters.TryGetValue(key, out var last) ? last : 0) + 1;

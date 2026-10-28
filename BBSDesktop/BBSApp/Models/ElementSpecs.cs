@@ -127,6 +127,9 @@ public static class ElementSpecs
             Combo("provide_lap", "Provide compression lap", new[] { "No", "Yes" }, "No",
                 "Default from Settings — length = max(Ld_c, 24φ)"),
             When(Text("lap_nos", "Lap nos (0 = all bars)", "0"), "provide_lap", "Yes"),
+            Sec("Phases (set in O-Draft)"),
+            Text("phase", "Est. phase", "", "Estimation phase, picked in O-Draft while measuring"),
+            Text("bill_phase", "Bill phase", "", "Running bill phase, picked in O-Draft while measuring"),
         }
     };
 
@@ -197,6 +200,9 @@ public static class ElementSpecs
             Combo("end_anchorage", "End anchorage",
                 new[] { "Straight Ld", "90 Hook", "180 Hook" }, "90 Hook"),
             Combo("provide_lap", "Provide tension lap", new[] { "None", "Tension" }, "None"),
+            Sec("Phases (set in O-Draft)"),
+            Text("phase", "Est. phase", "", "Estimation phase, picked in O-Draft while measuring"),
+            Text("bill_phase", "Bill phase", "", "Running bill phase, picked in O-Draft while measuring"),
         }
     };
 
@@ -335,6 +341,9 @@ public static class ElementSpecs
             Sec("Bent-up bars (IS 2502)"),
             Combo("crank_count", "No. of bent-ups / bar", new[] { "0", "1", "2" }, "0"),
             Text("crank_rise", "Rise of bent-up (mm)", "", "Blank = D − 2 × nominal cover"),
+            Sec("Phases (set in O-Draft)"),
+            Text("phase", "Est. phase", "", "Estimation phase, picked in O-Draft while measuring"),
+            Text("bill_phase", "Bill phase", "", "Running bill phase, picked in O-Draft while measuring"),
         }
     };
 
@@ -470,6 +479,9 @@ public static class ElementSpecs
             Combo("block_size", "Block size (mm)",
                 new[] { "600x200x100", "600x200x150", "600x200x200", "400x200x200", "400x200x150" },
                 "600x200x150"),
+            Sec("Phases (set in O-Draft)"),
+            Text("phase", "Est. phase", "", "Estimation phase, picked in O-Draft while measuring"),
+            Text("bill_phase", "Bill phase", "", "Running bill phase, picked in O-Draft while measuring"),
         }
     };
 

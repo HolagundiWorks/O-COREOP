@@ -163,17 +163,27 @@
         </MenuBar>
 
 
-        <!-- Same structure as AOS: a menu bar, then a left navigation pane grouped by job, then the work area -->
-        <!-- Cursor-style: 56 px icon rail; expand for labels (OpenPaneLength 260). -->
-        <NavigationView x:Name="AppNav" Grid.Row="1"
-                        PaneDisplayMode="LeftCompact" CompactPaneLength="56" OpenPaneLength="260"
-                        CompactModeThresholdWidth="0" ExpandedModeThresholdWidth="10000"
-                        IsPaneOpen="False"
-                        IsSettingsVisible="False" IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="True"
-                        Background="{ThemeResource HcwFogBrush}"
-                        SelectionChanged="AppNav_SelectionChanged" DisplayModeChanged="AppNav_DisplayModeChanged"
-                        AutomationProperties.Name="Sections">
-            <Grid x:Name="WorkArea" Background="{ThemeResource HcwFogBrush}">
+        <!-- A menu bar, then two ribbons of text tabs (main: the sections; sub: the pages of the open section), then the work area.
+             The open tab of each ribbon is the colour of what lies below it, so it joins the sub ribbon or the canvas without a line. -->
+        <Grid x:Name="AppNav" Grid.Row="1" Background="{ThemeResource HcwFogBrush}" AutomationProperties.Name="Sections">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid x:Name="MainRibbon" Grid.Row="0" Background="{ThemeResource HcwSoftBrush}" AutomationProperties.Name="Main menu">
+                <Border x:Name="MainRibbonLine" Height="1" VerticalAlignment="Bottom" Background="{ThemeResource HcwEdgeBrush}"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Top">
+                    <StackPanel x:Name="MainRibbonTabs" Orientation="Horizontal" Margin="12,6,12,0"/>
+                </ScrollViewer>
+            </Grid>
+            <Grid x:Name="SubRibbon" Grid.Row="1" Background="{ThemeResource HcwWhiteBrush}" AutomationProperties.Name="Sub menu">
+                <Border Height="1" VerticalAlignment="Bottom" Background="{ThemeResource HcwEdgeBrush}"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Top">
+                    <StackPanel x:Name="SubRibbonTabs" Orientation="Horizontal" Margin="12,6,12,0"/>
+                </ScrollViewer>
+            </Grid>
+            <Grid x:Name="WorkArea" Grid.Row="2" Background="{ThemeResource HcwFogBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -308,7 +318,7 @@
             <!-- Hidden FAB peer — code still references CalcFab for focus -->
             <Button x:Name="CalcFab" Visibility="Collapsed" Click="CalcFab_Click"/>
             </Grid>
-        </NavigationView>
+        </Grid>
                 </Grid><!-- scale inner -->
             </Grid><!-- ScaleHost -->
         </Grid><!-- ScaleViewport -->

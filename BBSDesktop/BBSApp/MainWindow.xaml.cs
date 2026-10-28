@@ -55,7 +55,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
-        Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
         Hcw.Ui.SuiteLandmarks.ApplyShell(AppNav, ContentFrame, StatusStrip,
             navigationName: "Sections", mainName: "Main content");
         BuildNavigation();
@@ -84,7 +83,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             if (Content is FrameworkElement root)
                 root.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
             AppNav.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
-            Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
             // Rebuild the ribbon model so ImageIcon sources pick up the active theme dictionary (light/dark SVG).
             BuildRibbonModel();
             BuildNavigation();
@@ -349,54 +347,78 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private const double SuiteIconPx = 15;
     private const double SuiteTilePx = 36;
 
-    private bool _navSyncing;
+    // Ribbon tabs are drawn in code. Heights: the open tab is one pixel taller than the others so that it covers the
+    // line under its ribbon and so joins whatever lies below (the sub ribbon for a section, the canvas for a page).
+    private const double RibbonTabHeight = 30;
+    private const double RibbonLine = 1;
 
-    /// <summary>Builds the left navigation pane from the sections: a heading for each, and an item for each page.</summary>
+    /// <summary>
+    /// Builds the two ribbons: the main one has a text tab for each section, the sub one a text tab for each page of the
+    /// open section. No icons.
+    /// </summary>
     private void BuildNavigation()
     {
-        AppNav.MenuItems.Clear();
-        var first = true;
+        MainRibbonTabs.Children.Clear();
+        SubRibbonTabs.Children.Clear();
         foreach (var tab in _tabs)
         {
-            if (!first)
-                AppNav.MenuItems.Add(new NavigationViewItemSeparator());
-            first = false;
-            AppNav.MenuItems.Add(new NavigationViewItemHeader { Content = tab.Title, FontSize = 12, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
-            foreach (var cmd in tab.Commands)
+            var id = tab.Id;
+            var open = id == _activeTab;
+            var button = RibbonTabButton(tab.Title, open, joinsBrush: BrushRes("HcwWhiteBrush", Color.FromArgb(255, 255, 255, 255)));
+            button.Click += (_, _) => SelectTab(id);
+            MainRibbonTabs.Children.Add(button);
+        }
+        var section = _tabs.FirstOrDefault(t => t.Id == _activeTab);
+        foreach (var cmd in section?.Commands ?? Array.Empty<NavCmd>())
+        {
+            var tag = cmd.Tag;
+            var open = string.Equals(tag, _activeTag, StringComparison.OrdinalIgnoreCase);
+            var button = RibbonTabButton(cmd.Label, open, joinsBrush: BrushRes("HcwFogBrush", Color.FromArgb(255, 0xF4, 0xF5, 0xF7)));
+            button.Click += (_, _) =>
             {
-                var icon = cmd.Icon switch
-                {
-                    FontIcon fi => (IconElement)CloneFontIcon(fi, SuiteIconPx),
-                    ImageIcon ii => new ImageIcon { Source = ii.Source, Width = SuiteIconPx, Height = SuiteIconPx },
-                    _ => new FontIcon { Glyph = "\uE7C3", FontSize = SuiteIconPx, FontFamily = (FontFamily)Application.Current.Resources["SymbolThemeFontFamily"] },
-                };
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetAccessibilityView(icon, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
-                AppNav.MenuItems.Add(new NavigationViewItem
-                {
-                    Content = cmd.Label,
-                    Tag = cmd.Tag,
-                    MinHeight = SuiteTilePx,
-                    FontSize = 13,
-                    Icon = icon,
-                });
-            }
+                Navigate(tag);
+                // an action such as Pull JM is not a page: put the highlight back on the page being shown
+                RefreshCommandHighlight();
+            };
+            SubRibbonTabs.Children.Add(button);
         }
     }
 
-    // In the narrow layout the pane's menu button sits at the top left, so the page line moves clear of it.
-    private void AppNav_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
+    /// <summary>One text tab. Open: the colour of what is below it, edges on three sides, taller by the ribbon line.</summary>
+    private static Button RibbonTabButton(string text, bool open, Brush joinsBrush)
     {
-        var minimal = sender.DisplayMode == NavigationViewDisplayMode.Minimal;
-        PageLine.Margin = new Thickness(minimal ? 56 : 24, 12, 24, 4);
-    }
-
-    private void AppNav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-    {
-        if (_navSyncing || args.SelectedItem is not NavigationViewItem { Tag: string tag })
-            return;
-        Navigate(tag);
-        // an action such as Pull JM is not a page: put the highlight back on the page being shown
-        RefreshCommandHighlight();
+        var edge = BrushRes("HcwEdgeBrush", Color.FromArgb(255, 0xD0, 0xD4, 0xDC));
+        var ink = BrushRes("HcwInkBrush", Color.FromArgb(255, 0x14, 0x15, 0x17));
+        var muted = BrushRes("HcwMutedBrush", Color.FromArgb(255, 0x5A, 0x60, 0x6B));
+        var button = new Button
+        {
+            Content = new TextBlock
+            {
+                Text = text,
+                FontSize = 13,
+                FontWeight = open ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
+                Foreground = open ? ink : muted,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+            Height = open ? RibbonTabHeight + RibbonLine : RibbonTabHeight,
+            Padding = new Thickness(14, 0, 14, 0),
+            Margin = new Thickness(0, 0, 2, 0),
+            VerticalAlignment = VerticalAlignment.Top,
+            Background = open ? joinsBrush : new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            BorderBrush = edge,
+            BorderThickness = open ? new Thickness(1, 1, 1, 0) : new Thickness(0),
+            CornerRadius = new CornerRadius(4, 4, 0, 0),
+        };
+        if (open)
+        {
+            // Keep the open tab the colour of what it joins when the pointer is over it or presses it.
+            foreach (var key in new[] { "ButtonBackground", "ButtonBackgroundPointerOver", "ButtonBackgroundPressed", "ButtonBorderBrushPointerOver", "ButtonBorderBrushPressed" })
+                button.Resources[key] = key.StartsWith("ButtonBorder", StringComparison.Ordinal) ? edge : joinsBrush;
+        }
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, text);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(button, open ? "open" : "");
+        return button;
     }
 
     private void SelectTab(string id)
@@ -533,19 +555,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         if (RibbonPageLabel != null) RibbonPageLabel.Text = label;
     }
 
-    /// <summary>Marks the navigation item of the page being shown, without navigating again.</summary>
-    private void RefreshCommandHighlight()
-    {
-        _navSyncing = true;
-        try
-        {
-            AppNav.SelectedItem = AppNav.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(i => string.Equals(i.Tag as string, _activeTag, StringComparison.OrdinalIgnoreCase));
-        }
-        finally
-        {
-            _navSyncing = false;
-        }
-    }
+    /// <summary>Redraws the ribbons so the open section and page are the open tabs, without navigating again.</summary>
+    private void RefreshCommandHighlight() => BuildNavigation();
 
     static Brush BrushRes(string key, Color fallback)
     {

@@ -45,7 +45,7 @@ Existing project quantities document remains `aqc.project` (unchanged).
 | `shared_at` / `shared_by` | UTC ISO-8601 and ticket username |
 | `artifact_ref` | Same shape as O-Studio `docs/contracts/refs.md` (`Office.Shared.ArtifactRefs`) |
 | `summary` | Inbox-friendly totals without parsing `body` |
-| `body` | Full estimate JSON (`EstimateCalculator.ToJson`) or RA bill JSON (`RunningBill.ToJson`) |
+| `body` | Full estimate JSON (`EstimateCalculator.ToJson`) or RA bill JSON (`RunningBill.ToJson`). The estimate carries `revision` (0 for the first calculation) and each line its `phase` and `bill_phase`; the bill carries `revision` (0 for the first issue; a certified bill reopened with Revise keeps its number and takes the next) and `billing_phase`. These are CoreOp's own revision counters; `artifact_ref.revision` is the company-file document revision and is separate |
 
 ### Estimate `summary`
 

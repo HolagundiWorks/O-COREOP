@@ -149,6 +149,8 @@ public sealed partial class EstimatePage : Page
         }
 
         var result = EstimateCalculator.Build(ProjectStore.Current, ver, levels);
+        // The first calculation is Rev 0; calculating again makes the next revision.
+        result.Revision = ProjectStore.Current.LastEstimate is { } previous ? Office.Shared.RevisionLabels.Next(previous.Revision) : 0;
         EstimateCalculator.AttachCompanyArtifactRef(result, ProjectStore.Current);
         ProjectStore.Current.LastEstimate = result;
         ProjectStore.Current.LastEstimateRateBookVersionId = ver.Id;
@@ -157,15 +159,26 @@ public sealed partial class EstimatePage : Page
         ShowResult(result);
     }
 
+    /// <summary>Two extra lines under the totals: the civil items by estimation phase and by running-bill phase. Empty when no item has a phase.</summary>
+    private static string PhaseSummary(EstimateResult result)
+    {
+        static string Line(string title, IReadOnlyList<(string Phase, double Amount)> split) =>
+            split.Count == 0 || split.All(s => s.Phase == Office.Shared.PhaseTotals.NoPhase)
+                ? ""
+                : "\n" + title + ": " + string.Join("  ·  ", split.Select(s => $"{s.Phase} ₹ {s.Amount:N2}"));
+        return Line("Civil items by estimation phase", result.CivilByPhase(false)) + Line("Civil items by running-bill phase", result.CivilByPhase(true));
+    }
+
     private void ShowResult(EstimateResult result)
     {
         _result = result;
-        TotalText.Text = $"₹ {result.GrandTotal:N2}";
+        TotalText.Text = $"₹ {result.GrandTotal:N2}  ·  {Office.Shared.RevisionLabels.Estimate(result.Revision)}";
         var mk = result.Markups;
         MarkupText.Text =
             $"Base ₹ {mk.BaseTotal:N2}  ·  Elec {mk.ElectricalPct:0.##}% ₹ {mk.ElectricalAmount:N2}  ·  " +
             $"Plumb {mk.PlumbingPct:0.##}% ₹ {mk.PlumbingAmount:N2}  ·  Esc {mk.EscalationPct:0.##}% ₹ {mk.EscalationAmount:N2}  ·  " +
-            $"Fees {mk.ConsultingFeePct:0.##}% ₹ {mk.ConsultingFeeAmount:N2}";
+            $"Fees {mk.ConsultingFeePct:0.##}% ₹ {mk.ConsultingFeeAmount:N2}"
+            + PhaseSummary(result);
         RefreshProjectRefCaption(result);
         CivilTitle.Text = $"Abstract of cost — Civil / finishes / doors / windows ({result.Civil.Count})";
         MatTitle.Text = $"Abstract of cost — Materials ({result.Materials.Count})";

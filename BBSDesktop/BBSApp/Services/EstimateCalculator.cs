@@ -24,6 +24,10 @@ public sealed class EstimateLine
     public double HeightM { get; set; }
     public double AreaM2 { get; set; }
     public double VolumeM3 { get; set; }
+    /// <summary>The estimation phase the measured item was put in, in O-Draft; empty when it has none.</summary>
+    public string Phase { get; set; } = "";
+    /// <summary>The running-bill phase the measured item was put in, in O-Draft; empty when it has none.</summary>
+    public string BillPhase { get; set; } = "";
 }
 
 public sealed class EstimateResult
@@ -39,6 +43,15 @@ public sealed class EstimateResult
     public List<string> MissingCodes { get; set; } = new();
     /// <summary>Suite ArtifactRef JSON when this estimate is tied to a company-file project; otherwise null.</summary>
     public JsonObject? ArtifactRef { get; set; }
+    /// <summary>Revision of this estimate: 0 for the first calculation, then one more each time it is calculated again.</summary>
+    public int Revision { get; set; }
+
+    /// <summary>
+    /// The civil items' amounts grouped by estimation phase (or by running-bill phase). Materials and steel are
+    /// derived from the civil items and the member sheets, so they carry no phase of their own and are not in this split.
+    /// </summary>
+    public IReadOnlyList<(string Phase, double Amount)> CivilByPhase(bool billing) =>
+        PhaseTotals.Group(Civil.Select(l => ((string?)(billing ? l.BillPhase : l.Phase), l.Amount)), ProjectPhases.DefaultStages.Select(s => s.Name));
 }
 
 /// <summary>DSR / SOR abstract-of-cost table with measurement columns (L, B, H, area, volume).</summary>
@@ -159,6 +172,7 @@ public static class EstimateCalculator
         var missing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var civil = CivilBoqCalculator.BuildAll(store, levels);
+        var phaseOf = PhaseIndex(store);
         foreach (var c in civil)
         {
             if (c.Qty <= 0) continue;
@@ -197,7 +211,9 @@ public static class EstimateCalculator
                 BreadthM = Round3(c.BreadthM),
                 HeightM = Round3(c.HeightM),
                 AreaM2 = Round3(c.AreaM2),
-                VolumeM3 = Round3(c.VolumeM3)
+                VolumeM3 = Round3(c.VolumeM3),
+                Phase = phaseOf.TryGetValue(PhaseKey(c.Mark, c.Level), out var ph) ? ph.Phase : "",
+                BillPhase = ph.BillPhase ?? ""
             });
         }
 
@@ -250,6 +266,24 @@ public static class EstimateCalculator
         return result;
     }
 
+    static string PhaseKey(string mark, string level) => mark.Trim().ToUpperInvariant() + "|" + level.Trim();
+
+    /// <summary>The phases the member sheets hold (set in O-Draft), by mark and storey.</summary>
+    static Dictionary<string, (string Phase, string BillPhase)> PhaseIndex(ProjectStore store)
+    {
+        var index = new Dictionary<string, (string, string)>();
+        foreach (var rows in new[] { store.MasonryWalls, store.Columns, store.Lintels, store.Slabs, store.Flooring })
+            foreach (var r in rows)
+            {
+                string phase = r.TryGetValue("phase", out var p) ? p.Trim() : "";
+                string bill = r.TryGetValue("bill_phase", out var b) ? b.Trim() : "";
+                if (phase.Length == 0 && bill.Length == 0) continue;
+                if (!r.TryGetValue("mark", out var mark) || string.IsNullOrWhiteSpace(mark)) continue;
+                index[PhaseKey(mark, MaterialsCalculator.RowLevel(r))] = (phase, bill);
+            }
+        return index;
+    }
+
     public static JsonObject ToJson(EstimateResult r)
     {
         var civil = new JsonArray();
@@ -264,6 +298,7 @@ public static class EstimateCalculator
         {
             ["rate_book_version_id"] = r.RateBookVersionId,
             ["rate_book_version_name"] = r.RateBookVersionName,
+            ["revision"] = r.Revision,
             ["grand_total"] = r.GrandTotal,
             ["base_total"] = r.BaseTotal,
             ["markups"] = r.Markups.ToJson(),
@@ -300,7 +335,8 @@ public static class EstimateCalculator
         var r = new EstimateResult
         {
             RateBookVersionId = o["rate_book_version_id"]?.GetValue<string>() ?? "",
-            RateBookVersionName = o["rate_book_version_name"]?.GetValue<string>() ?? ""
+            RateBookVersionName = o["rate_book_version_name"]?.GetValue<string>() ?? "",
+            Revision = Math.Max(0, o["revision"]?.GetValue<int>() ?? 0)
         };
         LoadLines(o["civil"] as JsonArray, r.Civil);
         LoadLines(o["materials"] as JsonArray, r.Materials);
@@ -334,7 +370,9 @@ public static class EstimateCalculator
         ["breadth_m"] = l.BreadthM,
         ["height_m"] = l.HeightM,
         ["area_m2"] = l.AreaM2,
-        ["volume_m3"] = l.VolumeM3
+        ["volume_m3"] = l.VolumeM3,
+        ["phase"] = l.Phase,
+        ["bill_phase"] = l.BillPhase
     };
 
     private static void LoadLines(JsonArray? arr, List<EstimateLine> dest)
@@ -359,7 +397,9 @@ public static class EstimateCalculator
                 BreadthM = o["breadth_m"]?.GetValue<double>() ?? 0,
                 HeightM = o["height_m"]?.GetValue<double>() ?? 0,
                 AreaM2 = o["area_m2"]?.GetValue<double>() ?? 0,
-                VolumeM3 = o["volume_m3"]?.GetValue<double>() ?? 0
+                VolumeM3 = o["volume_m3"]?.GetValue<double>() ?? 0,
+                Phase = o["phase"]?.GetValue<string>() ?? "",
+                BillPhase = o["bill_phase"]?.GetValue<string>() ?? ""
             });
         }
     }

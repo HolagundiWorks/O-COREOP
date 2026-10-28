@@ -169,7 +169,7 @@ public sealed partial class AccountsPage : Page
     {
         if (_current is null) { NumberText.Text = "—"; return; }
         NumberText.Text = _current.Certified && !string.IsNullOrWhiteSpace(_current.Number)
-            ? $"{_current.Number} · RA {_current.BillNo}"
+            ? $"{RevisionLabels.RunningBill(_current.Number, _current.Revision)} · RA {_current.BillNo}"
             : _book.PreviewBillNumber(_current, Company) + " (draft)";
     }
 
@@ -301,6 +301,28 @@ public sealed partial class AccountsPage : Page
         ProjectStore.Current.Notify();
         UpdateSummary();
         AppNotify.Success("Certified locally", _current.Number);
+    }
+
+    private async void ReviseBill_Click(object sender, RoutedEventArgs e)
+    {
+        if (_current is null) { AppNotify.Info("Nothing to revise", "Select a certified RA bill."); return; }
+        if (!_current.Certified) { AppNotify.Info("Not certified", "Only a certified bill has a revision to make; edit this one directly."); return; }
+        var dlg = new ContentDialog
+        {
+            Title = "Revise RA bill",
+            Content = $"Open {_current.Number} as {RevisionLabels.Revision(RevisionLabels.Next(_current.Revision))}? It keeps its number and is unlocked until you certify it again.",
+            PrimaryButtonText = "Revise",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = XamlRoot
+        };
+        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
+        if (!_book.ReviseBill(_current)) return;
+        RowFor(_current)?.Refresh();
+        LoadBill(_current);
+        ProjectStore.Current.Notify();
+        UpdateSummary();
+        AppNotify.Success("Revision opened", RevisionLabels.RunningBill(_current.Number, _current.Revision));
     }
 
     private void DeleteBill_Click(object sender, RoutedEventArgs e)
@@ -565,7 +587,9 @@ public sealed class BillRow : INotifyPropertyChanged
     private readonly AccountsBook _book; private readonly string _company;
     public RunningBill B { get; }
     public BillRow(AccountsBook book, RunningBill b, string company) { _book = book; B = b; _company = company; }
-    public string Header => B.Certified && !string.IsNullOrWhiteSpace(B.Number) ? $"RA {B.BillNo} · {B.Number}" : "RA bill · (draft)";
+    public string Header => !string.IsNullOrWhiteSpace(B.Number)
+        ? $"RA {B.BillNo} · {RevisionLabels.RunningBill(B.Number, B.Revision)}{(B.Certified ? "" : " (revising)")}"
+        : "RA bill · (draft)";
     public string Sub => $"{B.Date:dd MMM yyyy} · net {B.Net:N0}";
     public void Refresh() { OnP(nameof(Header)); OnP(nameof(Sub)); }
     public event PropertyChangedEventHandler? PropertyChanged;

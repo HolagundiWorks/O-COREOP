@@ -66,6 +66,8 @@ One database holds many drawings, and ids have no namespace, so each drawing own
 
 **The same fields as the bridge file row, unchanged** (see [bridge/hcw-aqc-bridge.schema.json](bridge/hcw-aqc-bridge.schema.json) and [bridge/fixtures](bridge/fixtures)): a wall is `{ "ref", "level", "length_mm", "height_mm", "thickness_mm", "layer" }`, an opening `{ "ref", "kind", "mark", "type", "level", "width_mm", "height_mm", "sill_mm", "wall_ref" }`, and so on. `ref` is the row's stable identity; O-CoreOp stores it as `source_ref`. `level` is the floor **name** from the header's `levels`.
 
+**Phases (optional).** A wall, column, lintel, slab or opening row may carry `phase` (the estimation phase, for example `Foundation`) and `bill_phase` (the running-bill phase, for example `Phase 1`), both text, chosen in O-Draft ([O-Draft `takeoff-shilpidb.md`](https://github.com/HolagundiWorks/O-DRAFT/blob/main/docs/takeoff-shilpidb.md), "Phases"). A row without them has no field, and a reader that does not know them is unaffected, so this is not a new format version. An opening carries its wall's phases. O-CoreOp stores them on the imported row (`phase`, `bill_phase`) and shows them as table columns.
+
 The bounding box is the bounds of the measured geometry in the drawing's coordinates, in millimetres (zero-size at the origin when there is no geometry). O-CoreOp does not need it to import; it lets any client ask "what was measured in this window" and lets O-Draft select the item.
 
 ### 4.3 Header payload
