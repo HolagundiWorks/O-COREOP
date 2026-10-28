@@ -148,8 +148,10 @@
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <hcw:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
                             <Button Content="Bind" Style="{StaticResource HcwGhostButton}" Click="BindProject_Click"
+                                    AutomationProperties.Name="Bind project to Connect catalog"
                                     ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
                             <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
+                                    AutomationProperties.Name="Flush outbox to hub"
                                     ToolTipService.ToolTip="Flush outbox to hub"/>
                             <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
                                     Click="CompanyBadge_Click"
@@ -220,6 +222,7 @@
                                     Style="{StaticResource HcwGhostButton}"
                                     MinWidth="{StaticResource SuiteControlMinHeight}" Width="{StaticResource SuiteControlMinHeight}" Padding="0"
                                     Click="CalcClose_Click"
+                                    AutomationProperties.Name="Close calculator"
                                     ToolTipService.ToolTip="Close">
                                 <FontIcon Glyph="&#xE711;" FontSize="{StaticResource SuiteIconSize}"
                                           FontFamily="{ThemeResource SymbolThemeFontFamily}"
@@ -228,12 +231,14 @@
                         </Grid>
                         <TextBox x:Name="CalcInput"
                                  PlaceholderText="Calculate or ask a question"
+                                 AutomationProperties.Name="Calculator or ask input"
                                  FontSize="{StaticResource SuiteFontBody}" MinHeight="{StaticResource SuiteControlMinHeight}"
                                  AcceptsReturn="False" TextWrapping="NoWrap"
                                  KeyDown="CalcInput_KeyDown"
                                  TextChanged="CalcInput_TextChanged"/>
                         <TextBox x:Name="CalcResult"
                                  PlaceholderText="Result"
+                                 AutomationProperties.Name="Calculator result"
                                  FontSize="{StaticResource SuiteFontBody}" MinHeight="{StaticResource SuiteControlMinHeight}"
                                  IsReadOnly="True" AcceptsReturn="False"
                                  Foreground="{ThemeResource HcwAccentTextBrush}"/>

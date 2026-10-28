@@ -20,6 +20,9 @@ Copyright (c) 2020-2024 Paweł Kuna
 | `pcc.svg` | `layers-intersect` |
 | `earthwork.svg` | `shovel` |
 | `ssm.svg` | stack / stone |
+| `door.svg` | `door` |
+| `window.svg` | `window` (frame + mullions) |
+| `coping.svg`, `dpc.svg`, `flooring.svg`, `lintel.svg`, `painting.svg`, `parapet.svg`, `pedestal.svg`, `plinth.svg`, `screed.svg`, `shuttering.svg`, `skirting.svg`, `waterproofing.svg`, `vdf.svg` | adapted Tabler stroke primitives |
 
 Light = black stroke; `*-dark.svg` = white stroke for dark theme.
 License: [MIT](https://github.com/tabler/tabler-icons/blob/master/LICENSE)

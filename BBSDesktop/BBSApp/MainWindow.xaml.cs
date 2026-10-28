@@ -88,6 +88,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
                 root.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
             AppNav.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
             Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
+            // Rebuild the ribbon model so ImageIcon sources pick up the active theme dictionary (light/dark SVG).
+            BuildRibbonModel();
             BuildNavigation();
             ApplyBrandingChrome();
         });
@@ -271,8 +273,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             "skirting" => "NavIconSkirting",
             "parapet" => "NavIconParapet",
             "plinth_protection" or "plinth" => "NavIconPlinth",
-            "doors" or "door" => null,
-            "windows" or "window" => null,
+            "doors" or "door" => "NavIconDoor",
+            "windows" or "window" => "NavIconWindow",
             _ => null
         };
         if (key is not null && ThemeIcon(key) is { } img)

@@ -305,6 +305,8 @@
             <SvgImageSource x:Key="NavIconSkirting" UriSource="ms-appx:///Assets/Icons/skirting.svg"/>
             <SvgImageSource x:Key="NavIconParapet" UriSource="ms-appx:///Assets/Icons/parapet.svg"/>
             <SvgImageSource x:Key="NavIconPlinth" UriSource="ms-appx:///Assets/Icons/plinth.svg"/>
+            <SvgImageSource x:Key="NavIconDoor" UriSource="ms-appx:///Assets/Icons/door.svg"/>
+            <SvgImageSource x:Key="NavIconWindow" UriSource="ms-appx:///Assets/Icons/window.svg"/>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
             <SvgImageSource x:Key="NavIconColumn" UriSource="ms-appx:///Assets/Icons/column.svg"/>
@@ -331,6 +333,8 @@
             <SvgImageSource x:Key="NavIconSkirting" UriSource="ms-appx:///Assets/Icons/skirting.svg"/>
             <SvgImageSource x:Key="NavIconParapet" UriSource="ms-appx:///Assets/Icons/parapet.svg"/>
             <SvgImageSource x:Key="NavIconPlinth" UriSource="ms-appx:///Assets/Icons/plinth.svg"/>
+            <SvgImageSource x:Key="NavIconDoor" UriSource="ms-appx:///Assets/Icons/door.svg"/>
+            <SvgImageSource x:Key="NavIconWindow" UriSource="ms-appx:///Assets/Icons/window.svg"/>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <SvgImageSource x:Key="NavIconColumn" UriSource="ms-appx:///Assets/Icons/column-dark.svg"/>
@@ -357,6 +361,8 @@
             <SvgImageSource x:Key="NavIconSkirting" UriSource="ms-appx:///Assets/Icons/skirting-dark.svg"/>
             <SvgImageSource x:Key="NavIconParapet" UriSource="ms-appx:///Assets/Icons/parapet-dark.svg"/>
             <SvgImageSource x:Key="NavIconPlinth" UriSource="ms-appx:///Assets/Icons/plinth-dark.svg"/>
+            <SvgImageSource x:Key="NavIconDoor" UriSource="ms-appx:///Assets/Icons/door-dark.svg"/>
+            <SvgImageSource x:Key="NavIconWindow" UriSource="ms-appx:///Assets/Icons/window-dark.svg"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
