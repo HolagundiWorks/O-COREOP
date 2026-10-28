@@ -85,7 +85,6 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
 | Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported. **Project > Take-off (O-Draft)** lists the drawings on the shared ShilpiDB server (refreshes every 5 s), reads one into the import preview, and fetches and stores the annotated drawing PDF O-Draft generated; several drawings per project, with a warning when two measure the same floor |
 | CAD import / export | **File > Import from CAD** reads an `hcw-aqc-bridge` file (the offline path); **Export for CAD** writes levels, project details and beam depths back. Idempotent (`source = hcwcad:<drawing id>`), preview first, one undo step, `Lvl0` never touched. Contracts: `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
-| AORMS sign-in and sync | **File > Sign in to AORMS** (one login for the suite; it is the licence), **Online projects**, **Push project online**, **Pull latest**. Edits are queued and sent under the edit lease and survive a restart. See `docs/PROJECT-SYNC.md` |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
 | Rate book | App-level versioned rates (`%LocalAppData%\O-CoreOp\`) |
 | Estimate | DSR abstract (L/B/H, area, volume) + % markups → grand total; PDF sketches appendix |
@@ -106,11 +105,9 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 |------|------|
 | Rate books / logos | `%LocalAppData%\O-CoreOp\` (reads legacy `%LocalAppData%\BOQCore\` if present) |
 | AI assistant API key | `%LocalAppData%\O-CoreOp\` — encrypted with Windows DPAPI (per-user); or the `ANTHROPIC_API_KEY` env var |
-| Project | User-chosen `.bbsproj` (also holds the link to the online project, the take-off file path and the stored annotated drawings) |
-| Unsent AORMS edits | `%LocalAppData%\O-CoreOp\outbox\<aqc project id>.json` and `.base.json` (rows only, never a token) |
+| Project | User-chosen `.bbsproj` (also holds the take-off file path and the stored annotated drawings) |
 | Annotated drawings | `<project name>.assets\annotated\` beside the saved project, or `%LocalAppData%\O-CoreOp\annotated\` until it is saved |
 | Shared take-off server data | `%LocalAppData%\OSAS\takeoff\takeoff.vdb` (ShilpiDB; O-Draft and O-CoreOp both use it) |
-| AORMS sign-in | Windows Credential Manager: `AORMS/Connect` (shared with O-Draft) and `AORMS/Connect/aqc`; never the password or the access token |
 
 ## Branding
 

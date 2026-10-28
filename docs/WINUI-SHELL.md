@@ -26,15 +26,15 @@ Pane footer — the Pomodoro clock (shown when the pane is fully open)
 
 | Region | Role |
 | --- | --- |
-| **File** | New · Open · Open company file · Company projects · **Take-off from ShilpiDB** · Import / Export CAD · Undo last CAD import · Save · Save as · Save to company file · Close company file · Publish project status · **AORMS: Sign in · Online projects · Push project online · Pull latest · Sign out** · Exit |
-| **Edit** | Project / Engineering / Cost settings · Bind Connect |
+| **File** | New · Open · Open company from OSAS · Company projects · Close company · Save · Save as · Save to company file · **Take-off from ShilpiDB** · Import / Export CAD · Undo last CAD import · Exit |
+| **Edit** | Project / Engineering / Cost settings |
 | **Help** | About |
 | **Navigation pane** | One heading per section (Project, RCC steel, Civil BOQ, Schedule, Office, Contracts, Accounts, Stores, HR & resources, Outputs) and one item per page. Ctrl+1 to Ctrl+9 jump to a section's first page |
-| **Status strip** | Calculator · Bind · Flush (the earlier hub flow, to be removed) · **AORMS chip** (`AORMS · <studio> · synced / 3 unsent / offline …`) · Sync chip (earlier hub flow) · company chip |
+| **Status strip** | Calculator · theme switch · company chip |
 | **UI scale** | 1×. The shell follows the system text size and display scale (`UiScale` in `MainWindow.xaml.cs`) |
 | **Narrow windows** | The navigation pane is fully open from 900 px, an icon rail from 560 px, and a menu button below that. The page line moves clear of the button. Page headers and toolbars wrap (`Hcw.Ui` `FlexBar`); the element page's section sketch gives its column back under 700 px. Page titles are level 2 headings and section headers level 3, under the level 1 page line |
 
-O-Studio (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New, Save and Publish are in the File menu.
+O-Studio (the office app) has the same structure: a menu bar, a left pane grouped by job, and the page. Keep the two in step when either changes. The earlier ribbon, command strip, action dock and bottom taskbar were removed; New and Save are in the File menu.
 
 Themes: `HcwTheme.xaml` · `HcwFluentBridge.xaml` · `FluentTokens.xaml`.
 

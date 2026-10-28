@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Removed
+- **AORMS Connect and Bridge connectors** — sign-in, Online projects, Push/Pull, Bind/Flush, hub sync badges, `Aorms.Connect` / `Aorms.Bridge` libraries, FakeAorms e2e, and Bridge-only stub hosts (`AQC.BBS` / `AQC.Estimation` / `AQC.PM`). Company-file / OSAS ticket flow, local `.bbsproj`, CAD import, and ShilpiDB take-off remain. Orphan Credential Manager entries `AORMS/Connect*` (if any) can be deleted manually.
+
 ### Changed (2026-10-19)
 - **Renamed O-CoreOp** (OSAS, the Open Source Architecture Suit). The program is still `AQCCore.exe`; the installer AppId, the `.bbsproj` extension and the `aqc` AORMS session name are unchanged on purpose. New shell: menu bar, grouped left navigation pane, work area and status strip (the same structure as the other OSAS apps), the shared `Hcw.Ui` design (building needs a sibling checkout of the private `hcw-ui` repository), accessibility fixes from the WCAG 2.2 AA audit.
 - **Take-off moved to O-Draft.** Drawings and PDFs are measured in O-Draft, which records the take-off in one shared ShilpiDB server; O-CoreOp reads it from there (see Added). The AutoCAD plugin hcwCAD-KIT is dropped.

@@ -1,21 +1,16 @@
 # Branch handoff (2026-10-11)
 
-> Update 2026-10-19: the branches named below are history. `feat/company-live-sync` and `feat/shared-company-file` were merged into `main` and deleted; see `HANDOFF-O-COREOP.md` for what is current.
+> Update 2026-10-28: AORMS Connect / Bridge connectors and related branches are historical only — the libraries (`Aorms.Connect`, `Aorms.Bridge`), stub hosts, and sync UI were removed from `main`. See `HANDOFF-O-COREOP.md` for what is current (company file, CAD import, ShilpiDB take-off).
 
-All remote branches were reviewed and merged into `main`. Nothing was deleted; the branches stay as history.
+All remote branches listed below were reviewed and merged into `main` at the time. Nothing was deleted then; the branches stay as history.
 
-| Branch | State | What it holds |
+| Branch | State | What it held (historical) |
 |---|---|---|
-| `claude/aqc-connect-a1` | Merged (two commits, A1 + A2) | `Aorms.Connect` library (sign-in, single session, token refresh, restore), `ProjectMapper` (.bbsproj <-> rows, `_rid` minting), `ProjectsApi` (list, seed, push online, pull), smoke app and 24 xUnit tests (`dotnet test BBSDesktop/Aorms.Connect.Tests`: 24 passed). |
-| `feat/aorms-bridge-smoke` | Merged; `main`'s versions kept | Older `Aorms.Bridge.Smoke` and spike doc. `main` already had newer versions (licence activation, hub port 4000), so conflicts in `Program.cs` and `docs/AORMS-BRIDGE-SPIKE.md` were resolved to `main`. Nothing unique was lost. |
+| `claude/aqc-connect-a1` | Merged | Former `Aorms.Connect` library (since removed). |
+| `feat/aorms-bridge-smoke` | Merged | Former `Aorms.Bridge.Smoke` / spike docs (since removed). |
 | `claude/ai-entry-points-kgcmip` | Already in `main` | AI entry points, DPAPI-encrypted API key. |
 | `claude/roadmap-continuation-l8vv8e` | Already in `main` | Roadmap phases up to row edit/delete via the assistant. |
 
-## Not verified
-- The WinUI app and C++ engine were not rebuilt after this merge; only `Aorms.Connect.Tests` was run.
-- `Aorms.Connect` is not yet referenced by `BBSApp`; wiring it into the shells is the next step.
-
-## Next
-1. Wire `Aorms.Connect` into the Estimation/BBS/PM shells.
-2. ~~Build the CAD importer~~ done on `feat/cad-import` (see `docs/AADT.md`). Next: run it in the app and with a real export once AADT is shared; add "Export for CAD".
-3. Then retire `BBSApp/Controls/TakeoffCanvas.cs` if the owner agrees.
+## Current next steps
+1. Company-file / OSAS ticket flow and local CAD / ShilpiDB take-off (keep).
+2. Click through Import/Export CAD and Take-off with a real O-Draft export.

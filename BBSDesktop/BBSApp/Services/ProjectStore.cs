@@ -162,28 +162,6 @@ public sealed class ProjectStore
             _ => null
         };
 
-    /// <summary>Every take-off sheet that syncs, by the key it has in the project file (the same names as ProjectMapper's take-off sections).</summary>
-    private IEnumerable<(string Section, ObservableCollection<Dictionary<string, string>> Rows)> SyncedSheets()
-    {
-        yield return ("columns", Columns); yield return ("beams", Beams); yield return ("pedestals", Pedestals); yield return ("lintels", Lintels);
-        yield return ("slabs", Slabs); yield return ("footings", Footings); yield return ("walls", Walls); yield return ("stairs", Stairs);
-        yield return ("masonry", MasonryWalls); yield return ("masonry_openings", MasonryOpenings); yield return ("plaster", Plaster);
-        yield return ("finish_propose", FinishPropose); yield return ("pcc", PccBeds); yield return ("earthwork", Earthwork);
-        yield return ("ssm", SizeStone); yield return ("shuttering", Shuttering); yield return ("flooring", Flooring);
-        yield return ("painting", Painting); yield return ("waterproofing", Waterproofing); yield return ("dpc", Dpc); yield return ("coping", Coping);
-        yield return ("screed", Screed); yield return ("vdf", Vdf); yield return ("skirting", Skirting); yield return ("parapet", Parapet);
-        yield return ("plinth_protection", PlinthProtection); yield return ("doors", Doors); yield return ("windows", Windows);
-    }
-
-    /// <summary>
-    /// Gives every take-off row a stable <c>_rid</c> (a row that lacks one, or that copies another row's, gets a new one) so the same row has the same
-    /// id on every sync. A duplicated row therefore never shares its original's id. Returns how many ids were minted.
-    /// </summary>
-    public int MintRowIds()
-    {
-        return Aorms.Connect.ProjectMapper.MintRowIds(SyncedSheets().SelectMany(s => s.Rows.Select(r => (s.Section, (IDictionary<string, string>)r))));
-    }
-
     public string[] LevelIds() => Levels.Select(l => l.Id).ToArray();
 
     public LevelDef? FindLevel(string id) => Levels.FirstOrDefault(l => l.Id == id);

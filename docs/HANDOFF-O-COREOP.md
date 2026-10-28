@@ -11,24 +11,24 @@ Merged on 2026-10-19 (merge commit `a0aa37d`):
 - The OSAS shell: menu bar, grouped left navigation pane, work area, status strip. The pane is open from 900 px, an icon rail from 560 px, and a menu button below that. See `docs/WINUI-SHELL.md`.
 - The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the private `hcw-ui` repository (`..\..\..\hcw-ui` from the app folder). The build fails without it.
 - Accessibility fixes from the WCAG 2.2 AA audit: names on sheet cells and icon buttons, targets of 24 px or more, headings, a polite notice host, 1x scale.
-- The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run); the installer's AppId and the `aqc` AORMS session name are unchanged, on purpose.
-- AORMS sign-in (Credential Manager stores, status badge, File > Sign in / Sign out, take-over prompt) and File > Online projects (list the studio's projects, link one, import CAD take-off).
-- CI (`.github/workflows/ci.yml`): the import and sign-in tests, and a build.
+- The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run).
+- **AORMS Connect / Bridge removed (2026-10-28):** sign-in, Online projects, Push/Pull, Bind/Flush, sync badges, `Aorms.Connect` / `Aorms.Bridge`, FakeAorms e2e, and Bridge stub hosts are gone. Company-file / OSAS ticket flow, CAD import, and ShilpiDB take-off remain.
+- CI (`.github/workflows/ci.yml`): CadImport + Office.Shared tests, and a BBSApp build.
 
 Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/company-live-sync` was then deleted):
 
 - The README and `docs/WINUI-SHELL.md` rewrite to the current names.
 - **Shared company file and OSAS hub** (section 5.1): O-CoreOp has no company picker. It opens the company file OSAS chose (`OSAS_COMPANY`), signed in by OSAS's one-time ticket (`OSAS_TICKET`, `OSAS_USER`), and shows a project saved in O-Studio within about two seconds, and the reverse. Code: `BBSDesktop/Office.Shared` (`OfficeSession`, `SharedCompany`, 5 tests), `BBSApp/MainWindow.Company.cs`, `Services/Company/CompanyService.cs`, the `Shared` link in `Services/ProjectStore.cs`. The engine is `office.dll`, copied beside the app from the O-STUDIO build (`OfficeDllDir`).
-- The project sync host, take-off reading from O-Draft, annotated drawings in reports, and the overlap warning (progress log below).
+- Take-off reading from O-Draft, annotated drawings in reports, and the overlap warning (progress log below).
 
 ## 2. Do first: make what exists trustworthy
 
 | # | Item | Evidence | Where to look |
 |---|---|---|---|
 | 2.1 | Add the repository secret `HCW_UI_TOKEN` (a read-only token for `HolagundiWorks/hcw-ui`). Without it the CI build job cannot clone the design library and fails | Checked: the workflow reads `secrets.HCW_UI_TOKEN`; the first run on GitHub has not been looked at | `.github/workflows/ci.yml` |
-| 2.2 | Sign in to the real AORMS portal and pull a project. Everything in `Aorms.Connect` was tested against a fake server and a local development server | Not tested live (`docs/ROADMAP.md`, "CAD take-off and AORMS sign-in") | `docs/AORMS-CONNECT-HANDOFF.md`, `BBSDesktop/Aorms.Connect.Smoke` |
-| 2.3 | The portal needs migration `0113_aqc_sessions_aos_app.sql` applied before the suite apps can hold a session. It is on the branch `claude/aos-suite-session` of the portal repository | Checked: not applied | portal repository, `web/supabase/migrations/` |
-| 2.4 | Click through File > Import from CAD, File > Export for CAD and File > Online projects with a real drawing export. The libraries have 20 and 80 tests; the app screens have not been used | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/` |
+| 2.2 | ~~AORMS portal sign-in / pull~~ **removed** with Connect/Bridge (2026-10-28) | n/a | — |
+| 2.3 | ~~Portal migration `0113` for AORMS sessions~~ **obsolete** after Connect removal | n/a | — |
+| 2.4 | Click through File > Import from CAD, File > Export for CAD and Take-off from ShilpiDB with a real drawing export | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
 | 2.5 | Install on a **clean** machine with the Inno Setup installer and check the Start menu entry reads O-CoreOp. On the development machine (2026-10-19) the installer upgraded an existing copy in place: it still installs to `%LOCALAPPDATA%\Programs\AQC-Core`, not `O-CoreOp`, and the run was silent, so the Start menu text was not looked at | Partly checked | `BBSDesktop/installer/AQCCore.iss`, `build-installer.ps1` |
 | 2.6 | ~~Rebuild the installer~~ done (1.1.0, built and installed 2026-10-19 from `main`). `build-installer.ps1 -OfficeDllDir <folder with office.dll>` now bundles the company-file engine and fails the build if `office.dll` is missing. Reinstalled 2026-10-19 under the new name: the installer replaced the `AQC-Core` folder with `Programs\O-CoreOp`, and the app opened with the settings copied from `AQCCore` | Checked | `BBSDesktop/installer/build-installer.ps1` |
 
@@ -48,18 +48,10 @@ The full audit is in the O-STUDIO repository, `docs/wcag-audit.md`. For O-CoreOp
 
 How the checks were run: a UI Automation script that opens each page, takes a screenshot, and lists every control with its name and size. It lives in the O-STUDIO repository as `tools/a11y/uia-audit.ps1` with `analyse.mjs` to summarise; the version used for the shell fixes is not in either repository yet and should be committed there.
 
-## 4. Finish the AORMS Connect work
+## 4. AORMS Connect — removed
 
-From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as not built):
+Connect/Bridge work from the former `docs/AORMS-CONNECT-HANDOFF.md` is **closed by removal** (2026-10-28): libraries, UI, FakeAorms e2e, and stub hosts deleted. Do not resume Bind/Flush or portal sync without an owner decision. Keep company-file auth (`Office.Shared`, `OSAS_TICKET`).
 
-| # | Item |
-|---|---|
-| 4.1 | ~~A file-backed `IOutboxStore`~~ done (`FileOutboxStore`) |
-| 4.2 | The home screen: sign in first, "Continue without signing in" for the Community edition, then Online projects, then Local; open from a seed; Push online |
-| 4.3 | ~~`ProjectStore` hooks and the sync timer~~ built: `ProjectSyncHost`, `RowBaseline`, `ProjectMapper.ApplyDelta`, File > Push project online / Pull latest from AORMS (see the progress log). Not yet run against AORMS |
-| 4.4 | Map the shared rate books onto `RateBookStore` (the library `RateBooksApi` is done) |
-| 4.5 | Remove `Aorms.Bridge`, `Aorms.Bridge.Smoke` and the old Bind/Flush flow once nothing references them. The status strip still has Bind and Flush buttons |
-| 4.6 | Two suite apps refreshing the shared token at once, and sign-out clearing the shared entry from the UI, were not checked |
 
 ## 5. Join up with the rest of the suite
 
@@ -86,7 +78,7 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 
 ## 7. Names and licence
 
-- Remaining old names are in technical specs where they are identifiers or contract names: `docs/AADT.md`, `docs/bridge/AQC-IMPORTER-SPEC.md`, `docs/AORMS-BRIDGE*.md`, `docs/SUITE-PACKAGING.md`, `docs/PROJECT-SYNC.md`, `CLAUDE.md`. Rewrite them when the contracts they describe are next revised.
+- Remaining old names may appear in historical changelog/progress notes. AORMS-only docs (`AORMS-BRIDGE*`, `AORMS-CONNECT-HANDOFF`, `PROJECT-SYNC`) were deleted.
 - `LICENSING.md` and `CONTRIBUTING.md` still name the product **AQC-Core**. Those are the licence terms; changing the licensed product's name is a legal edit. Decide with whoever owns the licence, then change them together (dual AGPL-3.0 and commercial).
 - The program is `O-CoreOp.exe` (was `AQCCore.exe`; the installer removes the old install). The project file is still `.bbsproj` and the repository folder is still `AQC` on disk; saved projects use the extension, so keep it unless you plan a migration.
 
@@ -95,7 +87,7 @@ From `docs/AORMS-CONNECT-HANDOFF.md`, still open (**Checked**, listed there as n
 ```powershell
 # one folder above this repository: git clone <hcw-ui>   (private)
 dotnet test BBSDesktop/AQC.CadImport.Tests
-dotnet test BBSDesktop/Aorms.Connect.Tests
+dotnet test BBSDesktop/Office.Shared.Tests
 dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Debug -p:Platform=x64 -p:WindowsPackageType=None -o $env:TEMP\ocoreop
 ```
 
@@ -105,14 +97,14 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 
 1. The licence wording and product name in `LICENSING.md` and `CONTRIBUTING.md` (section 7).
 2. Whether the PDF take-off canvas is retired (6.5).
-3. Whether the company file or the portal is the system of record when both exist. The proposed rule is in `docs/contracts/refs.md`: the portal id when there is one, otherwise the company file and project id.
+3. Company file remains the suite system of record for project identity after AORMS Connect removal (`source.project_ref`). Update any stale portal-id guidance in O-STUDIO `docs/contracts/refs.md` if needed.
 4. ~~Whether O-CoreOp may require the shared company file~~ Answered: the company is chosen in OSAS and O-CoreOp follows it. A local `.bbsproj` still works when no company is chosen; decide if that should stay.
 
 ## 10. Progress log
 
 **2026-10-19, started from this hand-off:**
 
-- **4.1 done.** `Aorms.Connect/FileOutboxStore.cs`: a file-backed `IOutboxStore`. A save writes a temporary file and swaps it in; an unreadable file is moved aside (`.corrupt-<time>`), never deleted, and `QuarantinedPath` says where. 8 new tests (`FileOutboxStoreTests`); `Aorms.Connect.Tests` is 88 passed. **Not wired yet:** nothing in `BBSApp` creates one (that is 4.3, with the `ProjectStore` hooks); the intended path is `%LocalAppData%\AQCCore\outbox\<aqc project id>.json`.
+- **4.1 done.** `Aorms.Connect/FileOutboxStore.cs`: a file-backed `IOutboxStore`. A save writes a temporary file and swaps it in; an unreadable file is moved aside (`.corrupt-<time>`), never deleted, and `QuarantinedPath` says where. 8 new tests (`FileOutboxStoreTests`); `Aorms.Connect.Tests` (removed) is 88 passed. **Not wired yet:** nothing in `BBSApp` creates one (that is 4.3, with the `ProjectStore` hooks); the intended path is `%LocalAppData%\AQCCore\outbox\<aqc project id>.json`.
 - **2.6 done.** The release installer builds: `BBSDesktop/artifacts/installer/O-CoreOp-Setup-1.1.0.exe` (51 MB). Not installed or run (2.5 is still open). Two things the script does not tell you:
   - **The engine must be built with MSVC.** On this machine the only compiler on `PATH` was LLVM-MinGW, and `build-installer.ps1` tried it and failed (`std::malloc` / `std::free` without `<cstdlib>` in `src/api/bbs_c_api.cpp`, wide-path `ofstream` in `src/core/Project.cpp`). Built instead with Visual Studio 2022 Build Tools (`vcvars64`, CMake, Ninja, outside the repo) and copied `bbs_engine.dll` to `BBSDesktop/build/`. `bbs_tests.exe`: 0 failures. Fixing the two clang errors would let the script work without Visual Studio.
   - **`hcw-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `hcw-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `hcw-ui` (build its own RID output) or have the script pre-build it.
@@ -128,7 +120,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 
 - **Built:** `Aorms.Connect/RowBaseline.cs` (what the server holds, a hash per row, saved as `<aqc id>.base.json` beside the outbox; `Diff` returns the rows to send and delete), `ProjectMapper.ApplyDelta` (merge rows changed elsewhere into a project document; keeps settings, `takeoff`, `last_estimate`), `ProjectStore.MintRowIds` (a stable `_rid` on every take-off row; a copied row gets a new one), `BBSApp/Services/Connect/ProjectSyncHost.cs` (1 s tick, push online, pull latest, status text) and two File menu items. The status chip now reads, for example, `AORMS · Studio · 3 unsent`.
 - **Design choice:** the open project is the source of truth for what the user typed, so the host diffs it instead of hooking every edit; the cost is one `ToJson` of the project per second while it is being edited, and only when dirty. A project of 10 000 rows has not been timed (hand-off 6.4 style check is still open).
-- **Checked:** 21 new library tests (`Aorms.Connect.Tests` 109 passed) that follow the host's loop against a scripted server: one edit sends one row, a delete is sent as a delete, offline edits survive a restart and go on the next run, a catch-up is applied and does not come back as a local edit, a catch-up with unsent edits asks for review and keeps the head. The app builds and starts. **Not checked:** against the real server, the two dialogs, `MintRowIds` (it lives in the WinUI project, which has no tests), the timing on a large project.
+- **Checked:** 21 new library tests (`Aorms.Connect.Tests` (removed) 109 passed) that follow the host's loop against a scripted server: one edit sends one row, a delete is sent as a delete, offline edits survive a restart and go on the next run, a catch-up is applied and does not come back as a local edit, a catch-up with unsent edits asks for review and keeps the head. The app builds and starts. **Not checked:** against the real server, the two dialogs, `MintRowIds` (it lives in the WinUI project, which has no tests), the timing on a large project.
 - **Behaviour to know:** a project opened on a computer with no baseline file takes the local file as the baseline and says so in the chip's tooltip; use Pull latest to bring in the online version. If a pull arrives while there are unsent edits to the same rows, the online version wins and the unsent edits to those rows are dropped (the dialog says so). The edit lease is taken automatically; when someone else holds it the project is read-only and the chip says so (editing is not blocked in the UI yet: the rows queue and go when the lease is free).
 
 **2026-10-19 (reading O-Draft's output):**
@@ -157,7 +149,7 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 
 **Checked in the real app (24 checks, all passing):** sign in (wrong password first, with its message), the chip naming the studio, a take-off imported through the UI, push online (54 rows, no local paths), the chip going to `synced`, a changed take-off reaching AORMS as exactly one row by itself, a catch-up applied (the wall then shows as changed locally) with nothing sent back, sign-out. Also on the Take-off page: the drawing list from the shared server, Read take-off and its preview, Fetch annotated drawing (PDF verified, stored, listed with Open).
 
-**Test totals:** `AQC.CadImport.Tests` 65, `Aorms.Connect.Tests` 127, `Office.Shared.Tests` 5, engine `bbs_tests` 0 failures (MSVC and clang), all passing. **Timing, 10 000 rows (release build):** a change check costs about 0.14 s, settings 0.06 s, building the JSON 0.06 s; the baseline file is written in under 0.1 s.
+**Test totals:** `AQC.CadImport.Tests` 65, `Aorms.Connect.Tests` (removed) 127, `Office.Shared.Tests` 5, engine `bbs_tests` 0 failures (MSVC and clang), all passing. **Timing, 10 000 rows (release build):** a change check costs about 0.14 s, settings 0.06 s, building the JSON 0.06 s; the baseline file is written in under 0.1 s.
 
 **Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.
 
@@ -171,7 +163,7 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 
 **2026-10-19 (hub merge and install):**
 
-- `origin/main` (project sync, O-Draft reading, annotated drawings, debug pass) was merged into the company-live-sync branch with no conflicts, and the result went to `main` as a fast-forward (`b67710a`). After the merge `Office.Shared.Tests` (6) and `AQC.CadImport.Tests` (65) pass and the app builds in Release. `Aorms.Connect.Tests` was not re-run after the merge.
+- `origin/main` (project sync, O-Draft reading, annotated drawings, debug pass) was merged into the company-live-sync branch with no conflicts, and the result went to `main` as a fast-forward (`b67710a`). After the merge `Office.Shared.Tests` (6) and `AQC.CadImport.Tests` (65) pass and the app builds in Release. `Aorms.Connect.Tests` (removed) was not re-run after the merge.
 - O-CoreOp 1.1.0 was built and installed on the development machine, with `office.dll` copied in by hand (see 2.6).
 - **Not done:** a run of the installed app against the company file after the merge (the merged sync host and the shared-company code were not driven together); `uia-sync-e2e.ps1` was not re-run.
 
@@ -183,4 +175,4 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 **2026-10-20 (checked in the running app, and the take-off names its project):**
 
 - **Checked in the installed app** with a throw-away company (random password, nothing of the practice's data): OSAS signed in, O-CoreOp opened from its card already signed in as the same person (`Company · Demo Studio`), the Company projects list showed `Mehta residence · Mehta family · Plot 4, Hospet`, and after opening it the title read `O-CoreOp — Mehta residence`, the dashboard showed `Plot 4, Hospet · Client: Mehta family · Demo Studio`, and the report persona read `Project Manager · Demo Studio`. The company and project details therefore reach the app from OSAS and O-Studio. Still not looked at: a printed report or PDF, and a change made in OSAS while the project is open.
-- The Take-off page recognises a drawing as this project's when its header names the project by `source.project_ref` (the company file and project id), as well as by the AORMS id (`ShilpiDrawing.ProjectRefCompany` / `ProjectRefId`; 1 new test, `AQC.CadImport.Tests` 84). Needs O-Draft with the matching change.
+- The Take-off page recognises a drawing as this project's when its header names the project by `source.project_ref` (the company file and project id) (`ShilpiDrawing.ProjectRefCompany` / `ProjectRefId`; 1 new test, `AQC.CadImport.Tests` 84). AORMS `project_office_id` grouping was removed with Connect. Needs O-Draft with the matching `project_ref` change.

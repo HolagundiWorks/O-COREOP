@@ -117,15 +117,13 @@ public sealed class TakeoffPage : Page
     void FillList()
     {
         var selected = Selected?.Slot;
-        var linked = ProjectStore.Current.Info.AormsProjectOfficeId;
         var shared = ProjectStore.Current.Shared;
         var companyUuid = BBSApp.Services.Company.CompanyService.Current?.Uuid;
-        // A drawing belongs to the open project when it names it by the AORMS id or by the project in the company file.
+        // A drawing belongs to the open project when it names the project in the company file.
         bool Mine(ShilpiDrawing d) =>
-            (!string.IsNullOrEmpty(linked) && d.ProjectOfficeId == linked)
-            || (shared is not null && d.ProjectRefId == shared.ProjectId && !string.IsNullOrEmpty(companyUuid) && d.ProjectRefCompany == companyUuid);
+            shared is not null && d.ProjectRefId == shared.ProjectId && !string.IsNullOrEmpty(companyUuid) && d.ProjectRefCompany == companyUuid;
         bool Other(ShilpiDrawing d) =>
-            !Mine(d) && ((!string.IsNullOrEmpty(linked) && !string.IsNullOrEmpty(d.ProjectOfficeId)) || (shared is not null && d.ProjectRefId is not null));
+            !Mine(d) && shared is not null && d.ProjectRefId is not null;
         _drawings.Items.Clear();
         // this project's drawings first, then the others
         foreach (var d in _list.OrderByDescending(Mine).ThenBy(d => d.Drawing, StringComparer.OrdinalIgnoreCase))
