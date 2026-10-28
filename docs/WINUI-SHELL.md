@@ -31,6 +31,7 @@ Notice row and calculator row — docked above the status strip, they push the p
 | **Help** | About |
 | **Main ribbon** | One text tab per section (Project, RCC steel, Civil BOQ, Schedule, Office, Contracts, Accounts, Stores, HR & resources, Outputs). Ctrl+1 to Ctrl+9 jump to a section's first page. The open tab is the colour of the sub ribbon, so it joins it |
 | **Sub ribbon** | One text tab per page of the open section. The open tab is the colour of the work area, so it joins the page without a line. No icons |
+| **Take-off page bar** | A flat text-only bar (Source, Read and Annotated groups with dividers), the same look as O-Draft's take-off bar (Draw, Compute, Sync, Phases). No icons |
 | **Status strip** | Calculator · theme switch · company chip |
 | **UI scale** | 1×. The shell follows the system text size and display scale (`UiScale` in `MainWindow.xaml.cs`) |
 | **Narrow windows** | Both ribbons scroll sideways when the window is narrower than their tabs. Page headers and toolbars wrap (`Hcw.Ui` `FlexBar`); the element page's section sketch gives its column back under 700 px. Page titles are level 2 headings and section headers level 3, under the level 1 page line |

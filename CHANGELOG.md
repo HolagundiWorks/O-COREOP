@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - `Office.Shared.ProjectPhases`, `PhaseTotals` and `RevisionLabels`: work stages, billing phases, phase totals and revision labels, with tests (`ProjectPhasesTests`).
 
 ### Changed (2026-10-29)
+- **The Take-off page has a text-only tool bar** like O-Draft's take-off bar: flat text buttons in groups with dividers (Start the shared server, Choose take-off file | Refresh, Read take-off | Fetch annotated drawing) instead of buttons scattered through the page. The two bars share the look; CoreOp's reads a recorded take-off and has no drawing tools. Compiled; not yet looked at in the running app.
 - **Navigation is two ribbons of text tabs** instead of the left pane: the main ribbon lists the sections, the sub ribbon the pages of the open section. The open tab of each is the colour of what lies below it (the sub ribbon, the canvas). No icons. Ctrl+1 to 9 still jump to a section. Compiled; not yet looked at in the running app.
 ### Removed
 - **AORMS Connect and Bridge connectors** — sign-in, Online projects, Push/Pull, Bind/Flush, hub sync badges, `Aorms.Connect` / `Aorms.Bridge` libraries, FakeAorms e2e, and Bridge-only stub hosts (`AQC.BBS` / `AQC.Estimation` / `AQC.PM`). Company-file / OSAS ticket flow, local `.bbsproj`, CAD import, and ShilpiDB take-off remain. Orphan Credential Manager entries `AORMS/Connect*` (if any) can be deleted manually.

@@ -7,6 +7,7 @@ using BBSApp.Services.Shilpi;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -51,6 +52,7 @@ public sealed class TakeoffPage : Page
                 Children =
                 {
                     title,
+                    BuildToolBar(),
                     new TextBlock
                     {
                         TextWrapping = TextWrapping.Wrap,
@@ -59,11 +61,10 @@ public sealed class TakeoffPage : Page
                              + "Importing again updates the same rows and never duplicates them. Plaster, painting, skirting and shuttering are derived here, not imported.",
                     },
                     _mode,
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Bottom, Children = { _gateway, _start } },
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { _choose, _file } },
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { new TextBlock { Text = "Drawings", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center }, _refresh } },
+                    _gateway,
+                    _file,
+                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { new TextBlock { Text = "Drawings", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center } } },
                     _drawings,
-                    new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { _read, _annotated } },
                     new TextBlock { Text = "Annotated drawings stored with this project", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Margin = new Thickness(0, 10, 0, 0) },
                     _stored,
                     _status,
@@ -86,6 +87,50 @@ public sealed class TakeoffPage : Page
         };
         Unloaded += (_, _) => _poll.Stop();
     }
+
+    /// <summary>
+    /// The take-off bar: flat text buttons in groups with dividers, drawn the way O-Draft's take-off bar is (text only, no
+    /// icons). Source (where the take-off is read from), Read (list and import it), Annotated (the stored drawing).
+    /// </summary>
+    StackPanel BuildToolBar()
+    {
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
+        AutomationProperties.SetName(bar, "Take-off tools");
+        var groups = new[] { new[] { _start, _choose }, new[] { _refresh, _read }, new[] { _annotated } };
+        for (int g = 0; g < groups.Length; g++)
+        {
+            if (g > 0) bar.Children.Add(BarDivider());
+            foreach (var b in groups[g])
+            {
+                StyleAsTextTool(b);
+                bar.Children.Add(b);
+            }
+        }
+        return bar;
+    }
+
+    static void StyleAsTextTool(Button b)
+    {
+        var label = b.Content as string ?? "";
+        b.Content = new TextBlock { Text = label, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis };
+        b.MinHeight = 26;
+        b.Padding = new Thickness(12, 0, 12, 0);
+        b.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        b.BorderThickness = new Thickness(0);
+        b.CornerRadius = new CornerRadius(4);
+        b.VerticalAlignment = VerticalAlignment.Center;
+        if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
+        AutomationProperties.SetName(b, label);
+    }
+
+    static Border BarDivider() => new()
+    {
+        Width = 1,
+        Height = 16,
+        Margin = new Thickness(6, 0, 6, 0),
+        VerticalAlignment = VerticalAlignment.Center,
+        Background = Application.Current.Resources.TryGetValue("HcwEdgeBrush", out var edge) && edge is Brush br ? br : new SolidColorBrush(Microsoft.UI.Colors.Gray),
+    };
 
     bool UseFile => _mode.SelectedIndex == 1;
 
