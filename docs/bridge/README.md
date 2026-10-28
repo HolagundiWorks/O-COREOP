@@ -2,7 +2,7 @@
 
 The file hcwCAD-KIT writes for AQC (and reads back, in the other direction). One JSON document per drawing: `<drawing>.aqcbridge.json`.
 
-* The schema is [hcw-aqc-bridge.schema.json](hcw-aqc-bridge.schema.json); two sample files are in [fixtures](fixtures): `levels-only.json` (project details and floors) and `small-house.json` (every section).
+* The schema is [hcw-aqc-bridge.schema.json](hcw-aqc-bridge.schema.json); sample files are in [fixtures](fixtures): `levels-only.json` (project details and floors), `small-house.json` (every section), and `quantity-trust-checklist.json` (known wall/opening numbers for CadImport quantity-trust tests; run `scripts/takeoff-quantity-trust.ps1`).
 * **Millimetres on the wire** (`"units": "mm"`; areas in square metres). The plugin converts from the drawing's units; AQC's element rows are already millimetres.
 * **Every section is optional**, so a first import can carry only the project and the levels.
 * **Levels** are the floors above the plinth, in order, with `height_mm` (floor to floor), `slab_thickness_mm` and `beam_depth_mm`. AQC computes a column's clear height as `height - slab - beam depth`, so the beam depth matters. AQC matches levels by `name`, then by position, to `Lvl1`, `Lvl2` ...; `Lvl0` (plinth) is AQC's and an import does not change it.
