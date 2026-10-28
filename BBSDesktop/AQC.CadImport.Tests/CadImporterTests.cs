@@ -173,6 +173,22 @@ public class CadImporterTests
         Assert.Throws<BridgeFormatException>(() => BridgeFile.Parse(json));
     }
 
+    [Fact]
+    public void Bridge_source_project_ref_is_read_like_a_shilpidb_header()
+    {
+        Assert.Equal((null, null), (House().ProjectRefCompany, House().ProjectRefId));
+
+        var linked = BridgeFile.Parse(Fixture("small-house.json").Replace(
+            "\"exported\": \"2026-10-07T11:00:00Z\"",
+            "\"exported\": \"2026-10-07T11:00:00Z\", \"project_ref\": { \"v\": 1, \"company_uuid\": \"u-1\", \"project_id\": 7 }"));
+        Assert.Equal(("u-1", 7L), (linked.ProjectRefCompany, linked.ProjectRefId));
+
+        var odd = BridgeFile.Parse(Fixture("small-house.json").Replace(
+            "\"exported\": \"2026-10-07T11:00:00Z\"",
+            "\"exported\": \"2026-10-07T11:00:00Z\", \"project_ref\": { \"company_uuid\": \"u-2\", \"project_id\": \"not a number\" }"));
+        Assert.Equal(("u-2", null), (odd.ProjectRefCompany, odd.ProjectRefId));
+    }
+
     // ---- two drawings measuring the same floor ----
 
     static BridgeFile HouseAs(string drawingId, string refSuffix = "", string? levelName = null)
