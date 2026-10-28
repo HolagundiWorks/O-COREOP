@@ -60,6 +60,8 @@ Installs to `%LocalAppData%\Programs\O-CoreOp\`
 
 The version comes from `<Version>` in `BBSApp.csproj`; the script passes it to Inno Setup, so the output filename tracks it automatically. Pass `-SkipEngineBuild` when `BBSDesktop\build\bbs_engine.dll` already exists.
 
+Setup.exe is **unsigned** unless `WINDOWS_CERTIFICATE` / Azure Trusted Signing / `SIGN_SELF_SIGNED=1` is set (`installer\sign.ps1`). Help → **Check for updates…** is a channel stub (`OSAS_UPDATE_CHANNEL_URL`). Details: [docs/PACKAGING.md](docs/PACKAGING.md).
+
 ## MSIX (Store / sideload)
 
 ```powershell
