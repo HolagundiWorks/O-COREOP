@@ -1017,9 +1017,12 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             .Where(i => i.Action != Aqc.CadImport.PlanAction.Unchanged)
             .Select(i => $"{i.Action,-17} {i.Section,-17} {(i.Mark.Length > 0 ? i.Mark : i.Ref)}{(i.Reason.Length > 0 ? "  - " + i.Reason : "")}")
             .ToList();
-        var other = plan.OtherDrawingId is null
-            ? ""
-            : "\nThis project already holds rows from a different drawing; importing adds this drawing's rows alongside them.\n";
+        var companyUuid = BBSApp.Services.Company.CompanyService.Current?.Uuid;
+        var openProjectId = ProjectStore.Current.Shared?.ProjectId;
+        var projectRefLine = prep.File.ProjectRefCaption(companyUuid, openProjectId);
+        var other = "\n" + projectRefLine + "\n";
+        if (plan.OtherDrawingId is not null)
+            other += "\nThis project already holds rows from a different drawing; importing adds this drawing's rows alongside them.\n";
         if (plan.Warnings.Count > 0)
             other += "\nCheck before importing:\n - " + string.Join("\n - ", plan.Warnings) + "\n";
         var dlg = new ContentDialog
@@ -1030,7 +1033,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
                 MaxHeight = 420,
                 Content = new TextBlock
                 {
-                    Text = plan.Summary + "\n" + other + "\n" + string.Join("\n", lines),
+                    Text = plan.Summary + other + "\n" + string.Join("\n", lines),
                     FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
                     TextWrapping = TextWrapping.Wrap,
                     IsTextSelectionEnabled = true,

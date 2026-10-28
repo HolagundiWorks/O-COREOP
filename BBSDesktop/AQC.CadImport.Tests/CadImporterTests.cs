@@ -189,6 +189,19 @@ public class CadImporterTests
         Assert.Equal(("u-2", null), (odd.ProjectRefCompany, odd.ProjectRefId));
     }
 
+    [Fact]
+    public void Bridge_project_ref_caption_marks_this_project_another_or_missing()
+    {
+        Assert.Contains("no company-file project_ref", House().ProjectRefCaption("u-1", 7));
+
+        var linked = BridgeFile.Parse(Fixture("small-house.json").Replace(
+            "\"exported\": \"2026-10-07T11:00:00Z\"",
+            "\"exported\": \"2026-10-07T11:00:00Z\", \"project_ref\": { \"v\": 1, \"company_uuid\": \"u-1\", \"project_id\": 7 }"));
+        Assert.Contains("this company-file project", linked.ProjectRefCaption("u-1", 7));
+        Assert.Contains("another company-file project", linked.ProjectRefCaption("u-1", 99));
+        Assert.Contains("another company-file project", linked.ProjectRefCaption(null, null));
+    }
+
     // ---- two drawings measuring the same floor ----
 
     static BridgeFile HouseAs(string drawingId, string refSuffix = "", string? levelName = null)
