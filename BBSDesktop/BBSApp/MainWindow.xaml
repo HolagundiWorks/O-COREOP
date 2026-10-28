@@ -62,30 +62,98 @@
                  AutomationProperties.Name="Menu bar">
             <!-- Company first ? work ? Exit (same File shape as O-Studio / OSAS). -->
             <MenuBarItem Title="File" AccessKey="F">
-                <MenuFlyoutItem Text="Open company from OSAS…" Click="CompanyOpen_Click" AccessKey="O"/>
-                <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click"/>
-                <MenuFlyoutItem Text="Close company" Click="CompanyClose_Click" AccessKey="C"/>
+                <MenuFlyoutItem Text="Open company from OSAS…" Click="CompanyOpen_Click" AccessKey="O">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8F1;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Close company" Click="CompanyClose_Click" AccessKey="C">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8BB;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N"/>
-                <MenuFlyoutItem Text="Open…" Click="Open_Click"/>
-                <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S"/>
-                <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click"/>
-                <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click"/>
+                <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE710;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Open…" Click="Open_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8E5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE74E;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE792;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff"/>
-                <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
-                <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
-                <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>
+                <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE9F9;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8B5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xEDE1;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE7A7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>
+                <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE711;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
             </MenuBarItem>
             <MenuBarItem Title="Edit" AccessKey="E">
-                <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project"/>
-                <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering"/>
-                <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost"/>
+                <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE713;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE90F;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE1D0;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                             </MenuBarItem>
             <MenuBarItem Title="Help" AccessKey="H">
-                <MenuFlyoutItem Text="About" Click="About_Click"/>
+                <MenuFlyoutItem Text="About" Click="About_Click">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE946;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
             </MenuBarItem>
         </MenuBar>
 
@@ -129,7 +197,7 @@
                 </Frame>
 
                 <!-- Status strip: calculator, theme, company chip -->
-                <Border Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteHeaderHeight}"
+                <Border x:Name="StatusStrip" Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteHeaderHeight}"
                         Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}"
                         BorderThickness="0" CornerRadius="{StaticResource SuiteCornerControl}" AutomationProperties.Name="Status">
                     <Grid>

@@ -56,6 +56,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
         Hcw.Ui.SuiteNavigation.Apply(AppNav, Hcw.Ui.SuiteApp.Metra);
+        Hcw.Ui.SuiteLandmarks.ApplyShell(AppNav, ContentFrame, StatusStrip,
+            navigationName: "Sections", mainName: "Main content");
         BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();
