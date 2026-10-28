@@ -61,15 +61,15 @@ Connect/Bridge work from the former `docs/AORMS-CONNECT-HANDOFF.md` is **closed 
 | 5.2 | Produce and read `ProjectRef` and `ArtifactRef`: estimate gets an `ArtifactRef` when linked to the company file; project JSON carries `project_ref` | 2.3 | Built: `Office.Shared.ArtifactRefs`, Estimate page + `ProjectStore.ToJson`; BOQ / rate schedule ArtifactRefs and drawing `made_from` still open |
 | 5.3 | Compute and store a SHA-256 for each artifact at each revision | 2.3 | Needed for 5.2 |
 | 5.4 | An MCP server around the calculation engine (`aqc.calculate_boq`, `aqc.compare_estimates`), with the same descriptor shape as O-Studio's `office-agent` | 2.5 | Writes are proposals first; today only O-Studio has a server. The in-app assistant (`Services/Ai`) is separate and stays opt-in |
-| 5.5 | Estimates and running bills: O-CoreOp calculates, O-Studio shows the result against the fee proposal | 2.4 | Needs 5.1 to 5.3 first |
-| 5.6 | O-Draft writes the bridge file (`aqcexport`) and carries a `ProjectRef` in it | (O-Draft repo) | Until then, import is tested only against the sample files in `docs/bridge/` |
+| 5.5 | ~~Estimates and running bills against fee proposals~~ **done:** O-Studio reads `project_estimate_summary` + `project_ra_summary`; fee proposals can use the O-CoreOp estimate as cost; invoices show estimate (+ RA) totals | 2.4 | Built on both sides; **open:** Windows GUI E2E click-through, optional invoice ArtifactRef column, BOQ/`made_from` ArtifactRefs |
+| 5.6 | O-Draft bridge file: CoreOp parses `source.project_ref` (Import captions Mine/Other/missing); Draft stamps take-off `project_ref` when company-linked | (O-Draft repo) | Interactive Draft project-picker UI still open; offline bridge export should keep carrying the same ref |
 
 ## 6. Product work, in rough order
 
 | # | Item |
 |---|---|
 | 6.1 | Streaming AI replies (first item under "Planned next" in `docs/ROADMAP.md`) |
-| 6.2 | Code signing for the installer and an update path (roadmap 3.1) |
+| 6.2 | Code signing for the installer and an update path (roadmap 3.1) — `sign.ps1` + Help → Check for updates stubs exist; need org cert + hosted channel URL |
 | 6.3 | Automated UI tests with UI Automation for the main flows, run in CI (roadmap 3.2) |
 | 6.4 | Check quantities and purchase-order output against a real project and add the cases it exposes (roadmap 3.3) |
 | 6.5 | ~~Retire the PDF take-off canvas~~ done 2026-10-19: take-off moves to O-Draft and is read from ShilpiDB (`docs/TAKEOFF-SHILPIDB.md`) |
@@ -101,6 +101,8 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 4. ~~Whether O-CoreOp may require the shared company file~~ Answered: the company is chosen in OSAS and O-CoreOp follows it. A local `.bbsproj` still works when no company is chosen; decide if that should stay.
 
 ## 10. Progress log
+
+**Historical (pre-removal):** entries below that mention `Aorms.Connect`, Online projects, Push/Pull, FakeAorms, or status chips like `AORMS · Studio` describe work that shipped and was **removed on 2026-10-28**. Keep for archaeology; do not treat as current product. Current path = company file + OSAS ticket + CAD/ShilpiDB take-off.
 
 **2026-10-19, started from this hand-off:**
 

@@ -1,6 +1,6 @@
 # Take-off in ShilpiDB: the contract between O-Draft and O-CoreOp
 
-Written 2026-10-19 on the owner's instruction, revised the same day after the owner's answers (section 1). **Status: version 1, draft.** O-CoreOp's side is built and checked (section 9). O-Draft's side is not built; the instructions for it are in [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md). Nothing was built on the first draft of this contract, so version 1 was revised in place instead of becoming version 2.
+Written 2026-10-19 on the owner's instruction, revised the same day after the owner's answers (section 1). **Status: version 1.** O-CoreOp's reader side is built and checked (section 9). O-Draft's writer (`takeoff.record` / `takeoff.annotate`, trust fields, `project_ref`) is built in the O-DRAFT repo; remaining writer gaps and product E2E are listed in [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md). Nothing was built on the first draft of this contract, so version 1 was revised in place instead of becoming version 2.
 
 ## 1. Decisions (owner, 2026-10-19)
 

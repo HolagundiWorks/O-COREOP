@@ -92,16 +92,16 @@ AORMS Connect / Bridge (sign-in, Online projects, Push/Pull, Bind/Flush, outbox)
 
 7. ~~A check for two drawings that measure the same floor~~ O-CoreOp now warns in the import preview (`CadImporter.WarnAboutOverlap`, 5 tests); whether O-Draft should also warn when recording is **owner**'s call ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 5).
 8. A notice when O-Draft has re-recorded a drawing since it was imported.
-9. O-Draft side (not in this repository): `takeoff.record`, stable `refs`, slab spans and `takeoff.annotate` are built; still to do there: room level, length and breadth, `wall_ref` on openings, wall thickness, a real annotated-PDF run, PDF underlay and calibration, `aqcexport` ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
+9. O-Draft side (not in this repository): `takeoff.record`, stable `refs`, slab spans, `takeoff.annotate`, room/entity level, `wall_ref` on deduct openings, A-WALL face thickness, and take-off honesty notes are built. Still open there: product E2E against live CoreOp, scanned-PDF underlay polish, interactive company-file project picker UI ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
 
-**Suite joins** (O-STUDIO roadmap numbers): shared company file + live sync (2.2); `ProjectRef` / estimate `ArtifactRef` stamped on company-file saves and Estimate page (2.3); O-Studio fee proposals read totals via `project_estimate_summary` (2.4, Studio side); MCP server still open (2.5).
+**Suite joins** (O-STUDIO roadmap numbers): shared company file + live sync (2.2); `ProjectRef` / estimate `ArtifactRef` stamped on company-file saves and Estimate page (2.3); O-Studio fee proposals + RA summary via `project_estimate_summary` / `project_ra_summary` (2.4); MCP server still open (2.5). Next trust gate: human/Windows GUI E2E.
 
 **Product**
 
 10. Streaming AI replies (`Messages.CreateStreaming`; touches the `AskAsync` tool loop and the command-bar UI).
-11. Code signing and an update path (3.1); automated UI tests in CI (3.2); check quantities and purchase orders against a real project (3.3).
+11. Signing certs + hosted update channel (hooks/`sign.ps1`/Check for updates stub landed); automated UI tests in CI (3.2); check quantities and purchase orders against a real project (3.3).
 12. Accessibility passes still open: Narrator and NVDA, 520 px on every page, 200% text and high contrast, keyboard order (3.1 to 3.7 in the hand-off).
-13. **owner:** licence wording and product name in `LICENSING.md` and `CONTRIBUTING.md`.
+13. **counsel:** review dual AGPL+commercial; rename product in `LICENSING.md` / `CONTRIBUTING.md` from AQC-Core → O-CoreOp when approved.
 
 ## Done recently ✅
 
@@ -144,4 +144,4 @@ Take-off from drawings and PDFs is done in **O-Draft**, recorded in one shared S
 | Export for CAD | File > Export for CAD… (levels, project, beam depths) | ✅ |
 | Take-off from ShilpiDB | Take-off page: shared server or `.vdb`; several drawings; company-file grouping | ✅ |
 | Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF | ✅ |
-| O-Draft writes the take-off | `takeoff.record` / annotate in O-Draft repo | 🚧 |
+| O-Draft writes the take-off | `takeoff.record` / annotate in O-Draft repo | ✅ built; E2E / underlay polish open |
