@@ -21,7 +21,7 @@ public sealed partial class MainWindow
     bool _companyPolling;
 
     /// <summary>
-    /// OSAS chooses the company and signs the person in once. Opens only with OSAS_COMPANY + one-time OSAS_TICKET.
+    /// Studio (suite hub) chooses the company and signs the person in once. Opens only with OSAS_COMPANY + one-time OSAS_TICKET.
     /// O-CoreOp never asks for a company password.
     /// </summary>
     async Task StartFromSuiteAsync()
@@ -33,7 +33,7 @@ public sealed partial class MainWindow
             return;
         if (string.IsNullOrWhiteSpace(ticket))
         {
-            AppNotify.Info("Company file", "Sign in to the company in OSAS, then open O-CoreOp from OSAS. This app does not ask for a password.");
+            AppNotify.Info("Company file", "Sign in to the company in Studio, then open O-CoreOp from its card. This app does not ask for a password.");
             return;
         }
         await Task.Delay(800);
@@ -45,7 +45,7 @@ public sealed partial class MainWindow
         }
         catch (OfficeException ex)
         {
-            AppNotify.Warning("Company file", ex.Message + " Open O-CoreOp again from OSAS while signed in.");
+            AppNotify.Warning("Company file", ex.Message + " Open O-CoreOp again from Studio while signed in.");
         }
     }
 
@@ -107,7 +107,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// The company is chosen and signed in only in OSAS. This never asks for a password — it starts OSAS so the person can open O-CoreOp from there.
+    /// The company is chosen and signed in only in Studio. This never asks for a password — it starts the suite hub so the person can open O-CoreOp from there.
     /// </summary>
     async void CompanyOpen_Click(object sender, RoutedEventArgs e)
     {
@@ -118,9 +118,9 @@ public sealed partial class MainWindow
             return;
         }
         if (CompanyService.StartOsas())
-            AppNotify.Info("Company file", "Sign in to the company in OSAS, then open O-CoreOp from OSAS. This app does not ask for a password.");
+            AppNotify.Info("Company file", "Sign in to the company in Studio, then open O-CoreOp from its card. This app does not ask for a password.");
         else
-            AppNotify.Warning("Company file", "OSAS, the suite app, is not installed. Sign-in happens only there.");
+            AppNotify.Warning("Company file", "Studio (suite hub) is not installed. Sign-in happens only there.");
         await Task.CompletedTask;
     }
 
@@ -137,7 +137,7 @@ public sealed partial class MainWindow
         if (!EngineReady()) return;
         if (!CompanyService.IsOpen)
         {
-            AppNotify.Info("Company file", "The company is chosen in OSAS: use File > Open the company OSAS chose.");
+            AppNotify.Info("Company file", "The company is chosen in Studio: use File > Open company from OSAS… after launching from Studio.");
             return;
         }
         IReadOnlyList<SharedProject> projects;
@@ -161,9 +161,15 @@ public sealed partial class MainWindow
             line.Children.Add(new TextBlock { Text = sub, FontSize = 12, Opacity = 0.8 });
             list.Items.Add(new ListViewItem { Content = line, Tag = p });
         }
-        var empty = new TextBlock { Text = "The company file has no projects yet. Make one with New project, or in O-Studio.", TextWrapping = TextWrapping.Wrap, Visibility = projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed };
+        var canCreate = CompanyService.CanCreateClientsAndProjects;
+        var emptyText = canCreate
+            ? "The company file has no projects yet. Make one with New project, or in Studio."
+            : "The company file has no projects yet. Create a project in Studio, then open it here.";
+        var empty = new TextBlock { Text = emptyText, TextWrapping = TextWrapping.Wrap, Visibility = projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed };
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock { Text = CompanyService.Current!.Name, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        if (!canCreate)
+            panel.Children.Add(new TextBlock { Text = CompanyOfficePolicy.UseStudioForClientsProjects, TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = 0.85 });
         panel.Children.Add(empty);
         panel.Children.Add(list);
         var dialog = new ContentDialog
@@ -171,7 +177,7 @@ public sealed partial class MainWindow
             Title = "Company projects",
             Content = panel,
             PrimaryButtonText = "Open",
-            SecondaryButtonText = "New project…",
+            SecondaryButtonText = canCreate ? "New project…" : "",
             CloseButtonText = "Close",
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = Content.XamlRoot,
@@ -181,6 +187,11 @@ public sealed partial class MainWindow
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.Secondary)
         {
+            if (!canCreate)
+            {
+                AppNotify.Info("Use Studio", CompanyOfficePolicy.UseStudioForClientsProjects);
+                return;
+            }
             await NewCompanyProjectAsync();
             return;
         }
@@ -222,6 +233,11 @@ public sealed partial class MainWindow
 
     async Task NewCompanyProjectAsync()
     {
+        if (!CompanyService.CanCreateClientsAndProjects)
+        {
+            AppNotify.Info("Use Studio", CompanyOfficePolicy.UseStudioForClientsProjects);
+            return;
+        }
         IReadOnlyList<SharedClient> clients;
         try
         {
@@ -331,7 +347,7 @@ public sealed partial class MainWindow
         if (!EngineReady()) return;
         if (!CompanyService.IsOpen)
         {
-            AppNotify.Info("Company file", "The company is chosen in OSAS: use File > Open the company OSAS chose.");
+            AppNotify.Info("Company file", "The company is chosen in Studio: open O-CoreOp from its card after signing in.");
             return;
         }
         IReadOnlyList<SharedProject> projects;
@@ -344,14 +360,23 @@ public sealed partial class MainWindow
             AppNotify.Error("Save to company file", ex.Message);
             return;
         }
+        var canCreate = CompanyService.CanCreateClientsAndProjects;
         var choice = new ComboBox { Header = "Save it as", HorizontalAlignment = HorizontalAlignment.Stretch };
-        choice.Items.Add(new ComboBoxItem { Content = $"A new company project named “{ProjectStore.Current.Name}”", Tag = 0L });
+        if (canCreate)
+            choice.Items.Add(new ComboBoxItem { Content = $"A new company project named “{ProjectStore.Current.Name}”", Tag = 0L });
         foreach (var p in projects)
             choice.Items.Add(new ComboBoxItem { Content = $"The project {p.Name} ({p.ClientName})", Tag = p.Id });
+        if (choice.Items.Count == 0)
+        {
+            AppNotify.Info("Use Studio", "Create a project in Studio first, then save this work into it.");
+            return;
+        }
         choice.SelectedIndex = 0;
-        var client = new TextBox { Header = "Client name (for a new project)", Text = ProjectStore.Current.Info.ClientName };
+        var client = new TextBox { Header = "Client name (for a new project)", Text = ProjectStore.Current.Info.ClientName, Visibility = canCreate ? Visibility.Visible : Visibility.Collapsed };
         var panel = new StackPanel { Spacing = 10, MinWidth = 400 };
         panel.Children.Add(new TextBlock { Text = "Saving to an existing project replaces what the company file holds for it, and keeps the earlier revisions.", TextWrapping = TextWrapping.Wrap });
+        if (!canCreate)
+            panel.Children.Add(new TextBlock { Text = CompanyOfficePolicy.UseStudioForClientsProjects, TextWrapping = TextWrapping.Wrap, FontSize = 12, Opacity = 0.85 });
         panel.Children.Add(choice);
         panel.Children.Add(client);
         var dialog = new ContentDialog
@@ -369,6 +394,11 @@ public sealed partial class MainWindow
             var target = (choice.SelectedItem as ComboBoxItem)?.Tag as long? ?? 0;
             if (target == 0)
             {
+                if (!canCreate)
+                {
+                    AppNotify.Info("Use Studio", CompanyOfficePolicy.UseStudioForClientsProjects);
+                    return;
+                }
                 var clientName = client.Text.Trim();
                 if (clientName.Length == 0)
                 {

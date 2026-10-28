@@ -49,28 +49,33 @@ public sealed partial class SettingsPage : Page
     }
 
     /// <summary>
-    /// When the project is linked to the company file, the project's name, site and client are kept in O-Studio and the company's
-    /// name, contacts and registrations in OSAS. They are shown here for reference and every report prints them from there.
+    /// When the project is linked to the company file, company and project identity are kept in Studio.
+    /// They are shown here for reference and every report prints them from there.
     /// </summary>
     private void ShowWhereDetailsAreKept(bool linked)
     {
-        (TextBox Box, string Header, string Where)[] fields =
+        (TextBox Box, string Header)[] fields =
         [
-            (ProjectNameBox, "Project name", "O-Studio"),
-            (ProjectLocationBox, "Project location", "O-Studio"),
-            (ClientNameBox, "Client name", "O-Studio"),
-            (CompanyNameBox, "Company name", "OSAS"),
-            (ContactPhoneBox, "Contact number", "OSAS"),
-            (ContactEmailBox, "Email", "OSAS"),
-            (AddressBox, "Address", "OSAS"),
-            (GstinBox, "GSTIN", "OSAS"),
-            (PanBox, "PAN", "OSAS"),
+            (ProjectNameBox, "Project name"),
+            (ProjectLocationBox, "Project location"),
+            (ClientNameBox, "Client name"),
+            (CompanyNameBox, "Company name"),
+            (ContactPhoneBox, "Contact number"),
+            (ContactEmailBox, "Email"),
+            (AddressBox, "Address"),
+            (GstinBox, "GSTIN"),
+            (PanBox, "PAN"),
         ];
-        foreach (var (box, header, where) in fields)
+        foreach (var (box, header) in fields)
         {
             box.IsReadOnly = linked;
-            box.Header = linked ? $"{header} (change it in {where})" : header;
+            box.Header = linked ? $"{header} (change it in Studio)" : header;
         }
+        // PM firm fields follow the company file when linked — do not let Settings overwrite them.
+        PmCompanyBox.IsReadOnly = linked;
+        PmGstinBox.IsReadOnly = linked;
+        PmPanBox.IsReadOnly = linked;
+        PmCompanyBox.Header = linked ? "Company / firm (from Studio)" : "Company / firm";
     }
 
     private void LoadProjectFields()
@@ -120,15 +125,19 @@ public sealed partial class SettingsPage : Page
     private void SavePersonaFields()
     {
         var parties = ProjectStore.Current.Parties;
+        var linked = ProjectStore.Current.Info.FromCompanyFile;
         parties.Active = (PersonaActiveBox.SelectedItem as ComboBoxItem)?.Tag as string == "contractor"
             ? PartyRole.Contractor
             : PartyRole.PM;
 
-        parties.Pm.Company = (PmCompanyBox.Text ?? "").Trim();
+        if (!linked)
+        {
+            parties.Pm.Company = (PmCompanyBox.Text ?? "").Trim();
+            parties.Pm.Gstin = (PmGstinBox.Text ?? "").Trim();
+            parties.Pm.Pan = (PmPanBox.Text ?? "").Trim();
+        }
         parties.Pm.SignatoryName = (PmSignNameBox.Text ?? "").Trim();
         parties.Pm.SignatoryRole = (PmSignRoleBox.Text ?? "").Trim();
-        parties.Pm.Gstin = (PmGstinBox.Text ?? "").Trim();
-        parties.Pm.Pan = (PmPanBox.Text ?? "").Trim();
         parties.Pm.NumberPrefix = (PmPrefixBox.Text ?? "").Trim();
 
         parties.Contractor.Company = (ConCompanyBox.Text ?? "").Trim();
@@ -259,32 +268,39 @@ public sealed partial class SettingsPage : Page
             return;
         }
 
+        var store = ProjectStore.Current;
+        var info = store.Info;
+        var linked = info.FromCompanyFile;
         var name = (ProjectNameBox.Text ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(name))
+        if (!linked && string.IsNullOrWhiteSpace(name))
         {
             AppNotify.Error("Enter a project name.");
             return;
         }
 
-        var store = ProjectStore.Current;
-        var info = store.Info;
-        info.Name = name;
-        info.Location = (ProjectLocationBox.Text ?? "").Trim();
-        info.ClientName = (ClientNameBox.Text ?? "").Trim();
+        // Suite-linked: do not write company/project identity from this page — Studio is the source of truth.
+        if (!linked)
+        {
+            info.Name = name;
+            info.Location = (ProjectLocationBox.Text ?? "").Trim();
+            info.ClientName = (ClientNameBox.Text ?? "").Trim();
+            info.CompanyName = string.IsNullOrWhiteSpace(CompanyNameBox.Text)
+                ? Branding.Company
+                : CompanyNameBox.Text.Trim();
+            info.ContactPhone = (ContactPhoneBox.Text ?? "").Trim();
+            info.ContactEmail = (ContactEmailBox.Text ?? "").Trim();
+            info.Address = (AddressBox.Text ?? "").Trim();
+            info.Gstin = (GstinBox.Text ?? "").Trim();
+            info.Pan = (PanBox.Text ?? "").Trim();
+        }
         info.PreparedByRole = PreparedByRoleBox.SelectedItem?.ToString() ?? "Engineer";
         info.PreparedByName = (PreparedByNameBox.Text ?? "").Trim();
-        info.CompanyName = string.IsNullOrWhiteSpace(CompanyNameBox.Text)
-            ? Branding.Company
-            : CompanyNameBox.Text.Trim();
-        info.ContactPhone = (ContactPhoneBox.Text ?? "").Trim();
-        info.ContactEmail = (ContactEmailBox.Text ?? "").Trim();
-        info.Address = (AddressBox.Text ?? "").Trim();
-        info.Gstin = (GstinBox.Text ?? "").Trim();
         info.Cin = (CinBox.Text ?? "").Trim();
-        info.Pan = (PanBox.Text ?? "").Trim();
         info.LogoPath = _pendingLogoPath ?? "";
         store.Name = info.Name;
         SavePersonaFields();
+        if (linked)
+            store.Parties.FollowCompanyFile(info);
 
         store.Diameters.Clear();
         foreach (var d in list.Distinct().OrderBy(x => x))

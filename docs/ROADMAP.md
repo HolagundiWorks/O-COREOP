@@ -94,7 +94,7 @@ AORMS Connect / Bridge (sign-in, Online projects, Push/Pull, Bind/Flush, outbox)
 8. A notice when O-Draft has re-recorded a drawing since it was imported.
 9. O-Draft side (not in this repository): `takeoff.record`, stable `refs`, slab spans and `takeoff.annotate` are built; still to do there: room level, length and breadth, `wall_ref` on openings, wall thickness, a real annotated-PDF run, PDF underlay and calibration, `aqcexport` ([HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md)).
 
-**Suite joins** (O-STUDIO roadmap numbers): shared company file + live sync (2.2); `ProjectRef` / estimate `ArtifactRef` stamped on company-file saves and Estimate page (2.3); O-Studio fee proposals read totals via `project_estimate_summary` (2.4, Studio side); MCP server still open (2.5).
+**Suite joins** (O-STUDIO roadmap numbers): shared company file + live sync (2.2); `ProjectRef` / estimate `ArtifactRef` stamped on company-file saves and Estimate page (2.3); **share estimate / RA drafts to Studio** via `aqc.estimate.draft` / `aqc.ra.draft.*` ([STUDIO-DRAFT-SHARE.md](STUDIO-DRAFT-SHARE.md)); Studio inbox approve/lock still open (2.4); MCP server still open (2.5). Suite-linked CoreOp no longer creates clients/projects (use Studio).
 
 **Product**
 

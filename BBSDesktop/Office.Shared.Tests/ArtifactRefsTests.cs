@@ -46,4 +46,14 @@ public class ArtifactRefsTests
         };
         Assert.DoesNotContain("artifact_ref", ArtifactRefs.EstimateChecksumBody(body));
     }
+
+    [Fact]
+    public void Running_bill_ArtifactRef_uses_ra_bill_kind()
+    {
+        var project = ArtifactRefs.ProjectRef("uuid-a", 7);
+        var a = ArtifactRefs.RunningBill(project, "bill1", 1, "{\"id\":\"bill1\"}");
+        Assert.Equal("ra_bill", a["kind"]!.GetValue<string>());
+        Assert.Equal("bill1", a["id"]!.GetValue<string>());
+        Assert.Equal(1u, a["revision"]!.GetValue<uint>());
+    }
 }
