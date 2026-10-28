@@ -61,13 +61,8 @@ Connect/Bridge work from the former `docs/AORMS-CONNECT-HANDOFF.md` is **closed 
 | 5.2 | Produce and read `ProjectRef` and `ArtifactRef`: estimate gets an `ArtifactRef` when linked to the company file; project JSON carries `project_ref` | 2.3 | Built: `Office.Shared.ArtifactRefs`, Estimate page + `ProjectStore.ToJson`; BOQ / rate schedule ArtifactRefs and drawing `made_from` still open |
 | 5.3 | Compute and store a SHA-256 for each artifact at each revision | 2.3 | Needed for 5.2 |
 | 5.4 | An MCP server around the calculation engine (`aqc.calculate_boq`, `aqc.compare_estimates`), with the same descriptor shape as O-Studio's `office-agent` | 2.5 | Writes are proposals first; today only O-Studio has a server. The in-app assistant (`Services/Ai`) is separate and stays opt-in |
-<<<<<<< HEAD
-| 5.5 | Estimates and running bills: O-CoreOp calculates and **shares drafts** into the company file; Studio approves/locks | 2.4 | CoreOp share **implemented** ([STUDIO-DRAFT-SHARE.md](STUDIO-DRAFT-SHARE.md)). Studio inbox / approve / revise still open. Local Certify is interim only. |
-| 5.6 | O-Draft writes the bridge file (`aqcexport`) and carries a `ProjectRef` in it | (O-Draft repo) | Until then, import is tested only against the sample files in `docs/bridge/` |
-=======
-| 5.5 | ~~Estimates and running bills against fee proposals~~ **done:** O-Studio reads `project_estimate_summary` + `project_ra_summary`; fee proposals can use the O-CoreOp estimate as cost; invoices show estimate (+ RA) totals | 2.4 | Built on both sides; **open:** Windows GUI E2E click-through, optional invoice ArtifactRef column, BOQ/`made_from` ArtifactRefs |
+| 5.5 | Estimates and running bills: O-Studio reads `project_estimate_summary` + `project_ra_summary`; CoreOp also **shares drafts** into the company file for Studio approve/lock | 2.4 | Fee/RA summary **done** on Studio side. CoreOp draft share **implemented** ([STUDIO-DRAFT-SHARE.md](STUDIO-DRAFT-SHARE.md)). Studio inbox / approve / revise still open. Local Certify is interim only. **Open:** Windows GUI E2E, optional invoice ArtifactRef column, BOQ/`made_from` ArtifactRefs |
 | 5.6 | O-Draft bridge file: CoreOp parses `source.project_ref` (Import captions Mine/Other/missing); Draft stamps take-off `project_ref` when company-linked | (O-Draft repo) | Interactive Draft project-picker UI still open; offline bridge export should keep carrying the same ref |
->>>>>>> origin/main
 
 ## 6. Product work, in rough order
 
