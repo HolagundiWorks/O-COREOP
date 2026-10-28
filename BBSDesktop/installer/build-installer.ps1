@@ -136,6 +136,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $PublishDir "office.dll"))) {
 Write-Host "Publish : O-CoreOp.exe + bbs_engine.dll + office.dll ready"
 
 # --- ShilpiDB engine (bundled sibling process; not a separate product) ---
+# Suite pin: v0.2.1 — download shilpidb-v0.2.1-x86_64-pc-windows-msvc.zip from
+# https://github.com/HolagundiWorks/shilpidb/releases/tag/v0.2.1 and point SHILPIDB_BIN
+# at the unzipped folder (or build a sibling ..\shilpidb at that tag).
 function Find-ShilpiEngineBins {
     $names = @('shilpid.exe', 'shilpi-http.exe')
     $candidates = [System.Collections.Generic.List[string]]::new()
