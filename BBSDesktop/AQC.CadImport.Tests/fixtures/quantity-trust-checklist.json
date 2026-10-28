@@ -1,0 +1,48 @@
+{
+  "format": "hcw-aqc-bridge",
+  "version": 1,
+  "source": {
+    "app": "O-Draft",
+    "drawing": "quantity-trust-checklist.dxf",
+    "drawing_id": "quantity-trust-checklist-0001",
+    "exported": "2026-10-28T12:00:00Z",
+    "project_ref": { "v": 1, "company_uuid": "quantity-trust-co", "project_id": 42 }
+  },
+  "units": "mm",
+  "project": {
+    "name": "Quantity trust checklist",
+    "client_name": "QS audit",
+    "company_name": "Quantity Trust Studio"
+  },
+  "levels": [
+    { "name": "Ground", "height_mm": 3150, "slab_thickness_mm": 150, "beam_depth_mm": 450, "ceiling_mm": 3000, "lintel_bottom_mm": 2100 }
+  ],
+  "beam_depths_mm": [ 300, 450 ],
+  "walls": [
+    { "ref": "W-FRONT", "level": "Ground", "length_mm": 6000, "height_mm": 3000, "thickness_mm": 230, "layer": "MEASURE-FULLBRICK" },
+    { "ref": "W-BACK", "level": "Ground", "length_mm": 6000, "height_mm": 3000, "thickness_mm": 230, "layer": "MEASURE-FULLBRICK" }
+  ],
+  "openings": [
+    { "ref": "O-D2", "kind": "Door", "mark": "D2", "level": "Ground", "width_mm": 900, "height_mm": 2100, "sill_mm": 0, "type": "single", "wall_ref": "W-FRONT" },
+    { "ref": "O-W3", "kind": "Window", "mark": "W3", "level": "Ground", "width_mm": 1200, "height_mm": 1200, "sill_mm": 900, "wall_ref": "W-FRONT" }
+  ],
+  "opening_schedule": [
+    { "mark": "D2", "kind": "Door", "width_mm": 900, "height_mm": 2100, "sill_mm": 0, "nos": 1, "type": "single" },
+    { "mark": "W3", "kind": "Window", "width_mm": 1200, "height_mm": 1200, "sill_mm": 900, "nos": 1 }
+  ],
+  "columns": [],
+  "lintels": [],
+  "rooms": [],
+  "slabs": [],
+  "_quantity_trust": {
+    "expected_face_m2": {
+      "front_gross": 18.0,
+      "door_deduct": 1.89,
+      "window_deduct": 1.44,
+      "front_net": 14.67,
+      "back_net": 18.0,
+      "total_net": 32.67
+    },
+    "note": "Mirrored from O-Draft crates/engine/tests/fixtures/quantity-trust-checklist.json. CadImport asserts facts + wall_ref linking; net m² is the QS audit target."
+  }
+}
