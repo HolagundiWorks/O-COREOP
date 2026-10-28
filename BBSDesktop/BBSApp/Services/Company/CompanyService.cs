@@ -157,12 +157,65 @@ public static class CompanyService
 
     public static Task<IReadOnlyList<SharedClient>> ClientsAsync() => Task.Run(() => Require().Clients());
 
+    /// <summary>False when this company session was opened from the suite — clients/projects are created only in Studio.</summary>
+    public static bool CanCreateClientsAndProjects => CompanyOfficePolicy.AllowsClientProjectCreate(_company);
+
     public static Task<long> CreateProjectAsync(string name, long? clientId, string newClientName, string site) =>
         Task.Run(() =>
         {
             var company = Require();
+            CompanyOfficePolicy.RequireClientProjectCreate(company);
             var client = clientId ?? company.CreateClient(newClientName);
             return company.CreateProject(name, client, site);
+        });
+
+    /// <summary>
+    /// Shares an estimate snapshot into the company file as <see cref="StudioDraftShare.EstimateDraftKind"/> with state
+    /// <c>draft</c> for Studio's inbox. Does not certify or lock anything in CoreOp.
+    /// </summary>
+    public static Task<(long Revision, string ChecksumSha256)> ShareEstimateDraftAsync(JsonObject estimatePayload, double grandTotal, string? rateBookVersionName) =>
+        Task.Run(() =>
+        {
+            var company = Require();
+            var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "Link this project to the company file before sharing a draft with Studio.");
+            var project = ArtifactRefs.ProjectRef(company.Uuid, link.ProjectId);
+            var checksumBody = ArtifactRefs.EstimateChecksumBody(estimatePayload);
+            var revision = (uint)Math.Max(1, company.DocumentRevision(link.ProjectId, StudioDraftShare.EstimateDraftKind) + 1);
+            var artifact = ArtifactRefs.Estimate(project, "estimate_draft", revision, checksumBody);
+            var envelope = StudioDraftShare.BuildEnvelope(
+                "estimate",
+                StudioDraftShare.StateDraft,
+                company.User,
+                DateTimeOffset.UtcNow,
+                artifact,
+                StudioDraftShare.EstimateSummary(grandTotal, rateBookVersionName, ProjectStore.Current.Info.Name),
+                estimatePayload);
+            return StudioDraftShare.PutDraft(company, link.ProjectId, StudioDraftShare.EstimateDraftKind, envelope);
+        });
+
+    /// <summary>
+    /// Shares a running-account bill into the company file as <c>aqc.ra.draft.&lt;bill_id&gt;</c> with state <c>draft</c>
+    /// for Studio's inbox. Local Certify in CoreOp is interim only and is not the suite approval gate.
+    /// </summary>
+    public static Task<(long Revision, string ChecksumSha256)> ShareRaBillDraftAsync(string billId, JsonObject billPayload, double gross, double net, string? numberOrPreview, string? party) =>
+        Task.Run(() =>
+        {
+            var company = Require();
+            var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "Link this project to the company file before sharing a draft with Studio.");
+            var kind = StudioDraftShare.RaDraftKind(billId);
+            var project = ArtifactRefs.ProjectRef(company.Uuid, link.ProjectId);
+            var checksumBody = billPayload.ToJsonString();
+            var revision = (uint)Math.Max(1, company.DocumentRevision(link.ProjectId, kind) + 1);
+            var artifact = ArtifactRefs.RunningBill(project, billId, revision, checksumBody);
+            var envelope = StudioDraftShare.BuildEnvelope(
+                "ra_bill",
+                StudioDraftShare.StateDraft,
+                company.User,
+                DateTimeOffset.UtcNow,
+                artifact,
+                StudioDraftShare.RaBillSummary(billId, numberOrPreview ?? "", gross, net, party),
+                billPayload);
+            return StudioDraftShare.PutDraft(company, link.ProjectId, kind, envelope);
         });
 
     /// <summary>

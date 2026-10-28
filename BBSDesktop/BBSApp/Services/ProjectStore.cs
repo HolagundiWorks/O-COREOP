@@ -308,7 +308,8 @@ public sealed class ProjectStore
         };
         // Suite identity: company file is the system of record (ProjectRef). Present when this project lives there.
         if (Shared is not null && Company.CompanyService.Current is { } company && !string.IsNullOrWhiteSpace(company.Uuid))
-            root["project_ref"] = Office.Shared.ArtifactRefs.ProjectRef(company.Uuid, Shared.ProjectId);
+            // global:: — Office is also this store's OfficeRegister property.
+            root["project_ref"] = global::Office.Shared.ArtifactRefs.ProjectRef(company.Uuid, Shared.ProjectId);
         return root;
     }
 

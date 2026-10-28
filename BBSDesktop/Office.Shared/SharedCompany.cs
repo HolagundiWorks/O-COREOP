@@ -24,13 +24,14 @@ public sealed class SharedCompany : IDisposable
 
     private readonly OfficeSession _session;
 
-    private SharedCompany(OfficeSession session, string name, string uuid, string path, string user)
+    private SharedCompany(OfficeSession session, string name, string uuid, string path, string user, bool suiteLinked)
     {
         _session = session;
         Name = name;
         Uuid = uuid;
         Path = path;
         User = user;
+        SuiteLinked = suiteLinked;
     }
 
     public string Name { get; }
@@ -40,6 +41,12 @@ public sealed class SharedCompany : IDisposable
     public string Path { get; }
 
     public string User { get; }
+
+    /// <summary>
+    /// True when this session was opened with a suite ticket (<c>OSAS_TICKET</c>). Suite-linked sessions must not
+    /// create clients or projects — that is Studio's job. Password open (tests/tools) leaves this false.
+    /// </summary>
+    public bool SuiteLinked { get; }
 
     /// <summary>
     /// Opens a company file and signs in. <paramref name="secret"/> and <paramref name="unlock"/> are only for a protected file
@@ -52,7 +59,7 @@ public sealed class SharedCompany : IDisposable
         {
             var company = session.Call("company.open", new JsonObject { ["path"] = path, ["secret"] = secret, ["unlock"] = unlock });
             session.Call("auth.login", new JsonObject { ["username"] = user, ["password"] = password });
-            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, user);
+            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, user, suiteLinked: false);
         }
         catch
         {
@@ -62,8 +69,8 @@ public sealed class SharedCompany : IDisposable
     }
 
     /// <summary>
-    /// Opens a company file and signs in with a one-time ticket from the suite app (OSAS) instead of a password. The ticket works once, for
-    /// two minutes, and signs in the person who was signed in there.
+    /// Opens a company file and signs in with a one-time ticket from the suite app (OSAS / Studio) instead of a password. The ticket works once, for
+    /// two minutes, and signs in the person who was signed in there. The resulting session is <see cref="SuiteLinked"/>.
     /// </summary>
     public static SharedCompany OpenWithTicket(string appDir, string path, string ticket)
     {
@@ -72,7 +79,7 @@ public sealed class SharedCompany : IDisposable
         {
             var company = session.Call("company.open", new JsonObject { ["path"] = path, ["secret"] = "", ["unlock"] = "" });
             var who = session.Call("auth.login_ticket", new JsonObject { ["ticket"] = ticket });
-            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, who?["username"]?.GetValue<string>() ?? "");
+            return new SharedCompany(session, company?["name"]?.GetValue<string>() ?? "", company?["uuid"]?.GetValue<string>() ?? "", path, who?["username"]?.GetValue<string>() ?? "", suiteLinked: true);
         }
         catch
         {
@@ -84,22 +91,28 @@ public sealed class SharedCompany : IDisposable
     public IReadOnlyList<SharedClient> Clients() =>
         Array(_session.Call("client_list", new JsonObject { ["include_archived"] = false })).Select(c => new SharedClient(Long(c, "id"), Text(c, "name"))).ToList();
 
-    public long CreateClient(string name) =>
-        _session.Call("client_save", new JsonObject
+    public long CreateClient(string name)
+    {
+        CompanyOfficePolicy.RequireClientProjectCreate(this);
+        return _session.Call("client_save", new JsonObject
         {
             ["client"] = new JsonObject { ["id"] = null, ["name"] = name, ["contact_person"] = "", ["email"] = "", ["phone"] = "", ["address"] = "", ["pan"] = "", ["gstin"] = "" },
         })!.GetValue<long>();
+    }
 
     public IReadOnlyList<SharedProject> Projects(bool includeArchived = false) =>
         Array(_session.Call("project_list", new JsonObject { ["client_id"] = null, ["include_archived"] = includeArchived }))
             .Select(p => new SharedProject(Long(p, "id"), Text(p, "code"), Text(p, "name"), Long(p, "client_id"), Text(p, "client_name"), Text(p, "site_address"), Text(p, "summary"), Text(p, "status")))
             .ToList();
 
-    public long CreateProject(string name, long clientId, string siteAddress = "") =>
-        _session.Call("project_save", new JsonObject
+    public long CreateProject(string name, long clientId, string siteAddress = "")
+    {
+        CompanyOfficePolicy.RequireClientProjectCreate(this);
+        return _session.Call("project_save", new JsonObject
         {
             ["project"] = new JsonObject { ["id"] = null, ["client_id"] = clientId, ["code"] = "", ["name"] = name, ["site_address"] = siteAddress, ["status"] = "active" },
         })!.GetValue<long>();
+    }
 
     /// <summary>The project's document of this kind, or null when it has none yet.</summary>
     public SharedDocument? GetDocument(long projectId, string kind = DocumentKind)
@@ -143,7 +156,7 @@ public sealed class SharedCompany : IDisposable
 
     /// <summary>
     /// The company's details and, when <paramref name="projectId"/> is given, that project's details, in one read. This is what a document
-    /// is printed from; the company's details are changed in OSAS and a project's in O-Studio, never here.
+    /// is printed from; company and project identity are changed in Studio, never here.
     /// </summary>
     public DocumentContext DocumentContext(long? projectId)
     {

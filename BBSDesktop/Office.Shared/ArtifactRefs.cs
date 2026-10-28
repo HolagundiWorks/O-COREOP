@@ -43,7 +43,14 @@ public static class ArtifactRefs
     /// An estimate ArtifactRef. <paramref name="checksumContent"/> is the maker's canonical body for this revision
     /// (not including the ArtifactRef itself).
     /// </summary>
-    public static JsonObject Estimate(JsonObject projectRef, string id, uint revision, string checksumContent)
+    public static JsonObject Estimate(JsonObject projectRef, string id, uint revision, string checksumContent) =>
+        Artifact(projectRef, "estimate", id, revision, checksumContent);
+
+    /// <summary>A running-account bill ArtifactRef (draft share into Studio).</summary>
+    public static JsonObject RunningBill(JsonObject projectRef, string id, uint revision, string checksumContent) =>
+        Artifact(projectRef, "ra_bill", id, revision, checksumContent);
+
+    static JsonObject Artifact(JsonObject projectRef, string kind, string id, uint revision, string checksumContent)
     {
         if (projectRef["v"]?.GetValue<uint>() != Version
             || string.IsNullOrWhiteSpace(projectRef["company_uuid"]?.GetValue<string>())
@@ -57,7 +64,7 @@ public static class ArtifactRefs
         {
             ["v"] = Version,
             ["project"] = projectRef.DeepClone(),
-            ["kind"] = "estimate",
+            ["kind"] = kind,
             ["id"] = id.Trim(),
             ["revision"] = revision,
             ["checksum_sha256"] = Sha256Hex(checksumContent),

@@ -25,7 +25,10 @@
                         HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button Content="Calculate" Style="{StaticResource PrimaryButtonStyle}"
                         Click="Calculate_Click" AutomationProperties.Name="Calculate estimate"/>
-                <Button Content="Export PDF" Style="{StaticResource AccentButtonStyle}"
+                <Button Content="Share draft to Studio" Style="{StaticResource AccentButtonStyle}"
+                        Click="ShareDraft_Click" AutomationProperties.Name="Share estimate draft to Studio"
+                        ToolTipService.ToolTip="Writes a draft estimate into the company file for Studio approval. Approval and lock happen in Studio."/>
+                <Button Content="Export PDF" Style="{StaticResource SecondaryButtonStyle}"
                         Click="ExportPdf_Click" AutomationProperties.Name="Export estimate PDF"/>
                 <Button Content="CSV" Style="{StaticResource SecondaryButtonStyle}"
                         Click="ExportCsv_Click" AutomationProperties.Name="Export estimate CSV"/>

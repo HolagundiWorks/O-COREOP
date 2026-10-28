@@ -17,6 +17,26 @@ jobs:
         with:
           repository: HolagundiWorks/O-UI
           path: o-ui
+      # O-UI #3 left WidgetWindow internal and an ambiguous Path in PomodoroWidget;
+      # CoreOp needs that tip for SuiteAppearance/SuiteDark. Patch until O-UI ships the fix.
+      - name: Patch O-UI widget build break
+        working-directory: o-ui
+        shell: pwsh
+        run: |
+          $ww = 'Hcw.Ui/Widgets/WidgetWindow.cs'
+          $pom = 'Hcw.Ui/Widgets/PomodoroWidget.cs'
+          if (Test-Path $ww) {
+            $t = Get-Content -Raw $ww
+            $n = $t -replace '(?<!public )abstract class WidgetWindow', 'public abstract class WidgetWindow'
+            if ($n -ne $t) { Set-Content -NoNewline -Path $ww -Value $n; Write-Host "Patched $ww (WidgetWindow public)" }
+            else { Write-Host "WidgetWindow already public or missing pattern" }
+          }
+          if (Test-Path $pom) {
+            $t = Get-Content -Raw $pom
+            $n = $t -replace 'sealed class Arc : Path\b', 'sealed class Arc : Microsoft.UI.Xaml.Shapes.Path'
+            if ($n -ne $t) { Set-Content -NoNewline -Path $pom -Value $n; Write-Host "Patched $pom (Path qualified)" }
+            else { Write-Host "Pomodoro Path already qualified or missing pattern" }
+          }
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
