@@ -40,6 +40,7 @@ public sealed partial class EstimatePage : Page
         RateBookStore.Current.EnsureLoaded();
         BuildLevelChecks(selectAll: true);
         RefreshVersionCombo();
+        RefreshPhaseCombo();
         if (ProjectStore.Current.LastEstimate is { } last)
             ShowResult(last);
         else
@@ -62,6 +63,17 @@ public sealed partial class EstimatePage : Page
             kv.Value.IsChecked = selected.Contains(kv.Key) || selected.Count == 0;
         if (_levelBoxes.Count > 0 && !_levelBoxes.Values.Any(c => c.IsChecked == true))
             foreach (var cb in _levelBoxes.Values) cb.IsChecked = true;
+    }
+
+    private void RefreshPhaseCombo()
+    {
+        var keep = (PhaseCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        PhaseCombo.Items.Clear();
+        PhaseCombo.Items.Add(new ComboBoxItem { Content = "All phases", Tag = "" });
+        foreach (var name in ProjectStore.Current.PhaseNames(billing: false))
+            PhaseCombo.Items.Add(new ComboBoxItem { Content = name, Tag = name });
+        PhaseCombo.SelectedItem = PhaseCombo.Items.OfType<ComboBoxItem>().FirstOrDefault(i => string.Equals(i.Tag as string, keep, StringComparison.OrdinalIgnoreCase))
+            ?? PhaseCombo.Items.FirstOrDefault();
     }
 
     private void RefreshVersionCombo()
@@ -148,7 +160,9 @@ public sealed partial class EstimatePage : Page
             return;
         }
 
-        var result = EstimateCalculator.Build(ProjectStore.Current, ver, levels);
+        var phase = (PhaseCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        var result = MaterialsCalculator.WithPhase(phase, () => EstimateCalculator.Build(ProjectStore.Current, ver, levels));
+        result.Phase = phase;
         // The first calculation is Rev 0; calculating again makes the next revision.
         result.Revision = ProjectStore.Current.LastEstimate is { } previous ? Office.Shared.RevisionLabels.Next(previous.Revision) : 0;
         EstimateCalculator.AttachCompanyArtifactRef(result, ProjectStore.Current);
@@ -172,7 +186,7 @@ public sealed partial class EstimatePage : Page
     private void ShowResult(EstimateResult result)
     {
         _result = result;
-        TotalText.Text = $"₹ {result.GrandTotal:N2}  ·  {Office.Shared.RevisionLabels.Estimate(result.Revision)}";
+        TotalText.Text = $"₹ {result.GrandTotal:N2}  ·  {Office.Shared.RevisionLabels.Estimate(result.Revision, result.Phase)}";
         var mk = result.Markups;
         MarkupText.Text =
             $"Base ₹ {mk.BaseTotal:N2}  ·  Elec {mk.ElectricalPct:0.##}% ₹ {mk.ElectricalAmount:N2}  ·  " +

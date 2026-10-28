@@ -113,14 +113,33 @@ public static class MaterialsCalculator
     public static string RowLevel(Dictionary<string, string> r) =>
         r.TryGetValue("level", out var v) && !string.IsNullOrWhiteSpace(v) ? v : "Lvl0";
 
+    [ThreadStatic] private static string? _phaseScope;
+
+    /// <summary>
+    /// Runs <paramref name="build"/> with only the rows whose <c>phase</c> (set in O-Draft) is <paramref name="phase"/>.
+    /// A null or empty phase means every row. Every quantity calculator takes its rows through
+    /// <see cref="FilterByLevels"/>, so one scope narrows them all; rows with no phase (including the derived finishes)
+    /// are left out of a single phase.
+    /// </summary>
+    public static T WithPhase<T>(string? phase, Func<T> build)
+    {
+        var previous = _phaseScope;
+        _phaseScope = string.IsNullOrWhiteSpace(phase) ? null : phase.Trim();
+        try { return build(); }
+        finally { _phaseScope = previous; }
+    }
+
+    private static bool InPhase(Dictionary<string, string> r) =>
+        _phaseScope is null || (r.TryGetValue("phase", out var p) && string.Equals(p.Trim(), _phaseScope, StringComparison.OrdinalIgnoreCase));
+
     public static bool MatchesLevels(Dictionary<string, string> r, IReadOnlySet<string>? levels) =>
-        levels is null || levels.Count == 0 || levels.Contains(RowLevel(r));
+        (levels is null || levels.Count == 0 || levels.Contains(RowLevel(r))) && InPhase(r);
 
     public static IEnumerable<Dictionary<string, string>> FilterByLevels(
         IEnumerable<Dictionary<string, string>> rows, IReadOnlySet<string>? levels) =>
         levels is null || levels.Count == 0
             ? Array.Empty<Dictionary<string, string>>()
-            : rows.Where(r => levels.Contains(RowLevel(r)));
+            : rows.Where(r => levels.Contains(RowLevel(r)) && InPhase(r));
 
     public static List<ConcreteLine> BuildConcreteBoq(ProjectStore store, IReadOnlySet<string>? levels = null)
     {

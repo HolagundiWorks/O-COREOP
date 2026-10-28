@@ -63,8 +63,13 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <ComboBox x:Name="VersionCombo" Header="Rate book version" HorizontalAlignment="Stretch"
-                          AutomationProperties.Name="Rate book version for estimate"/>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource SpacingS}">
+                    <ComboBox x:Name="VersionCombo" Header="Rate book version" MinWidth="220"
+                              AutomationProperties.Name="Rate book version for estimate"/>
+                    <ComboBox x:Name="PhaseCombo" Header="Estimation phase" MinWidth="180"
+                              AutomationProperties.Name="Estimation phase to estimate"
+                              ToolTipService.ToolTip="Estimate only the items given this phase in O-Draft. All phases estimates everything; items without a phase are left out of a single phase."/>
+                </StackPanel>
                 <TextBlock x:Name="TotalText" Grid.Column="1" VerticalAlignment="Bottom" Margin="0,0,0,8"
                            Style="{StaticResource PageTitleStyle}" FontSize="20"/>
                 <TextBlock x:Name="MarkupText" Grid.Row="1" Grid.ColumnSpan="2"

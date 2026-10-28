@@ -45,6 +45,8 @@ public sealed class EstimateResult
     public JsonObject? ArtifactRef { get; set; }
     /// <summary>Revision of this estimate: 0 for the first calculation, then one more each time it is calculated again.</summary>
     public int Revision { get; set; }
+    /// <summary>The estimation phase this estimate covers; empty for all phases.</summary>
+    public string Phase { get; set; } = "";
 
     /// <summary>
     /// The civil items' amounts grouped by estimation phase (or by running-bill phase). Materials and steel are
@@ -299,6 +301,7 @@ public static class EstimateCalculator
             ["rate_book_version_id"] = r.RateBookVersionId,
             ["rate_book_version_name"] = r.RateBookVersionName,
             ["revision"] = r.Revision,
+            ["phase"] = r.Phase,
             ["grand_total"] = r.GrandTotal,
             ["base_total"] = r.BaseTotal,
             ["markups"] = r.Markups.ToJson(),
@@ -336,7 +339,8 @@ public static class EstimateCalculator
         {
             RateBookVersionId = o["rate_book_version_id"]?.GetValue<string>() ?? "",
             RateBookVersionName = o["rate_book_version_name"]?.GetValue<string>() ?? "",
-            Revision = Math.Max(0, o["revision"]?.GetValue<int>() ?? 0)
+            Revision = Math.Max(0, o["revision"]?.GetValue<int>() ?? 0),
+            Phase = o["phase"]?.GetValue<string>() ?? ""
         };
         LoadLines(o["civil"] as JsonArray, r.Civil);
         LoadLines(o["materials"] as JsonArray, r.Materials);

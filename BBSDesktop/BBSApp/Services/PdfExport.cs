@@ -551,6 +551,7 @@ public static class PdfExport
                 ? store.Accounts.PreviewBillNumber(b, info.CompanyDisplay) + "  (draft)"
                 : b.Number;
             string raNo = b.BillNo > 0 ? $"RA Bill No. {b.BillNo} · {Office.Shared.RevisionLabels.Revision(b.Revision)}" : "RA Bill (draft)";
+            if (!string.IsNullOrWhiteSpace(b.BillingPhase)) raNo += " · " + b.BillingPhase.Trim();
 
             Document.Create(container =>
             {

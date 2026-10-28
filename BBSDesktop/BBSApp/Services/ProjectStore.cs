@@ -164,6 +164,23 @@ public sealed class ProjectStore
 
     public string[] LevelIds() => Levels.Select(l => l.Id).ToArray();
 
+    /// <summary>
+    /// The phase names a user can pick: the defaults, then any other name found on the member sheets (set in O-Draft).
+    /// <paramref name="billing"/> picks running-bill phases (<c>bill_phase</c>) instead of estimation phases (<c>phase</c>).
+    /// </summary>
+    public List<string> PhaseNames(bool billing)
+    {
+        var names = billing
+            ? new List<string> { "Phase 1", "Phase 2", "Phase 3" }
+            : global::Office.Shared.ProjectPhases.DefaultStages.Select(s => s.Name).ToList();
+        string key = billing ? "bill_phase" : "phase";
+        foreach (var rows in new[] { MasonryWalls, Columns, Lintels, Slabs, Flooring })
+            foreach (var r in rows)
+                if (r.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) && !names.Contains(v.Trim(), StringComparer.OrdinalIgnoreCase))
+                    names.Add(v.Trim());
+        return names;
+    }
+
     public LevelDef? FindLevel(string id) => Levels.FirstOrDefault(l => l.Id == id);
 
     public double ColumnHeightFor(string levelId)

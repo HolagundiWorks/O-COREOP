@@ -111,6 +111,7 @@ public sealed partial class AccountsPage : Page
             BillDateBox.Date = DateTimeOffset.Now;
             ContractBox.SelectedIndex = 0;
             PartyBox.Text = "";
+            FillBillPhases("");
             RetentionBox.Value = 5; OtherDeductBox.Value = 0; AdvanceBox.Value = 0;
             GstBox.Value = 0; TdsBox.Value = 0; CessBox.Value = 0; GstTdsBox.Value = 0;
             NumberText.Text = "—";
@@ -123,6 +124,7 @@ public sealed partial class AccountsPage : Page
         int ci = Math.Max(0, _contractIds.IndexOf(b.ContractId));
         ContractBox.SelectedIndex = ci;
         PartyBox.Text = b.Party;
+        FillBillPhases(b.BillingPhase);
         RetentionBox.Value = b.RetentionPct;
         OtherDeductBox.Value = b.OtherDeductions;
         AdvanceBox.Value = b.AdvanceRecovery;
@@ -145,6 +147,7 @@ public sealed partial class AccountsPage : Page
         _current.ContractId = ci >= 0 && ci < _contractIds.Count ? _contractIds[ci] : "";
         _current.ContractLabel = ci > 0 && ContractBox.SelectedItem is string s ? s : "";
         _current.Party = PartyBox.Text ?? "";
+        _current.BillingPhase = (BillPhaseBox.Text ?? "").Trim();
         _current.RetentionPct = double.IsNaN(RetentionBox.Value) ? 0 : RetentionBox.Value;
         _current.OtherDeductions = double.IsNaN(OtherDeductBox.Value) ? 0 : OtherDeductBox.Value;
         _current.AdvanceRecovery = double.IsNaN(AdvanceBox.Value) ? 0 : AdvanceBox.Value;
@@ -158,11 +161,20 @@ public sealed partial class AccountsPage : Page
     private void SetLocked(bool locked)
     {
         bool en = !locked;
-        foreach (var c in new Control[] { BillDateBox, ContractBox, PartyBox, RetentionBox, OtherDeductBox, AdvanceBox,
+        foreach (var c in new Control[] { BillDateBox, ContractBox, PartyBox, BillPhaseBox, RetentionBox, OtherDeductBox, AdvanceBox,
                                           GstBox, TdsBox, CessBox, GstTdsBox })
             c.IsEnabled = en;
         LinesGrid.IsReadOnly = locked;
         LockBar.IsOpen = locked;
+    }
+
+    /// <summary>The running-bill phases to pick from (the defaults and any chosen in O-Draft), with this bill's own value kept.</summary>
+    private void FillBillPhases(string current)
+    {
+        var names = ProjectStore.Current.PhaseNames(billing: true);
+        if (!string.IsNullOrWhiteSpace(current) && !names.Contains(current, StringComparer.OrdinalIgnoreCase)) names.Add(current);
+        BillPhaseBox.ItemsSource = names;
+        BillPhaseBox.Text = current ?? "";
     }
 
     private void UpdateNumberText()
