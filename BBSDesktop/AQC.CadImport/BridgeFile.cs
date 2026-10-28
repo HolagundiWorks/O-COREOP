@@ -12,6 +12,10 @@ public sealed class BridgeFile
 {
     public string DrawingId { get; init; } = "";
     public string Drawing { get; init; } = "";
+    /// <summary>Company uuid from <c>source.project_ref</c> when O-Draft linked the drawing to a company-file project (same as ShilpiDB headers).</summary>
+    public string? ProjectRefCompany { get; init; }
+    /// <summary>Project id from <c>source.project_ref</c> when present and numeric.</summary>
+    public long? ProjectRefId { get; init; }
     public Dictionary<string, string> Project { get; init; } = new();
     public List<BridgeLevel> Levels { get; init; } = new();
     public List<JsonObject> Walls { get; init; } = new();
@@ -36,10 +40,21 @@ public sealed class BridgeFile
             throw new BridgeFormatException($"Unsupported units '{Str(root, "units")}' (expected mm).");
 
         var src = root["source"] as JsonObject;
+        var projectRef = src?["project_ref"] as JsonObject;
+        string? refCompany = null;
+        long? refId = null;
+        if (projectRef is not null)
+        {
+            refCompany = NullIfEmpty(Str(projectRef, "company_uuid"));
+            if (projectRef["project_id"] is JsonValue pid && pid.TryGetValue<long>(out var pidValue))
+                refId = pidValue;
+        }
         var f = new BridgeFile
         {
             DrawingId = src is null ? "" : Str(src, "drawing_id"),
             Drawing = src is null ? "" : Str(src, "drawing"),
+            ProjectRefCompany = refCompany,
+            ProjectRefId = refId,
         };
         if (string.IsNullOrWhiteSpace(f.DrawingId))
             throw new BridgeFormatException("source.drawing_id is missing.");
@@ -60,6 +75,23 @@ public sealed class BridgeFile
         Fill(root, "rooms", f.Rooms);
         Fill(root, "slabs", f.Slabs);
         return f;
+    }
+
+    static string? NullIfEmpty(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    /// <summary>
+    /// One-line caption for Import-from-CAD preview: whether this bridge file's <c>source.project_ref</c>
+    /// matches the open company-file project (same rules as the ShilpiDB Take-off list Mine/Other).
+    /// </summary>
+    public string ProjectRefCaption(string? openCompanyUuid, long? openProjectId)
+    {
+        var hasRef = ProjectRefId is not null || !string.IsNullOrEmpty(ProjectRefCompany);
+        if (!hasRef)
+            return "This drawing has no company-file project_ref; it will not be marked as this project.";
+        if (!string.IsNullOrEmpty(openCompanyUuid) && openProjectId is long pid
+            && ProjectRefCompany == openCompanyUuid && ProjectRefId == pid)
+            return "This drawing names this company-file project (project_ref).";
+        return "This drawing names another company-file project (project_ref).";
     }
 
     static void Fill(JsonObject root, string key, List<JsonObject> into)
