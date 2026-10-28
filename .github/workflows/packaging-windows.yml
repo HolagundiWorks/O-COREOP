@@ -1,0 +1,89 @@
+# Build O-CoreOp-Setup.exe (Inno). Authenticode runs when the shared suite signing
+# secrets are present; otherwise uploads -unsigned. Do not invent certificates.
+name: packaging-windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: AppVersion override (leave empty to read from csproj)
+        required: false
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  package:
+    runs-on: windows-latest
+    env:
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+      AZURE_SIGNING_REGION: ${{ secrets.AZURE_SIGNING_REGION }}
+      AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+      AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: aqc
+      - uses: actions/checkout@v4
+        with:
+          repository: HolagundiWorks/O-UI
+          path: o-ui
+      - uses: actions/checkout@v4
+        with:
+          repository: HolagundiWorks/O-STUDIO
+          path: o-studio
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Inno Setup 6 and Ninja
+        shell: pwsh
+        run: |
+          choco install innosetup ninja -y --no-progress
+      - name: Build office.dll (O-Studio office-ffi)
+        working-directory: o-studio
+        shell: pwsh
+        run: |
+          cargo build --release --manifest-path office-ffi/Cargo.toml
+          $dll = Get-ChildItem -Path . -Recurse -Filter office.dll -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\release\\' } | Select-Object -First 1
+          if (-not $dll) { throw "office.dll not found after office-ffi build" }
+          Write-Host "office.dll at $($dll.FullName)"
+          "OFFICE_DLL_DIR=$($dll.Directory.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build and optionally sign Setup.exe
+        working-directory: aqc
+        shell: pwsh
+        run: |
+          $args = @("-OfficeDllDir", $env:OFFICE_DLL_DIR)
+          if ("${{ github.event.inputs.version }}") {
+            $args += @("-AppVersion", "${{ github.event.inputs.version }}")
+          } elseif ($env:GITHUB_REF_NAME -like 'v*') {
+            $args += @("-AppVersion", $env:GITHUB_REF_NAME.Substring(1))
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File BBSDesktop\installer\build-installer.ps1 @args
+          $setup = Get-ChildItem BBSDesktop\artifacts\installer\O-CoreOp-Setup-*.exe |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $setup) { throw "O-CoreOp-Setup-*.exe not found" }
+          $ver = if ($setup.BaseName -match 'O-CoreOp-Setup-(.+)$') { $Matches[1] } else { "unknown" }
+          $sig = Get-AuthenticodeSignature -FilePath $setup.FullName
+          $outDir = "dist"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          if ($sig.SignerCertificate) {
+            Copy-Item $setup.FullName (Join-Path $outDir "O-CoreOp-Setup-$ver.exe")
+            Write-Host "Signed: $($sig.SignerCertificate.Subject)"
+          } else {
+            Copy-Item $setup.FullName (Join-Path $outDir "O-CoreOp-Setup-$ver-unsigned.exe")
+            Write-Host "::warning::No signing secrets — uploaded unsigned Setup.exe"
+          }
+          Get-FileHash (Get-ChildItem $outDir\*.exe) -Algorithm SHA256 | Format-List
+      - uses: actions/upload-artifact@v4
+        with:
+          name: o-coreop-setup
+          path: aqc/dist/*
+          if-no-files-found: error

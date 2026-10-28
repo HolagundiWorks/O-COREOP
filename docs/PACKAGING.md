@@ -23,10 +23,26 @@ the Setup.exe. Without secrets the script **warns and leaves the file unsigned**
 
 - `WINDOWS_CERTIFICATE` (base64 PFX) + optional `WINDOWS_CERTIFICATE_PASSWORD`
 - Azure Trusted Signing (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`,
-  `AZURE_SIGNING_ACCOUNT`, `AZURE_CERT_PROFILE`, endpoint/region)
+  `AZURE_SIGNING_ACCOUNT`, `AZURE_CERT_PROFILE`, plus `AZURE_SIGNING_ENDPOINT` **or**
+  `AZURE_SIGNING_REGION`)
 - `SIGN_SELF_SIGNED=1` for local smoke tests only
 
+When Azure secrets are set and the Trusted Signing client is not cached, `sign.ps1`
+downloads `Microsoft.Trusted.Signing.Client` from NuGet.
+
 Never commit production PFX files or invent certificates in CI.
+
+### Local unsigned vs signed smoke
+
+```powershell
+# Unsigned (default)
+powershell -File BBSDesktop\installer\build-installer.ps1
+Get-AuthenticodeSignature BBSDesktop\artifacts\installer\O-CoreOp-Setup-*.exe
+
+# Dev self-sign only
+$env:SIGN_SELF_SIGNED = '1'
+powershell -File BBSDesktop\installer\sign.ps1 BBSDesktop\artifacts\installer\O-CoreOp-Setup-1.1.0.exe
+```
 
 ## Suite glue
 
@@ -44,9 +60,13 @@ Set `OSAS_UPDATE_CHANNEL_URL` to a hosted channel JSON. Help → **Check for upd
 compares the installed version to the channel and does **not** download or apply
 updates yet.
 
-## CI notes
+## CI
 
-- Prefer a Windows runner for Inno + MSIX jobs.
-- Upload unsigned Setup.exe as `O-CoreOp-Setup-<ver>-unsigned.exe` when secrets are absent.
+- App CI: `.github/workflows/ci.yml` (build/test only).
+- Packaging: `.github/workflows/packaging-windows.yml` (`workflow_dispatch` or tag `v*`)
+  installs Inno, runs `build-installer.ps1`, maps the shared signing secret names,
+  uploads `O-CoreOp-Setup-<ver>.exe` or `…-unsigned.exe`.
 - Do not fail packaging solely because signing material is missing.
-- Full suite ops checklist: Project doc `suite-installer-signing.md`.
+- Once org/repo secrets exist, re-run packaging — signing turns on with no code change.
+- Full suite ops checklist (Azure vs EV enrollment for Vishwabhiram): Project doc
+  `suite-installer-signing.md`.
