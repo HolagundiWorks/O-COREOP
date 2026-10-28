@@ -79,6 +79,21 @@ public sealed class BridgeFile
 
     static string? NullIfEmpty(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
+    /// <summary>
+    /// One-line caption for Import-from-CAD preview: whether this bridge file's <c>source.project_ref</c>
+    /// matches the open company-file project (same rules as the ShilpiDB Take-off list Mine/Other).
+    /// </summary>
+    public string ProjectRefCaption(string? openCompanyUuid, long? openProjectId)
+    {
+        var hasRef = ProjectRefId is not null || !string.IsNullOrEmpty(ProjectRefCompany);
+        if (!hasRef)
+            return "This drawing has no company-file project_ref; it will not be marked as this project.";
+        if (!string.IsNullOrEmpty(openCompanyUuid) && openProjectId is long pid
+            && ProjectRefCompany == openCompanyUuid && ProjectRefId == pid)
+            return "This drawing names this company-file project (project_ref).";
+        return "This drawing names another company-file project (project_ref).";
+    }
+
     static void Fill(JsonObject root, string key, List<JsonObject> into)
     {
         if (root[key] is JsonArray a) into.AddRange(a.OfType<JsonObject>());
