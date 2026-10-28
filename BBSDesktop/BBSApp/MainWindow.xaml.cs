@@ -888,6 +888,29 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
 
 
+    private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var result = await BBSApp.Services.UpdateCheck.CheckAsync(version);
+        var body = new StackPanel { Spacing = 8, MaxWidth = 400 };
+        body.Children.Add(new TextBlock { Text = result.Message, TextWrapping = TextWrapping.WrapWholeWords });
+        body.Children.Add(new TextBlock
+        {
+            Text = "Updates are not installed automatically. See docs/PACKAGING.md for signing and the suite channel.",
+            Style = (Style)Application.Current.Resources["MetaTextStyle"],
+            TextWrapping = TextWrapping.WrapWholeWords
+        });
+        var dlg = new ContentDialog
+        {
+            Title = result.UpdateAvailable ? "Update available" : "Check for updates",
+            Content = body,
+            CloseButtonText = "Close",
+            XamlRoot = Content.XamlRoot,
+            DefaultButton = ContentDialogButton.Close
+        };
+        await dlg.ShowAsync();
+    }
+
     private async void About_Click(object sender, RoutedEventArgs e)
     {
         var logo = new Border

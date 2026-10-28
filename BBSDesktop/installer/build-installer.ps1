@@ -198,6 +198,14 @@ if (-not (Test-Path -LiteralPath $setup)) {
     throw "Expected installer not found: $setup"
 }
 
+# Optional Authenticode — no secrets means unsigned (exit 0). See docs/PACKAGING.md.
+$signScript = Join-Path $InstallerDir "sign.ps1"
+if (Test-Path -LiteralPath $signScript) {
+    Write-Host "Signing (if material present)..." -ForegroundColor Yellow
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $signScript $setup
+    if ($LASTEXITCODE -ne 0) { throw "sign.ps1 failed ($LASTEXITCODE)" }
+}
+
 Write-Host ""
 Write-Host "Installer ready:" -ForegroundColor Green
 Write-Host "  $setup"
