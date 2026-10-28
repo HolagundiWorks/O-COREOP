@@ -141,13 +141,13 @@ or drawings involved when reporting a calculation issue.
 
 ## Security issues
 
-**Do not** file security vulnerabilities as public issues. Email **office@hcworks.in**
+**Do not** file security vulnerabilities as public issues. Email **support@hcworks.in**
 privately with details and we will respond as soon as we can.
 
 ## Questions & commercial licensing
 
 - General questions: open a GitHub issue or discussion.
-- Commercial licensing: **office@hcworks.in** · <https://hcworks.in> (see
+- Support / commercial licensing: **support@hcworks.in** · <https://hcworks.in> (see
   [LICENSING.md](LICENSING.md)).
 
 ---

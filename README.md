@@ -119,16 +119,17 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 
 ## Licensing
 
-O-CoreOp is **dual-licensed**:
+O-CoreOp is **open source** and **dual-licensed** (Developed by Human Centric Works):
 
-- **Community Edition** — [GNU AGPL v3](LICENSE). Free for individuals, hobbyists,
-  research, and internal business use. Note the AGPL's network clause: hosting a modified
-  version as a service (SaaS) requires releasing your source under the AGPL.
-- **Commercial License** — required to **resell**, **embed in a proprietary product**,
-  **offer as SaaS** without AGPL compliance, **remove the branding**, or **ship
-  closed-source modifications**.
+- **Community Edition** — [GNU AGPL v3](LICENSE). Free and open source for individuals,
+  hobbyists, research, and internal business use. Note the AGPL's network clause: hosting
+  a modified version as a service (SaaS) requires releasing your source under the AGPL.
+- **Commercial License** — optional **AGPL relief** (not a closed-source product) if you
+  cannot comply with the AGPL — for example to **resell**, **embed in a proprietary
+  product**, **offer as SaaS** without AGPL compliance, **remove the branding**, or
+  **ship closed-source modifications**.
 
-See [LICENSING.md](LICENSING.md). Commercial enquiries: **office@hcworks.in** · <https://hcworks.in>
+See [LICENSING.md](LICENSING.md). Support / commercial: **support@hcworks.in** · <https://hcworks.in>
 
 ## Disclaimer
 
