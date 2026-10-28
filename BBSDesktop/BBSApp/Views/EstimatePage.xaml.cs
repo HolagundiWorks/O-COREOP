@@ -40,6 +40,10 @@ public sealed partial class EstimatePage : Page
         RefreshVersionCombo();
         if (ProjectStore.Current.LastEstimate is { } last)
             ShowResult(last);
+        else
+            ProjectRefText.Text = ProjectStore.Current.Shared is null
+                ? "Company project: not linked."
+                : $"Company project linked (id {ProjectStore.Current.Shared.ProjectId}). Calculate to attach a ProjectRef / ArtifactRef.";
         ProjectStore.Current.Changed += OnStoreChanged;
     }
 
@@ -143,8 +147,10 @@ public sealed partial class EstimatePage : Page
         }
 
         var result = EstimateCalculator.Build(ProjectStore.Current, ver, levels);
+        EstimateCalculator.AttachCompanyArtifactRef(result, ProjectStore.Current);
         ProjectStore.Current.LastEstimate = result;
         ProjectStore.Current.LastEstimateRateBookVersionId = ver.Id;
+        ProjectStore.Current.IsDirty = true;
         ProjectStore.Current.Notify();
         ShowResult(result);
     }
@@ -158,6 +164,7 @@ public sealed partial class EstimatePage : Page
             $"Base ₹ {mk.BaseTotal:N2}  ·  Elec {mk.ElectricalPct:0.##}% ₹ {mk.ElectricalAmount:N2}  ·  " +
             $"Plumb {mk.PlumbingPct:0.##}% ₹ {mk.PlumbingAmount:N2}  ·  Esc {mk.EscalationPct:0.##}% ₹ {mk.EscalationAmount:N2}  ·  " +
             $"Fees {mk.ConsultingFeePct:0.##}% ₹ {mk.ConsultingFeeAmount:N2}";
+        RefreshProjectRefCaption(result);
         CivilTitle.Text = $"Abstract of cost — Civil / finishes / doors / windows ({result.Civil.Count})";
         MatTitle.Text = $"Abstract of cost — Materials ({result.Materials.Count})";
         SteelTitle.Text = $"Abstract of cost — Steel ({result.Steel.Count})";
@@ -175,9 +182,30 @@ public sealed partial class EstimatePage : Page
             ? "all item codes priced"
             : $"{result.MissingCodes.Count} missing rate(s): {string.Join(", ", result.MissingCodes.Take(8))}"
               + (result.MissingCodes.Count > 8 ? "…" : "");
-        Info.Message = $"{result.RateBookVersionName} · grand total ₹ {result.GrandTotal:N2} · {miss}";
-        Info.Severity = result.MissingCodes.Count > 0 ? InfoBarSeverity.Warning : InfoBarSeverity.Success;
+        var link = ProjectStore.Current.Shared is null
+            ? "not linked to a company-file project — open one from File → Company projects so O-Studio can use this total"
+            : "linked to the company file — save the project so O-Studio fee proposals can read this total";
+        Info.Message = $"{result.RateBookVersionName} · grand total ₹ {result.GrandTotal:N2} · {miss} · {link}";
+        Info.Severity = result.MissingCodes.Count > 0 || ProjectStore.Current.Shared is null
+            ? InfoBarSeverity.Warning
+            : InfoBarSeverity.Success;
         Info.IsOpen = true;
+    }
+
+    private void RefreshProjectRefCaption(EstimateResult result)
+    {
+        var company = BBSApp.Services.Company.CompanyService.Current;
+        var link = ProjectStore.Current.Shared;
+        if (company is null || link is null)
+        {
+            ProjectRefText.Text = "Company project: not linked. Open a project from the company file to put a ProjectRef on this estimate.";
+            return;
+        }
+        var artifact = result.ArtifactRef;
+        var rev = artifact?["revision"]?.GetValue<uint>() ?? 0;
+        ProjectRefText.Text =
+            $"Company project · {company.Name} · project id {link.ProjectId} · ProjectRef v1 · estimate ArtifactRef revision {rev}. " +
+            "O-Studio fee proposals read the grand total from the saved company-file document.";
     }
 
     private async void ExportPdf_Click(object sender, RoutedEventArgs e)
