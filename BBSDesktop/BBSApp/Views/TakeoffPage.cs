@@ -205,7 +205,15 @@ public sealed class TakeoffPage : Page
         {
             _list = await ShilpiTakeoffService.ListDrawingsAsync(src);
             FillList();
-            if (!quiet) _status.Text = _list.Count == 0 ? "No take-off has been recorded yet. Record one in O-Draft." : $"{_list.Count} drawing(s) with a recorded take-off.";
+            if (!quiet)
+            {
+                var text = _list.Count == 0
+                    ? "No take-off has been recorded yet. Record one in O-Draft."
+                    : $"{_list.Count} drawing(s) with a recorded take-off.";
+                if (_list.Count > 0 && ProjectStore.Current.Shared is null)
+                    text += " Open or link a company-file project so drawings that carry a project_ref can be marked as this project.";
+                _status.Text = text;
+            }
         }
         catch (Exception ex)
         {

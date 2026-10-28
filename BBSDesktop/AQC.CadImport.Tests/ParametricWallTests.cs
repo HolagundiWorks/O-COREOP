@@ -76,6 +76,16 @@ public class ParametricWallTests
     }
 
     [Fact]
+    public void A_wall_row_note_from_O_Draft_is_shown_in_the_preview_even_when_thickness_is_stated()
+    {
+        // Current O-Draft brick walls send thickness_mm and an honesty _note; without this, a stated thickness looked "trusted".
+        var noted = """{"ref":"W9","level":"Ground","length_mm":4000.0,"height_mm":2850.0,"thickness_mm":230.0,"layer":"MEASURE-FULLBRICK","_note":"thickness 230 mm is the nominal value the measure layer implies, not a measured thickness; check it"}""";
+        var (plan, m) = Import(Wall(9, noted));
+        Assert.Equal("230", m.Sheet("masonry")[0]["thickness"]);
+        Assert.Contains("nominal", plan.Items.Single(i => i.Section == "masonry").Reason);
+    }
+
+    [Fact]
     public void Re_recording_keeps_the_parametric_wall_and_a_changed_one_updates_in_place()
     {
         var (_, m) = Import(Wall(1, Parametric));

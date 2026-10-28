@@ -151,9 +151,12 @@ public static class CadImporter
                 ["length"] = N(BridgeFile.Num(w, "length_mm")), ["height"] = N(BridgeFile.Num(w, "height_mm")),
                 ["thickness"] = N(thick), ["unit_type"] = unit,
             };
-            Upsert(Masonry, r, f, lvl,
-                assumed ? thickNote
-                : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : thickNote);
+            // Prefer O-Draft's honesty note (e.g. nominal layer thickness) over silent acceptance of a stated value.
+            var wallNote = BridgeFile.Str(w, "_note");
+            var reason = wallNote.Length > 0 ? wallNote
+                : assumed ? thickNote
+                : thick <= 120 ? "thickness 120 mm or less: AQC measures it as its 110 mm wall" : thickNote;
+            Upsert(Masonry, r, f, lvl, reason);
             wallMarkByRef[r] = plan.Items.Last(i => i.Section == Masonry && i.Ref == r).Mark;
         }
 
