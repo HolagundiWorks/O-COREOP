@@ -37,7 +37,8 @@ public static class ShilpiTakeoff
     public const string HeaderFormat = "hcw-takeoff-shilpi";
     public const int Version = 1;
 
-    public const byte KindHeader = 1, KindWall = 3, KindOpening = 4, KindColumn = 5, KindLintel = 6, KindRoom = 7, KindSlab = 8, KindAnnotatedChunk = 9;
+    public const byte KindHeader = 1, KindWall = 3, KindOpening = 4, KindColumn = 5, KindLintel = 6, KindRoom = 7, KindSlab = 8, KindAnnotatedChunk = 9,
+        KindElectricalBoard = 10, KindElectricalCircuit = 11;
 
     /// <summary>id = kind (8 bits) | drawing slot (24 bits) | n (32 bits).</summary>
     public static ulong MakeId(byte kind, uint slot, uint n) => ((ulong)kind << 56) | ((ulong)(slot & 0xFFFFFF) << 32) | n;
@@ -65,6 +66,7 @@ public static class ShilpiTakeoff
     {
         [KindWall] = "walls", [KindOpening] = "openings", [KindColumn] = "columns",
         [KindLintel] = "lintels", [KindRoom] = "rooms", [KindSlab] = "slabs",
+        [KindElectricalBoard] = "electrical", [KindElectricalCircuit] = "electrical_circuits",
     };
 
     public sealed record Result(BridgeFile File, int Records, IReadOnlyList<string> Skipped, string BridgeJson, ShilpiDrawing Drawing, IReadOnlyList<string>? Notes = null);

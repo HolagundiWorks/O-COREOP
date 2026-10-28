@@ -32,6 +32,8 @@ public sealed class TakeoffPage : Page
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
     readonly DispatcherTimer _poll = new() { Interval = TimeSpan.FromSeconds(5) };
     List<ShilpiDrawing> _list = new();
+    readonly HashSet<uint> _complete = new();
+    bool _seenList;
     bool _busy;
 
     public TakeoffPage()
@@ -204,8 +206,18 @@ public sealed class TakeoffPage : Page
         try
         {
             _list = await ShilpiTakeoffService.ListDrawingsAsync(src);
+            var newly = _seenList
+                ? _list.Where(d => d.IsComplete && !_complete.Contains(d.Slot)).Select(d => d.DisplayName).ToList()
+                : new List<string>();
+            _complete.Clear();
+            foreach (var d in _list.Where(d => d.IsComplete)) _complete.Add(d.Slot);
+            _seenList = true;
             FillList();
-            if (!quiet)
+            if (newly.Count > 0)
+                _status.Text = newly.Count == 1
+                    ? $"{newly[0]} take-off is complete and can be read."
+                    : $"{newly.Count} take-offs are complete and can be read.";
+            else if (!quiet)
             {
                 var text = _list.Count == 0
                     ? "No take-off has been recorded yet. Record one in O-Draft."

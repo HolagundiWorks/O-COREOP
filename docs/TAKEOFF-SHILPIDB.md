@@ -46,8 +46,12 @@ Everything is millimetres (`"units": "mm"`; areas in m²) and every payload exce
 | 7 | Room | the `rooms[]` row |
 | 8 | Slab | the `slabs[]` row |
 | 9 | Annotated-PDF chunk, `n` = chunk number from 0 | raw bytes of the PDF (section 6) |
+| 10 | Electrical switchboard | `electrical[]`: `switchboard`, `height`, `5amp_socket`, `15amp_socket`, `connected_fixture`, `two_way_switches`, `one_way_switches` |
+| 11 | Electrical circuit | `electrical_circuits[]`: one wired point (`switchboard`, `point`, `kind`) |
 
-Kinds 0, 2 and 10 to 255 are reserved. A reader skips an unknown kind and reports it, so a later version can add kinds.
+Kinds 0, 2 and 12 to 255 are reserved. A reader skips an unknown kind and reports it, so a later version can add kinds. Kinds 10 and 11 were added in place (still version 1): an older reader skips them.
+
+Wall rows may also carry `wall_type` (`external` or `internal`), and `paint_external_m2` / `paint_internal_m2` after O-Draft's wall-paint take-off. O-CoreOp stores `wall_type` on the masonry row and uses it when proposing plaster (external: one external face and one internal face; internal: two internal faces).
 
 ### 4.1 The drawing slot
 
@@ -160,7 +164,7 @@ O-Draft's `takeoff.record` was run (its own test, against a real `shilpid`) and 
 | What O-Draft writes | Effect | What O-CoreOp now does |
 |---|---|---|
 | A room row has `area_m2` and `size` text but **no `level`, no `length_mm`, no `breadth_mm`** | the flooring row was skipped ("level '' is not in the file's levels") | A row with no level goes to the file's floor when the file has exactly one (several floors: skipped, with that reason). Length and breadth come from the record's **box** (the room's drawn outline, millimetres) when the box agrees with `area_m2` to 2%; if not (an L-shaped room) the area is kept exact, the box's shorter side is the breadth, and the row is flagged "approximate" |
-| Openings carry **no `wall_ref`** | they would be imported without a wall and not deduct | The opening is placed in the nearest wall **on the same level whose box, widened by 150 mm, meets the opening's box**; the preview flags it "wall chosen by position; check it". No wall within reach: left without a wall and flagged as before |
+| Openings in the **2026-10-19 fixture** carry **no `wall_ref`** (current O-Draft writes it when the insert sits on a measured wall) | without it they would import with no wall and not deduct | Fallback: place the opening in the nearest wall **on the same level whose box, widened by 150 mm, meets the opening's box**; preview flags "wall chosen by position; check it". A row that already has `wall_ref` is left alone. No wall within reach: left without a wall and flagged as before |
 | Walls carry **no `thickness_mm`** (only the layer, for example `MEASURE-FULLBRICK`) | the importer assumed 230 mm silently | Still 230 mm, but the preview now says "no wall thickness; 230 mm assumed, check it" |
 | `opening_schedule` has `"kind": "Ventilator"` | an opening of that kind would have become a door | A ventilator is a window (mark V1) |
 | Header `levels` rows also carry `ceiling_mm` and `lintel_bottom_mm`; `source.drawing` is empty for an unsaved drawing; `project_office_id` is absent for an unlinked drawing | none | Accepted; the Take-off page shows the slot number when the name is empty |

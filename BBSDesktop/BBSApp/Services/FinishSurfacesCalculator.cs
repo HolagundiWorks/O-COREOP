@@ -191,8 +191,13 @@ public static class FinishSurfacesCalculator
             double L = Mm(w, "length"), H = Mm(w, "height");
             string rule = Get(w, "deduct_rule", "IS1200 masonry");
             var (_, _, netMm2, note) = CivilBoqCalculator.DeductFaceArea(L, H, w, rule, addJambs: false);
-            int faces = ParseInt(Get(prev, "faces"), wallFaces);
-            if (faces < 1) faces = wallFaces;
+            string wallType = Get(w, "wall_type");
+            int fallbackFaces = wallType.Length > 0 ? 2 : wallFaces;
+            int faces = ParseInt(Get(prev, "faces"), fallbackFaces);
+            if (faces < 1) faces = fallbackFaces;
+            string faceNote = wallType.Equals("external", StringComparison.OrdinalIgnoreCase) ? "1 external + 1 internal"
+                : wallType.Equals("internal", StringComparison.OrdinalIgnoreCase) ? "2 internal faces"
+                : $"{faces} face(s)";
             double netFace = netMm2 / 1e6;
             double area = netFace * faces;
 
@@ -202,7 +207,7 @@ public static class FinishSurfacesCalculator
                 source: "auto_wall",
                 sourceMark: mark,
                 area: area,
-                notes: $"Wall · {faces} face(s) · {note}",
+                notes: $"Wall · {faceNote} · {note}",
                 prev: prev,
                 extra: new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {

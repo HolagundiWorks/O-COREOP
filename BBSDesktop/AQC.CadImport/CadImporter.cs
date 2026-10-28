@@ -14,11 +14,12 @@ namespace Aqc.CadImport;
 public static class CadImporter
 {
     const string Masonry = "masonry", MOpen = "masonry_openings", Doors = "doors", Windows = "windows",
-        Columns = "columns", Lintels = "lintels", Flooring = "flooring", Slabs = "slabs";
+        Columns = "columns", Lintels = "lintels", Flooring = "flooring", Slabs = "slabs",
+        Electrical = "electrical", ElectricalCircuits = "electrical_circuits";
 
     static readonly Dictionary<string, string[]> GeometryKeys = new()
     {
-        [Masonry] = new[] { "length", "height", "thickness" },
+        [Masonry] = new[] { "length", "height", "thickness", "wall_type" },
         [MOpen] = new[] { "opening_l", "opening_h", "opening_kind", "wall_mark" },
         [Doors] = new[] { "nos", "width", "height", "door_type" },
         [Windows] = new[] { "nos", "width", "height" },
@@ -26,11 +27,14 @@ public static class CadImporter
         [Lintels] = new[] { "opening", "bearing", "width", "depth" },
         [Flooring] = new[] { "length", "breadth" },
         [Slabs] = new[] { "span_x", "span_y", "thickness" },
+        [Electrical] = new[] { "switchboard", "five_amp", "fifteen_amp", "fixture", "two_way", "one_way" },
+        [ElectricalCircuits] = new[] { "switchboard", "point", "kind", "five_amp", "fifteen_amp", "fixture", "two_way", "one_way" },
     };
 
     static readonly Dictionary<string, string> Prefix = new()
     {
         [Masonry] = "MW", [MOpen] = "OP", [Columns] = "C", [Lintels] = "L", [Flooring] = "FL", [Slabs] = "S",
+        [Electrical] = "SB", [ElectricalCircuits] = "EC",
     };
 
     public static string SourceTag(string drawingId) => "hcwcad:" + drawingId;
@@ -146,11 +150,18 @@ public static class CadImporter
             var (thick, thickNote, assumed) = WallThickness(w, material);
             var unit = BridgeFile.Str(w, "unit_type") is { Length: > 0 } ut ? ut
                 : material.Equals("block.concrete", StringComparison.OrdinalIgnoreCase) ? "Cement Block" : "Brick";
+            var wallType = BridgeFile.Str(w, "wall_type");
             var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["length"] = N(BridgeFile.Num(w, "length_mm")), ["height"] = N(BridgeFile.Num(w, "height_mm")),
                 ["thickness"] = N(thick), ["unit_type"] = unit,
+                ["wall_type"] = wallType,
             };
+            if (wallType.Equals("external", StringComparison.OrdinalIgnoreCase)
+                || wallType.Equals("internal", StringComparison.OrdinalIgnoreCase))
+                f["faces"] = "2";
+            if (BridgeFile.Num(w, "paint_external_m2") is { } pext) f["paint_external_m2"] = N(pext);
+            if (BridgeFile.Num(w, "paint_internal_m2") is { } pint) f["paint_internal_m2"] = N(pint);
             // Prefer O-Draft's honesty note (e.g. nominal layer thickness) over silent acceptance of a stated value.
             var wallNote = BridgeFile.Str(w, "_note");
             var reason = wallNote.Length > 0 ? wallNote
@@ -265,6 +276,41 @@ public static class CadImporter
             {
                 ["span_x"] = N(len), ["span_y"] = N(br), ["thickness"] = N(BridgeFile.Num(s, "thickness_mm") ?? 150),
                 ["slab_type"] = Math.Max(len.Value, br.Value) / Math.Min(len.Value, br.Value) <= 2 ? "Two-Way" : "One-Way",
+            }, lvl);
+        }
+
+        foreach (var e in file.Electrical)
+        {
+            var r = BridgeFile.Str(e, "ref");
+            var board = BridgeFile.Str(e, "switchboard");
+            var lvl = Lvl(e, Electrical, r, board); if (lvl is null) continue;
+            Upsert(Electrical, r, new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["switchboard"] = board,
+                ["height"] = BridgeFile.Str(e, "height"),
+                ["five_amp"] = N(BridgeFile.Num(e, "5amp_socket")),
+                ["fifteen_amp"] = N(BridgeFile.Num(e, "15amp_socket")),
+                ["fixture"] = N(BridgeFile.Num(e, "connected_fixture")),
+                ["two_way"] = N(BridgeFile.Num(e, "two_way_switches")),
+                ["one_way"] = N(BridgeFile.Num(e, "one_way_switches")),
+            }, lvl);
+        }
+        foreach (var e in file.ElectricalCircuits)
+        {
+            var r = BridgeFile.Str(e, "ref");
+            var point = BridgeFile.Str(e, "point");
+            var lvl = Lvl(e, ElectricalCircuits, r, point); if (lvl is null) continue;
+            Upsert(ElectricalCircuits, r, new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["switchboard"] = BridgeFile.Str(e, "switchboard"),
+                ["point"] = point,
+                ["kind"] = BridgeFile.Str(e, "kind"),
+                ["height"] = BridgeFile.Str(e, "height"),
+                ["five_amp"] = N(BridgeFile.Num(e, "5amp_socket")),
+                ["fifteen_amp"] = N(BridgeFile.Num(e, "15amp_socket")),
+                ["fixture"] = N(BridgeFile.Num(e, "connected_fixture")),
+                ["two_way"] = N(BridgeFile.Num(e, "two_way_switches")),
+                ["one_way"] = N(BridgeFile.Num(e, "one_way_switches")),
             }, lvl);
         }
 
