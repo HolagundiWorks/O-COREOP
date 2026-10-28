@@ -9,7 +9,7 @@ Each item says how it is known. **Checked** means it was read in the code or run
 Merged on 2026-10-19 (merge commit `a0aa37d`):
 
 - The OSAS shell: menu bar, grouped left navigation pane, work area, status strip. The pane is open from 900 px, an icon rail from 560 px, and a menu button below that. See `docs/WINUI-SHELL.md`.
-- The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the private `hcw-ui` repository (`..\..\..\hcw-ui` from the app folder). The build fails without it.
+- The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the public `HolagundiWorks/O-UI` repository (`..\..\..\o-ui` from the app folder). The build fails without it.
 - Accessibility fixes from the WCAG 2.2 AA audit: names on sheet cells and icon buttons, targets of 24 px or more, headings, a polite notice host, 1x scale.
 - The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run).
 - **AORMS Connect / Bridge removed (2026-10-28):** sign-in, Online projects, Push/Pull, Bind/Flush, sync badges, `Aorms.Connect` / `Aorms.Bridge`, FakeAorms e2e, and Bridge stub hosts are gone. Company-file / OSAS ticket flow, CAD import, and ShilpiDB take-off remain.
@@ -25,7 +25,7 @@ Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/com
 
 | # | Item | Evidence | Where to look |
 |---|---|---|---|
-| 2.1 | Add the repository secret `HCW_UI_TOKEN` (a read-only token for `HolagundiWorks/hcw-ui`). Without it the CI build job cannot clone the design library and fails | Checked: the workflow reads `secrets.HCW_UI_TOKEN`; the first run on GitHub has not been looked at | `.github/workflows/ci.yml` |
+| 2.1 | ~~Add the repository secret `HCW_UI_TOKEN`~~ done: CI clones the public `HolagundiWorks/O-UI` repo (no token). Confirm the first Windows build job on GitHub succeeds | Checked: workflow clones `HolagundiWorks/O-UI` to `o-ui`; first run after the retarget has not been looked at | `.github/workflows/ci.yml` |
 | 2.2 | ~~AORMS portal sign-in / pull~~ **removed** with Connect/Bridge (2026-10-28) | n/a | — |
 | 2.3 | ~~Portal migration `0113` for AORMS sessions~~ **obsolete** after Connect removal | n/a | — |
 | 2.4 | Click through File > Import from CAD, File > Export for CAD and Take-off from ShilpiDB with a real drawing export | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
@@ -85,7 +85,7 @@ Connect/Bridge work from the former `docs/AORMS-CONNECT-HANDOFF.md` is **closed 
 ## 8. Build, test and run
 
 ```powershell
-# one folder above this repository: git clone <hcw-ui>   (private)
+# one folder above this repository: git clone https://github.com/HolagundiWorks/O-UI.git o-ui
 dotnet test BBSDesktop/AQC.CadImport.Tests
 dotnet test BBSDesktop/Office.Shared.Tests
 dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Debug -p:Platform=x64 -p:WindowsPackageType=None -o $env:TEMP\ocoreop
@@ -107,11 +107,11 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 - **4.1 done.** `Aorms.Connect/FileOutboxStore.cs`: a file-backed `IOutboxStore`. A save writes a temporary file and swaps it in; an unreadable file is moved aside (`.corrupt-<time>`), never deleted, and `QuarantinedPath` says where. 8 new tests (`FileOutboxStoreTests`); `Aorms.Connect.Tests` (removed) is 88 passed. **Not wired yet:** nothing in `BBSApp` creates one (that is 4.3, with the `ProjectStore` hooks); the intended path is `%LocalAppData%\AQCCore\outbox\<aqc project id>.json`.
 - **2.6 done.** The release installer builds: `BBSDesktop/artifacts/installer/O-CoreOp-Setup-1.1.0.exe` (51 MB). Not installed or run (2.5 is still open). Two things the script does not tell you:
   - **The engine must be built with MSVC.** On this machine the only compiler on `PATH` was LLVM-MinGW, and `build-installer.ps1` tried it and failed (`std::malloc` / `std::free` without `<cstdlib>` in `src/api/bbs_c_api.cpp`, wide-path `ofstream` in `src/core/Project.cpp`). Built instead with Visual Studio 2022 Build Tools (`vcvars64`, CMake, Ninja, outside the repo) and copied `bbs_engine.dll` to `BBSDesktop/build/`. `bbs_tests.exe`: 0 failures. Fixing the two clang errors would let the script work without Visual Studio.
-  - **`hcw-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `hcw-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `hcw-ui` (build its own RID output) or have the script pre-build it.
+  - **`o-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `o-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `o-ui` (build its own RID output) or have the script pre-build it.
 
 **2026-10-19 (later):**
 
-- **Engine builds with clang/MinGW as well as MSVC.** `src/api/bbs_c_api.cpp` includes `<cstdlib>`; `src/core/Project.cpp` opens files through `std::filesystem::path`; `CMakeLists.txt` sets `PREFIX ""` so MinGW names the library `bbs_engine.dll` (it was `libbbs_engine.dll`). Built with both compilers, `bbs_tests.exe` 0 failures on each. This **removes the need for Visual Studio** in `build-installer.ps1`'s engine step (item 2.6's first note is resolved). The `hcw-ui` win-x64 pre-build note still stands.
+- **Engine builds with clang/MinGW as well as MSVC.** `src/api/bbs_c_api.cpp` includes `<cstdlib>`; `src/core/Project.cpp` opens files through `std::filesystem::path`; `CMakeLists.txt` sets `PREFIX ""` so MinGW names the library `bbs_engine.dll` (it was `libbbs_engine.dll`). Built with both compilers, `bbs_tests.exe` 0 failures on each. This **removes the need for Visual Studio** in `build-installer.ps1`'s engine step (item 2.6's first note is resolved). The `o-ui` win-x64 pre-build note still stands.
 - **Annotated drawings in reports.** The stored annotated PDFs (see `docs/TAKEOFF-SHILPIDB.md` section 6) are embedded in the project report and the estimate PDF. Run in a scratch program, not yet in the app with a real project.
 - **Roadmap and docs brought up to date** (`docs/ROADMAP.md`: "Backlog" section; README take-off wording).
 - **Overlap warning.** Importing a drawing that adds rows on a floor and trade another drawing already supplies now lists "Check before importing" in the preview (once per drawing and floor; a warning, not a refusal). 5 tests; `AQC.CadImport.Tests` is 54 passed.
