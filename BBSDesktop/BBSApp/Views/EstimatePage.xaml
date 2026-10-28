@@ -58,6 +58,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <ComboBox x:Name="VersionCombo" Header="Rate book version" HorizontalAlignment="Stretch"
                           AutomationProperties.Name="Rate book version for estimate"/>
@@ -66,6 +67,9 @@
                 <TextBlock x:Name="MarkupText" Grid.Row="1" Grid.ColumnSpan="2"
                            Style="{StaticResource CaptionSecondaryStyle}" TextWrapping="Wrap"
                            Text="Set electrical / plumbing / escalation / fees under File → Cost percentages."/>
+                <TextBlock x:Name="ProjectRefText" Grid.Row="2" Grid.ColumnSpan="2"
+                           Style="{StaticResource CaptionSecondaryStyle}" TextWrapping="Wrap"
+                           AutomationProperties.Name="Company file project link for this estimate"/>
             </Grid>
         </Border>
 

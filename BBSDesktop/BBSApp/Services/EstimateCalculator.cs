@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using System.Text.Json.Nodes;
+using Office.Shared;
 
 namespace BBSApp.Services;
 
@@ -36,6 +37,8 @@ public sealed class EstimateResult
     public double BaseTotal => Civil.Sum(l => l.Amount) + Materials.Sum(l => l.Amount) + Steel.Sum(l => l.Amount);
     public double GrandTotal => Markups.GrandTotal > 0 ? Markups.GrandTotal : BaseTotal;
     public List<string> MissingCodes { get; set; } = new();
+    /// <summary>Suite ArtifactRef JSON when this estimate is tied to a company-file project; otherwise null.</summary>
+    public JsonObject? ArtifactRef { get; set; }
 }
 
 /// <summary>DSR / SOR abstract-of-cost table with measurement columns (L, B, H, area, volume).</summary>
@@ -257,7 +260,7 @@ public static class EstimateCalculator
         foreach (var l in r.Steel) steel.Add(LineToJson(l));
         var missing = new JsonArray();
         foreach (var m in r.MissingCodes) missing.Add(m);
-        return new JsonObject
+        var json = new JsonObject
         {
             ["rate_book_version_id"] = r.RateBookVersionId,
             ["rate_book_version_name"] = r.RateBookVersionName,
@@ -269,6 +272,26 @@ public static class EstimateCalculator
             ["steel"] = steel,
             ["missing_codes"] = missing
         };
+        if (r.ArtifactRef is not null)
+            json["artifact_ref"] = r.ArtifactRef.DeepClone();
+        return json;
+    }
+
+    /// <summary>
+    /// Stamps a suite ArtifactRef onto the estimate when the open project is linked to the company file.
+    /// Call after Calculate so O-Studio can name the same estimate once it is saved to the company file.
+    /// </summary>
+    public static void AttachCompanyArtifactRef(EstimateResult result, ProjectStore store)
+    {
+        result.ArtifactRef = null;
+        var company = Company.CompanyService.Current;
+        var link = store.Shared;
+        if (company is null || link is null)
+            return;
+        var project = ArtifactRefs.ProjectRef(company.Uuid, link.ProjectId);
+        var body = ToJson(result);
+        var revision = (uint)Math.Max(1, link.Revision + 1);
+        result.ArtifactRef = ArtifactRefs.Estimate(project, "last_estimate", revision, ArtifactRefs.EstimateChecksumBody(body));
     }
 
     public static EstimateResult? FromJson(JsonObject? o)
@@ -290,6 +313,8 @@ public static class EstimateCalculator
                 if (n is JsonValue jv && jv.TryGetValue<string>(out var s) && s is not null)
                     r.MissingCodes.Add(s);
         }
+        if (o["artifact_ref"] is JsonObject artifact)
+            r.ArtifactRef = artifact.DeepClone().AsObject();
         return r;
     }
 
