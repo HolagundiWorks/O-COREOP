@@ -364,5 +364,33 @@
             <SvgImageSource x:Key="NavIconDoor" UriSource="ms-appx:///Assets/Icons/door-dark.svg"/>
             <SvgImageSource x:Key="NavIconWindow" UriSource="ms-appx:///Assets/Icons/window-dark.svg"/>
         </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SvgImageSource x:Key="NavIconColumn" UriSource="ms-appx:///Assets/Icons/column.svg"/>
+            <SvgImageSource x:Key="NavIconBeam" UriSource="ms-appx:///Assets/Icons/beam.svg"/>
+            <SvgImageSource x:Key="NavIconPedestal" UriSource="ms-appx:///Assets/Icons/pedestal.svg"/>
+            <SvgImageSource x:Key="NavIconLintel" UriSource="ms-appx:///Assets/Icons/lintel.svg"/>
+            <SvgImageSource x:Key="NavIconSlab" UriSource="ms-appx:///Assets/Icons/slab.svg"/>
+            <SvgImageSource x:Key="NavIconFooting" UriSource="ms-appx:///Assets/Icons/footing.svg"/>
+            <SvgImageSource x:Key="NavIconWall" UriSource="ms-appx:///Assets/Icons/wall.svg"/>
+            <SvgImageSource x:Key="NavIconStair" UriSource="ms-appx:///Assets/Icons/stair.svg"/>
+            <SvgImageSource x:Key="NavIconMasonry" UriSource="ms-appx:///Assets/Icons/masonry.svg"/>
+            <SvgImageSource x:Key="NavIconPlaster" UriSource="ms-appx:///Assets/Icons/plaster.svg"/>
+            <SvgImageSource x:Key="NavIconPcc" UriSource="ms-appx:///Assets/Icons/pcc.svg"/>
+            <SvgImageSource x:Key="NavIconEarthwork" UriSource="ms-appx:///Assets/Icons/earthwork.svg"/>
+            <SvgImageSource x:Key="NavIconSsm" UriSource="ms-appx:///Assets/Icons/ssm.svg"/>
+            <SvgImageSource x:Key="NavIconShuttering" UriSource="ms-appx:///Assets/Icons/shuttering.svg"/>
+            <SvgImageSource x:Key="NavIconFlooring" UriSource="ms-appx:///Assets/Icons/flooring.svg"/>
+            <SvgImageSource x:Key="NavIconPainting" UriSource="ms-appx:///Assets/Icons/painting.svg"/>
+            <SvgImageSource x:Key="NavIconWaterproofing" UriSource="ms-appx:///Assets/Icons/waterproofing.svg"/>
+            <SvgImageSource x:Key="NavIconDpc" UriSource="ms-appx:///Assets/Icons/dpc.svg"/>
+            <SvgImageSource x:Key="NavIconCoping" UriSource="ms-appx:///Assets/Icons/coping.svg"/>
+            <SvgImageSource x:Key="NavIconScreed" UriSource="ms-appx:///Assets/Icons/screed.svg"/>
+            <SvgImageSource x:Key="NavIconVdf" UriSource="ms-appx:///Assets/Icons/vdf.svg"/>
+            <SvgImageSource x:Key="NavIconSkirting" UriSource="ms-appx:///Assets/Icons/skirting.svg"/>
+            <SvgImageSource x:Key="NavIconParapet" UriSource="ms-appx:///Assets/Icons/parapet.svg"/>
+            <SvgImageSource x:Key="NavIconPlinth" UriSource="ms-appx:///Assets/Icons/plinth.svg"/>
+            <SvgImageSource x:Key="NavIconDoor" UriSource="ms-appx:///Assets/Icons/door.svg"/>
+            <SvgImageSource x:Key="NavIconWindow" UriSource="ms-appx:///Assets/Icons/window.svg"/>
+        </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>
