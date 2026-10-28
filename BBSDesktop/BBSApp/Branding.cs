@@ -5,7 +5,7 @@ namespace BBSApp;
 
 /// <summary>
 /// Product branding — O-CoreOp, in OSAS the Open Source Architecture Suit (Human Centric Works). Formerly AQC Core.
-/// Keep display strings aligned with esti product-nomenclature / AORMS-SUITE.
+/// Keep display strings aligned with OSAS product nomenclature.
 /// </summary>
 public static class Branding
 {
@@ -21,7 +21,7 @@ public static class Branding
     public const string FullName = "Quantities, estimates and billing";
     public const string SuiteLine = "OSAS · Open Source Architecture Suit";
     public const string Tagline =
-        "Estimation · BBS · BOQ — local engine; publish totals to the firm hub";
+        "Estimation · BBS · BOQ — local quantities, estimates and billing";
     public const string HeroSupport =
         "RCC BBS, civil BOQ, shuttering, estimate & PDF drawing takeoff";
 
@@ -33,7 +33,7 @@ public static class Branding
     public const string Copyright = "© Human Centric Works · Hospet";
     public const string LicenseName = "GNU AGPL v3 (Community) or Commercial";
     public const string LicenseUrl = "https://www.gnu.org/licenses/agpl-3.0.html";
-    public const string SuiteUrl = "https://aorms.in";
+    public const string SuiteUrl = "https://github.com/holagundiworks/osas-open_source_architecture_suit";
 
     /// <summary>%LocalAppData% folder. Earlier versions used AQCCore; the first run copies that folder here and leaves it in place.</summary>
     public const string AppDataFolder = "O-CoreOp";

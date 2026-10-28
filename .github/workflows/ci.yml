@@ -21,11 +21,11 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - name: Test the import and sign-in libraries
+      - name: Test import and Office.Shared libraries
         working-directory: aqc
         run: |
           dotnet test BBSDesktop/AQC.CadImport.Tests
-          dotnet test BBSDesktop/Aorms.Connect.Tests
+          dotnet test BBSDesktop/Office.Shared.Tests
       - name: Build O-CoreOp
         working-directory: aqc
         run: dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=None

@@ -73,7 +73,7 @@ The bounding box is the bounds of the measured geometry in the drawing's coordin
   "units": "mm",
   "state": "complete",
   "source": { "app": "O-Draft", "drawing": "small house.dxf", "drawing_id": "<GUID kept in the drawing>",
-              "project_office_id": "<AORMS project office id, if the drawing is linked>",
+              "project_office_id": "<optional legacy id; prefer project_ref for company-file linking>",
               "project_ref": { "v": 1, "company_uuid": "<company file id>", "project_id": 0 },
               "exported": "2026-10-19T11:00:00Z", "revision_sha256": "<hash of the saved drawing>" },
   "project":  { "name": "", "client_name": "", "company_name": "", "location": "", "address": "" },
@@ -103,7 +103,7 @@ A reader **refuses a drawing whose state is `recording`** and says so; it never 
 
 A project usually has several drawings (a floor each, sections, a site plan). Each is **its own take-off in its own slot**, with its own header, so they never overwrite each other and can be recorded at different times.
 
-- **Which drawings belong to which project.** `source.project_office_id` is the AORMS project office id O-Draft already keeps with a linked drawing (`aorms.open`). O-CoreOp saves the same id on its project (File > Online projects > Link). The Take-off page lists **every** drawing in the database, puts the **linked project's drawings first** and marks them "this project", and marks others "another project". A drawing with no project id is listed unmarked; the user chooses.
+- **Which drawings belong to which project.** Prefer `source.project_ref` (`company_uuid` + `project_id` from the shared company file). The Take-off page lists **every** drawing in the database, puts drawings that match the open company-file project first ("this project"), and marks others with a project ref "another project". A drawing with no project ref is listed unmarked; the user chooses. (Legacy `project_office_id` is ignored for grouping after AORMS Connect removal.)
 - **Importing.** One drawing at a time: pick it, read it, review the preview, import. Rows are tagged `source = "hcwcad:<drawing_id>"` and `source_ref = <ref>`, so each drawing's rows are kept apart and each re-import updates only its own. Nothing is merged across drawings.
 - **Levels** are matched **by name** across drawings, so two drawings that both name a floor `Ground` feed the same AQC level.
 - **The rule that keeps quantities honest: one drawing per part of the building.** If two drawings both measure the same wall on the same floor (a plan and a detail sheet), O-CoreOp will import both and **double count**. It cannot know they overlap. O-CoreOp now **warns** (it does not block): when a drawing about to be imported adds rows on a floor and trade that another drawing already supplies, the preview lists "Check before importing" naming that drawing and floor, once per drawing and floor. The writer should still record only the drawing that is the measured source for a floor.

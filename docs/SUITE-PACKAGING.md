@@ -1,21 +1,13 @@
-﻿# AQC three-app packaging (suite)
+# O-CoreOp packaging (suite)
 
-**Status:** Scaffold · **Updated:** 2026-08-08  
-**Canon:** esti `docs/esti/AORMS-SUITE.md` · `docs/esti/DESKTOP-REPOS.md`
+**Status:** Updated after AORMS connector removal · **Updated:** 2026-10-28
 
-| Installer | In-tree (AQC SoT) | Product repo |
-| --- | --- | --- |
-| AQC Estimation | `BBSDesktop/AQC.Estimation` | [AQC-Estimation](https://github.com/HolagundiWorks/AQC-Estimation) |
-| AQC BBS | `BBSDesktop/AQC.BBS` | [AQC-BBS](https://github.com/HolagundiWorks/AQC-BBS) |
-| AQC Project Management | `BBSDesktop/AQC.PM` | [AQC-PM](https://github.com/HolagundiWorks/AQC-PM) |
+**This repo** is the engine and WinUI app SoT: `bbs_engine`, `AQC.CadImport`, `Office.Shared`, reference `BBSApp` (assembly `O-CoreOp`).
 
-**This repo (AQC)** remains the engine SoT: `bbs_engine`, `Aorms.Bridge`, reference `BBSApp`.
-Product repos pin AQC as a submodule and own installer identity / domain UI.
+Earlier Bridge-only stub hosts (`AQC.BBS`, `AQC.Estimation`, `AQC.PM`) and the shared `Aorms.Bridge` library were removed. Product-specific installers, if revived, should pin this repo and own their own UI without Bridge.
 
 ```bat
-dotnet run --project BBSDesktop\AQC.Estimation -c Release
-dotnet run --project BBSDesktop\AQC.BBS -c Release
-dotnet run --project BBSDesktop\AQC.PM -c Release
+dotnet build BBSDesktop\BBSApp\BBSApp.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=None
 ```
 
-MSIX identities and WinUI domain screens are follow-on work.
+MSIX identities and WinUI domain screens remain follow-on work.

@@ -28,14 +28,7 @@ public sealed class ProjectInfo
     public string Pan { get; set; } = "";
     /// <summary>Absolute or relative path to project logo image (png/jpg).</summary>
     public string LogoPath { get; set; } = "";
-    /// <summary>AORMS Connect / hub project UUID for Flush + JM pull (S11).</summary>
-    public string HubProjectId { get; set; } = "";
-    /// <summary>AORMS online project (Connect): the project office id, and AQC's binding id once bound. Set from File > Online projects.</summary>
-    public string AormsProjectOfficeId { get; set; } = "";
-    public string AormsAqcId { get; set; } = "";
-    /// <summary>Last change number of the online project this file has caught up with (see ProjectSyncHost).</summary>
-    public long AormsHeadSeq { get; set; }
-    /// <summary>The take-off database (.vdb) O-Draft recorded this project's take-off in. Read from the Take-off page.</summary>
+/// <summary>The take-off database (.vdb) O-Draft recorded this project's take-off in. Read from the Take-off page.</summary>
     public string TakeoffVdbPath { get; set; } = "";
     /// <summary>Annotated drawing PDFs fetched from ShilpiDB, one per drawing.</summary>
     public List<StoredAnnotatedDrawing> AnnotatedDrawings { get; } = new();
@@ -58,10 +51,6 @@ public sealed class ProjectInfo
         ["cin"] = Cin,
         ["pan"] = Pan,
         ["logo_path"] = LogoPath,
-        ["hub_project_id"] = HubProjectId,
-        ["aorms_project_office_id"] = AormsProjectOfficeId,
-        ["aorms_aqc_id"] = AormsAqcId,
-        ["aorms_head_seq"] = AormsHeadSeq,
         ["takeoff_vdb_path"] = TakeoffVdbPath,
         ["annotated_drawings"] = new JsonArray(AnnotatedDrawings.Select(a => (JsonNode)a.ToJson()).ToArray())
     };
@@ -83,10 +72,6 @@ public sealed class ProjectInfo
         Cin = o["cin"]?.GetValue<string>() ?? "";
         Pan = o["pan"]?.GetValue<string>() ?? "";
         LogoPath = o["logo_path"]?.GetValue<string>() ?? "";
-        HubProjectId = o["hub_project_id"]?.GetValue<string>() ?? "";
-        AormsProjectOfficeId = o["aorms_project_office_id"]?.GetValue<string>() ?? "";
-        AormsAqcId = o["aorms_aqc_id"]?.GetValue<string>() ?? "";
-        AormsHeadSeq = o["aorms_head_seq"] is JsonValue hv && hv.TryGetValue<long>(out var hs) ? hs : 0;
         TakeoffVdbPath = o["takeoff_vdb_path"]?.GetValue<string>() ?? "";
         AnnotatedDrawings.Clear();
         if (o["annotated_drawings"] is JsonArray ad)
@@ -109,10 +94,6 @@ public sealed class ProjectInfo
         Cin = "";
         Pan = "";
         LogoPath = "";
-        HubProjectId = "";
-        AormsProjectOfficeId = "";
-        AormsAqcId = "";
-        AormsHeadSeq = 0;
         TakeoffVdbPath = "";
         AnnotatedDrawings.Clear();
         FromCompanyFile = false;
