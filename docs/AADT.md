@@ -15,7 +15,7 @@ Instructions for anyone (person or agent) working on AQC. Written 2026-10-11 on 
 * **hcwCAD-KIT is still the only program that writes the file today.** Where this document says "the plugin" or `HCWBRIDGE`, it describes hcwCAD-KIT's behaviour, which is the behaviour AADT's bridge command has to match.
 * **Decided (owner, 2026-10-11): AADT writes the `hcw-aqc-bridge` v1 file.** AQC does not read AADT's own drawing format. AADT's port plan lists this as its last item (project data, floors, bridge file). What AADT builds must follow `docs/bridge/` here and the behaviour in "What hcwCAD-KIT did" below.
 * **Decided (owner, 2026-10-11): the export command in AADT is called `aqcexport`.** It writes `<drawing>.aqcbridge.json` and takes the place of hcwCAD-KIT's `HCWBRIDGE`.
-* **Decided (owner, 2026-10-11): when signed in, the take-off reaches AQC through the AORMS portal** (AAD publishes the same `hcw-aqc-bridge` v1 JSON as a `cad_bridge` version; AQC pulls it via `Aorms.Connect.CadBridgeApi` and runs the same importer). The local `<drawing>.aqcbridge.json` stays as the offline/Community path. One shared AORMS sign-in for AAD and AQC: see `docs/esti/AORMS-SUITE-SIGNIN.md` in the aorms repo.
+* **Take-off delivery (updated 2026-10-28):** O-Draft records take-off in the shared ShilpiDB server; O-CoreOp reads it from there (File > Take-off from ShilpiDB). The local `<drawing>.aqcbridge.json` / File > Import from CAD path stays as the offline path. The former AORMS portal / `Aorms.Connect.CadBridgeApi` path was removed.
 * **Still open for the owner:** whether AADT also reads the file back (the `HCWBRIDGEIMPORT` direction: levels, project details, beam depths). Do not guess; ask.
 
 ## The rule
@@ -42,7 +42,7 @@ The two programs meet only through a JSON file, never through shared code. The f
 Read the spec before changing the importer. The rules that matter most:
 
 1. **Millimetres.** The file says `"units": "mm"` and AQC's element rows are already millimetres, so no conversion is needed. Refuse a file with another `units` or `version`.
-2. **Every row has a `ref`**, and the file has a `drawing_id`. Store them on each imported row as `source = "hcwcad:<drawing_id>"` and `source_ref = <ref>`. Importing again updates by that pair and never duplicates (`JointMeasurementPull` is the pattern to follow: idempotent, marks, a `source`, then `ProjectStore.Current.Notify()`).
+2. **Every row has a `ref`**, and the file has a `drawing_id`. Store them on each imported row as `source = "hcwcad:<drawing_id>"` and `source_ref = <ref>`. Importing again updates by that pair and never duplicates (idempotent by `source` + `source_ref`, then `ProjectStore.Current.Notify()`).
 3. **Levels.** The file's levels are the floors above the plinth. Match them to AQC levels by `name`, then by position, to `Lvl1`, `Lvl2` ...; **`Lvl0` (plinth) is AQC's and an import never changes it.** The file's `height_mm` is floor to floor, which is the nearest thing to AQC's slab-top to slab-top height (note the finish difference in the preview). `beam_depth_mm` matters: AQC computes a column's clear height as `height - slab - beam depth`.
 4. **Columns carry no height.** Let AQC compute it from the level.
 5. **Never import** plaster, painting, skirting, shuttering, rebar, PCC, earthwork or waterproofing. They are not in the file. AQC derives the first four and owns the bar schedules.
@@ -69,7 +69,7 @@ Read the spec before changing the importer. The rules that matter most:
 ## Building AQC (what worked on 2026-10-09 with AQC `3667630`)
 
 * **C++ engine and tests:** needs MSVC. With Visual Studio 2022 Build Tools (C++ workload), CMake and Ninja: run `vcvars64.bat`, then `cmake -S BBSDesktop -B <build dir> -G Ninja -DCMAKE_BUILD_TYPE=Release` and `cmake --build <build dir>`. Build outside the repo folder. `bbs_tests.exe` reported 0 failures (40 checks).
-* **.NET projects** (`Aorms.Bridge`, `Aorms.Bridge.Smoke`, `AQC.BBS`, `AQC.Estimation`, `AQC.PM`, `BBSApp`): `dotnet build <project> -c Release -p:Platform=x64` with the .NET 8 SDK works, with no Visual Studio WinUI workload.
+* **.NET projects** (`AQC.CadImport`, `Office.Shared`, `BBSApp`): `dotnet build BBSDesktop/BBSApp/BBSApp.csproj -c Release -p:Platform=x64 -p:WindowsPackageType=None` with the .NET 8 SDK (WinUI workload / Windows App SDK for a full app build).
 * **Known portability gap, for the engine's owner:** the engine does not compile with clang and libc++ (MinGW): `src/api/bbs_c_api.cpp` uses `std::malloc` and `std::free` without `<cstdlib>`, and `src/core/Project.cpp` opens files with a wide-character path, which only MSVC accepts. Fixing both would let the engine build without Visual Studio.
 * The app itself has been built but **not yet started**.
 

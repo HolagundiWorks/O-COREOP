@@ -76,19 +76,17 @@ stored encrypted with Windows DPAPI, or read from `ANTHROPIC_API_KEY`).
 
 ## Backlog 🔭
 
-Ordered roughly by value and by what unblocks what. Items marked **owner** need a decision before work starts. Detail for each Connect and suite item is in [HANDOFF-O-COREOP.md](HANDOFF-O-COREOP.md) (same numbers).
+Ordered roughly by value and by what unblocks what. Items marked **owner** need a decision before work starts. Detail is in [HANDOFF-O-COREOP.md](HANDOFF-O-COREOP.md).
 
 **Run it for real first (nothing below is trustworthy until these are done)**
 
-1. Add the repository secret `HCW_UI_TOKEN` so CI builds (2.1); sign in to the real AORMS portal and pull a project (2.2); apply portal migration `0113` (2.3).
-2. Click through Import from CAD, Export for CAD, Online projects and the Take-off page with a real take-off; the libraries have 49 + 88 tests, the screens have not been used (2.4). Needs O-Draft to record a take-off first.
+1. Add the repository secret `HCW_UI_TOKEN` so CI builds (2.1).
+2. Click through Import from CAD, Export for CAD and the Take-off page with a real take-off; CadImport and Office.Shared tests pass, the screens need a desktop click-through (2.4). Needs O-Draft to record a take-off first.
 3. Install the new installer on a clean machine and check the in-place upgrade (2.5).
 
-**Connect and sync**
+**Connect and sync (removed 2026-10-28)**
 
-4. ~~Wire the file-backed outbox and the `ProjectStore` hooks~~ built 2026-10-19 (`ProjectSyncHost`, File > Push project online / Pull latest from AORMS); not yet run against AORMS, dialogs not clicked through, large projects not timed (4.3).
-5. Home screen: sign in first, "Continue without signing in", then Online projects, then Local; open from a seed; Push online (4.2).
-6. Map the shared rate books onto `RateBookStore` (4.4); then remove the old `Aorms.Bridge`, its smoke tool and the Bind and Flush buttons (4.5).
+AORMS Connect / Bridge (sign-in, Online projects, Push/Pull, Bind/Flush, outbox) were removed from this repository. Do not reintroduce without an owner decision. Company-file / OSAS ticket flow stays.
 
 **Take-off from O-Draft**
 
@@ -109,7 +107,7 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 - Take-off moved to O-Draft; the PDF take-off panel and canvas removed; the Take-off page reads one shared ShilpiDB server (several drawings per project) and stores the annotated drawing PDF; **the stored PDFs are embedded in the project report and the estimate PDF**.
 - Engine builds with clang/MinGW as well as MSVC (the installer script no longer needs Visual Studio for it).
-- AORMS sign-in, Online projects and CAD import and export (below); the file-backed outbox store; the O-CoreOp shell and the shared design.
+- CAD import and export; ShilpiDB take-off; the O-CoreOp shell and the shared design; company-file / OSAS ticket flow.
 
 ## Deferred 💤
 
@@ -130,29 +128,20 @@ Ordered roughly by value and by what unblocks what. Items marked **owner** need 
 
 ---
 
-## AORMS hub bridge (D2) � in progress
+## AORMS hub bridge — removed (2026-10-28)
 
-Shared `Aorms.Bridge` library under `BBSDesktop/Aorms.Bridge`:
-local `firm.db` (org_settings � meta_outbox � artifact_outbox) + activate/Flush
-against AORMS HUB-API. See [AORMS-BRIDGE.md](AORMS-BRIDGE.md).
-Open source; SaaS commercial licensing deferred.
-AStudio / AConsulting will consume this package after the smoke.
+`Aorms.Bridge`, stub hosts, and hub Flush/Bind UI are gone. Offline CAD bridge contract remains in [bridge/](bridge/README.md).
 
----
 
-## CAD take-off, ShilpiDB and AORMS sign-in 🚧 (2026-10-19)
+## CAD take-off and ShilpiDB (2026-10-19; Connect removed 2026-10-28)
 
-Take-off from drawings and PDFs is done in **O-Draft** (earlier AADT), recorded in one shared ShilpiDB server, and read here ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md), [AADT.md](AADT.md)). Everything below is built and its libraries unit-tested; **none of it has been run against the live AORMS server or against a take-off O-Draft wrote**, because O-Draft cannot write one yet.
+Take-off from drawings and PDFs is done in **O-Draft**, recorded in one shared ShilpiDB server, and read here ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md), [AADT.md](AADT.md)). AORMS portal sign-in / Online projects / project sync were removed.
 
 | Step | What | State |
 |------|------|-------|
 | Bridge contract | `hcw-aqc-bridge` v1 schema, samples and spec in [bridge/](bridge/README.md) | ✅ |
-| Import from CAD | `AQC.CadImport` + File > Import from CAD…, preview, idempotent, one undo | ✅ (app not clicked through) |
+| Import from CAD | `AQC.CadImport` + File > Import from CAD…, preview, idempotent, one undo | ✅ |
 | Export for CAD | File > Export for CAD… (levels, project, beam depths) | ✅ |
-| Take-off from ShilpiDB | Take-off page: the shared server (refreshes every 5 s) or a `.vdb`; several drawings per project; read one into the import preview. **Read against what O-Draft really wrote** (2026-10-19): agrees; four gaps handled and flagged ([TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10) | ✅ library run against real `shilpid` and O-Draft output; page not clicked through |
-| Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF; embedded in the project report and the estimate PDF | ✅ run in a scratch program; not yet in the app with a real project |
-| AORMS sign-in | Credential Manager stores, status chip, File > Sign in / Sign out, take-over prompt | ✅ built; live sign-in not yet tried |
-| Online projects | File > Online projects…: list, link, import the CAD take-off published to the portal | ✅ built; not yet run |
-| Project sync | `FileOutboxStore`, `RowBaseline`, `ProjectSyncHost`: edits are queued, sent under the edit lease, survive a restart; File > Push project online / Pull latest from AORMS | ✅ 50+ library tests; **driven in the real app against a scripted fake AORMS (24 checks, seven bugs fixed)**; not run against the real AORMS |
-| O-Draft writes the take-off | `takeoff.record` and `takeoff.annotate` built in O-Draft (read 2026-10-19; four requests sent back); `aqcexport` and PDF underlay not yet | 🚧 O-Draft repository |
-| Home screen, rate books | see the Backlog | 🔭 |
+| Take-off from ShilpiDB | Take-off page: shared server or `.vdb`; several drawings; company-file grouping | ✅ |
+| Annotated drawing | Fetch, verify (SHA-256) and store O-Draft's PDF | ✅ |
+| O-Draft writes the take-off | `takeoff.record` / annotate in O-Draft repo | 🚧 |

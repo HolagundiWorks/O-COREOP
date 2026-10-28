@@ -22,7 +22,7 @@ O-CoreOp's reader is built and has been run against the real ShilpiDB programs, 
 | ShilpiDB file and server client | `crates/vdb`: `VdbStore`, `save_path`, `load_path`, `VdbClient::{connect, insert, insert_many, delete, list, list_boxes, get, save}`; `MAX_RECORDS` 1,000,000, `MAX_PAYLOAD` 16 MB |
 | Windowless commands, MCP, control channel | `Session::execute`, JSON forms, `crates/mcp`, `aad-host` |
 | Drawing revision hash | `drawing.revision`, `<file>.aadrev.json` |
-| AORMS project link | `aorms.open`, project office id stored in the drawing's project data (`crates/aorms`, `engine/src/cmd/aorms.rs`) |
+| Company-file project link | Prefer `source.project_ref` (company UUID + project id) so O-CoreOp can group drawings with the open company file |
 
 ## 3. What to build
 
@@ -41,7 +41,7 @@ Run `bridge.export`'s collection step (the part that builds the `root` JSON, wit
 5. **Annotated PDF**, if generated (3.4).
 6. **Header** with `"state": "complete"` (+ `annotated_pdf`), then `POST /save` (or `VdbClient::save`).
 
-Header content: take `source`, `project`, `levels`, `beam_depths_mm` and `opening_schedule` from the bridge JSON unchanged. Add `source.app` = `"O-Draft"`, `source.project_office_id` (the AORMS project office id the drawing is linked to; **this is what lets O-CoreOp group a project's drawings**), and `source.revision_sha256` (the `drawing.revision` hash). Report counts per kind and any skipped item, as `bridge.export` reports warnings.
+Header content: take `source`, `project`, `levels`, `beam_depths_mm` and `opening_schedule` from the bridge JSON unchanged. Add `source.app` = `"O-Draft"`, `source.project_ref` (company UUID + project id from the shared company file; **this is what lets O-CoreOp group a project's drawings**), and `source.revision_sha256` (the `drawing.revision` hash). Optional legacy `project_office_id` is ignored for grouping in O-CoreOp. Report counts per kind and any skipped item, as `bridge.export` reports warnings.
 
 ### 3.3 Two fixes in `bridge.export` that this depends on
 
@@ -134,7 +134,7 @@ I read the database your `takeoff.record` wrote (your ignored real-server test, 
 
 Smaller: `opening_schedule` has `"kind": "Ventilator"` for V1; the contract says a ventilator is a window, so either send `Window` or keep `Ventilator` (O-CoreOp now treats both as windows). The header's `levels` rows carry `ceiling_mm` and `lintel_bottom_mm` as well; that is fine, they are ignored. `source.drawing` was empty for an unsaved drawing; recording an unsaved drawing could be refused, or named `(unsaved)`.
 
-**Not yet checked, and worth doing on your side:** run `takeoff.record` with `annotate` against the real `shilpid` (your tests use a stand-in plotter, so no real PDF has crossed the server yet); record **two** drawings into one server and one of them linked to an AORMS project (`project_office_id`); a drawing with more than one floor. Send me the database (or run the same test and keep the file) and I will read it with the same reader.
+**Not yet checked, and worth doing on your side:** run `takeoff.record` with `annotate` against the real `shilpid` (your tests use a stand-in plotter, so no real PDF has crossed the server yet); record **two** drawings into one server and one of them linked via `project_ref` (company file); a drawing with more than one floor. Send me the database (or run the same test and keep the file) and I will read it with the same reader.
 
 **Your "not done" items:** the check for two drawings measuring the same floor is built on the O-CoreOp side as a warning in the import preview (not on yours). PDF underlay and calibration are still the next piece of work and still block PDF-only projects.
 

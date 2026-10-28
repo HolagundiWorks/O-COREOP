@@ -217,7 +217,6 @@ public sealed partial class MainWindow
     {
         RefreshWindowTitle();
         UpdatePersonaBadge();
-        RefreshSyncBadge();
         SelectNavTag("dashboard");
     }
 

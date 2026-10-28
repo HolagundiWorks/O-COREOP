@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
-using Aorms.Bridge;
 using BBSApp.Models;
 using BBSApp.Services;
 using BBSApp.Services.Ai;
@@ -32,7 +31,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private readonly HashSet<string> _navTags = new(StringComparer.Ordinal);
     private string _activeTab = "project";
     private string _activeTag = "dashboard";
-    private readonly DispatcherTimer _syncTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private DispatcherTimer? _toastTimer;
     private int _toastGeneration;
     private AssistantService? _assistant;
@@ -61,18 +59,11 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         BuildNavigation();
         NavigateTo("dashboard");
         UpdatePersonaBadge();
-        RefreshSyncBadge();
-        _ = RestoreConnectAsync();
-        // Warm Connect session into firm.db for Flush readiness.
-        _ = ProjectSyncService.StatusSummary();
         SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
         StartCompanyPolling();
         _ = StartFromSuiteAsync();
         AppNotify.Raised += OnAppNotify;
         ProjectStore.Current.Changed += OnStoreChanged;
-        ProjectStore.Current.Changed += BBSApp.Services.Connect.ProjectSyncHost.MarkDirty;
-        _syncTimer.Tick += async (_, _) => { await BBSApp.Services.Connect.ProjectSyncHost.TickAsync(); RefreshConnectBadge(); };
-        _syncTimer.Start();
         Closed += (_, _) =>
         {
             Hcw.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
@@ -121,7 +112,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         {
             SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
             UpdatePersonaBadge();
-            RefreshSyncBadge();
         });
     }
 
@@ -234,7 +224,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Cmd("links", "Item links", Glyph("\uE71B")),               // Link
             Cmd("datamodel", "Data model", Glyph("\uE8AB")),           // MapLayers
             Cmd("ratebook", "Rate book", Glyph("\uE82D")),             // Bookmarks
-            Cmd("pull_jm", "Pull JM", Glyph("\uE896")),                // Download
             Cmd("report", "Report", Glyph("\uE9F9")),                  // ReportDocument
         }));
 
@@ -242,8 +231,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         foreach (var cmd in _tabs.SelectMany(t => t.Commands))
             _navTags.Add(cmd.Tag);
         // Edit menu + sync actions (not duplicated in Outputs strip).
-        foreach (var tag in new[] { "settings_project", "settings_engineering", "settings_cost",
-                     "bind_project", "flush_sync", "publish_sync" })
+        foreach (var tag in new[] { "settings_project", "settings_engineering", "settings_cost" })
             _navTags.Add(tag);
     }
 
@@ -471,27 +459,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     private void NavigateTo(string tag)
     {
-        if (string.Equals(tag, "pull_jm", StringComparison.OrdinalIgnoreCase))
-        {
-            _ = PullJointMeasurementsAsync();
-            return;
-        }
-        if (string.Equals(tag, "bind_project", StringComparison.OrdinalIgnoreCase))
-        {
-            BindProject_Click(this, new RoutedEventArgs());
-            return;
-        }
-        if (string.Equals(tag, "flush_sync", StringComparison.OrdinalIgnoreCase))
-        {
-            Flush_Click(this, new RoutedEventArgs());
-            return;
-        }
-        if (string.Equals(tag, "publish_sync", StringComparison.OrdinalIgnoreCase))
-        {
-            PublishStatus_Click(this, new RoutedEventArgs());
-            return;
-        }
-
         _activeTag = tag;
         var owner = _tabs.FirstOrDefault(t => t.Commands.Any(c => c.Tag == tag));
         if (owner is not null)
@@ -562,355 +529,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
         var label = owner?.Commands.FirstOrDefault(c => c.Tag == tag)?.Label ?? tag;
         if (RibbonPageLabel != null) RibbonPageLabel.Text = label;
-    }
-
-    /// <summary>S11 — pull APPROVED joint measurements into rate book + earthwork MB.</summary>
-    private async void BindProject_Click(object sender, RoutedEventArgs e)
-    {
-        var catalog = ConnectCatalog.List();
-        if (catalog.Count == 0)
-        {
-            AppNotify.Warning(
-                "Connect catalog empty",
-                @"Open AORMS Connect and add projects, then retry. Expected: %LocalAppData%\AORMS-Connect\catalog.json");
-            return;
-        }
-
-        var list = new ListView
-        {
-            SelectionMode = ListViewSelectionMode.Single,
-            MaxHeight = 280,
-            ItemsSource = catalog.Select(c =>
-                $"{(string.IsNullOrWhiteSpace(c.Title) ? c.Ref : c.Title)}  ·  {c.Ref}  ·  {c.Id}").ToList(),
-        };
-        if (list.Items.Count > 0) list.SelectedIndex = 0;
-
-        var dlg = new ContentDialog
-        {
-            Title = "Bind to Connect project",
-            Content = new StackPanel
-            {
-                Spacing = 8,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = "Select the shared AORMS project UUID for Flush, publish, and Pull JM.",
-                        TextWrapping = TextWrapping.Wrap,
-                    },
-                    list,
-                },
-            },
-            PrimaryButtonText = "Bind",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = Content.XamlRoot,
-        };
-
-        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
-        var idx = list.SelectedIndex;
-        if (idx < 0 || idx >= catalog.Count)
-        {
-            AppNotify.Warning("Bind", "Select a catalog project.");
-            return;
-        }
-
-        try
-        {
-            var msg = ProjectSyncService.Bind(catalog[idx]);
-            RefreshSyncBadge();
-            SetWindowTitle(Branding.WindowTitle(ProjectStore.Current.Name, ProjectStore.Current.IsDirty));
-            AppNotify.Success("Bound", msg);
-        }
-        catch (Exception ex)
-        {
-            AppNotify.Error("Bind failed", ex.Message);
-        }
-    }
-
-    private async void Flush_Click(object sender, RoutedEventArgs e)
-    {
-        AppNotify.Info("Flush", "Sending outbox to hub…");
-        var (ok, message) = await ProjectSyncService.FlushAsync().ConfigureAwait(true);
-        RefreshSyncBadge();
-        if (ok) AppNotify.Success("Flush", message);
-        else AppNotify.Warning("Flush", message);
-    }
-
-    private async void PublishStatus_Click(object sender, RoutedEventArgs e)
-    {
-        AppNotify.Info("Publish", "Queuing projectStatus…");
-        var (ok, message) = await ProjectSyncService.PublishProjectStatusAsync().ConfigureAwait(true);
-        RefreshSyncBadge();
-        if (ok) AppNotify.Success("Publish", message);
-        else AppNotify.Warning("Publish", message);
-    }
-
-    private async void PublishEstimate_Click(object sender, RoutedEventArgs e)
-    {
-        AppNotify.Info("Publish", "Queuing estimateTotals…");
-        var (ok, message) = await ProjectSyncService.PublishEstimateTotalsAsync().ConfigureAwait(true);
-        RefreshSyncBadge();
-        if (ok) AppNotify.Success("Publish", message);
-        else AppNotify.Warning("Publish", message);
-    }
-
-    // ── AORMS sign-in (Aorms.Connect; shared Credential Manager entry) ─────────────────────────────
-
-    private void RefreshConnectBadge()
-    {
-        if (ConnectBadgeText is null) return;
-        var sync = BBSApp.Services.Connect.ProjectSyncHost.Active ? " · " + BBSApp.Services.Connect.ProjectSyncHost.StateText : "";
-        ConnectBadgeText.Text = BBSApp.Services.Connect.ConnectService.StatusText + sync;
-        AutomationProperties.SetName(ConnectBadge, ConnectBadgeText.Text);
-        var notice = BBSApp.Services.Connect.ProjectSyncHost.Notice;
-        ToolTipService.SetToolTip(ConnectBadge, BBSApp.Services.Connect.ConnectService.Details + (notice is null ? "" : "\n" + notice));
-    }
-
-    private async Task RestoreConnectAsync()
-    {
-        BBSApp.Services.Connect.ConnectService.Changed += () => DispatcherQueue.TryEnqueue(RefreshConnectBadge);
-        await BBSApp.Services.Connect.ConnectService.RestoreAsync().ConfigureAwait(true);
-        RefreshConnectBadge();
-        if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SessionReplaced)
-            await OfferTakeOverAsync();
-    }
-
-    // ── Push online / Pull latest ───────────────────────────────────────────────────────────────
-
-    private async void PushOnline_Click(object sender, RoutedEventArgs e)
-    {
-        try { await PushOnlineFlowAsync(); }
-        catch (Exception ex) { AppNotify.Error("Push online", BBSApp.Services.Connect.ConnectService.Describe(ex)); }
-    }
-
-    private async Task PushOnlineFlowAsync()
-    {
-        var info = ProjectStore.Current.Info;
-        if (!string.IsNullOrWhiteSpace(info.AormsAqcId))
-        {
-            AppNotify.Info("Push online", "This project is already online and syncs by itself. Use Pull latest to bring in changes from elsewhere.");
-            return;
-        }
-        if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
-        {
-            AppNotify.Info("Push online", "Sign in to AORMS first (File > Sign in to AORMS).");
-            await ConnectFlowAsync();
-            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn) return;
-        }
-        var projects = await BBSApp.Services.Connect.ConnectService.ListProjectsAsync();
-        var free = projects.Where(p => !p.IsBound).ToList();
-        if (free.Count == 0)
-        {
-            AppNotify.Info("Push online", "Every project in your AORMS studio already has O-CoreOp data. Create the project in AORMS first, or link this one with File > Online projects.");
-            return;
-        }
-        var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 280, MinWidth = 440 };
-        foreach (var p in free)
-            list.Items.Add(new ListViewItem { Tag = p, Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}" });
-        var linked = free.FindIndex(p => p.ProjectOfficeId == info.AormsProjectOfficeId);
-        list.SelectedIndex = linked >= 0 ? linked : 0;
-        var dlg = new ContentDialog
-        {
-            Title = "Push project online",
-            Content = new StackPanel
-            {
-                Spacing = 10,
-                Children =
-                {
-                    new TextBlock { TextWrapping = TextWrapping.Wrap, Text = "Choose the AORMS project this one belongs to. The whole project is sent and from then on every change is kept in step. An AORMS project can be bound to one O-CoreOp project, once." },
-                    list,
-                },
-            },
-            PrimaryButtonText = "Push online",
-            CloseButtonText = "Cancel",
-            XamlRoot = Content.XamlRoot,
-        };
-        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
-        if (list.SelectedItem is not ListViewItem { Tag: Aorms.Connect.OnlineProject sel }) return;
-
-        AppNotify.Info("Push online", $"Sending to {sel.Ref}…");
-        var outcome = await BBSApp.Services.Connect.ProjectSyncHost.PushOnlineAsync(sel.ProjectOfficeId);
-        RefreshConnectBadge();
-        if (outcome.Pending > 0)
-            AppNotify.Warning("Push online", $"Bound to {sel.Ref}; {outcome.Rows} rows sent, {outcome.Pending} still waiting and will go when the connection allows. Save the project to keep the link.");
-        else
-            AppNotify.Success("Push online", $"Bound to {sel.Ref}; {outcome.Rows} rows sent. Save the project to keep the link.");
-    }
-
-    private async void PullLatest_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
-            {
-                AppNotify.Info("Pull latest", "Sign in to AORMS first (File > Sign in to AORMS).");
-                return;
-            }
-            await BBSApp.Services.Connect.ProjectSyncHost.EnsureStartedAsync();
-            var pull = await BBSApp.Services.Connect.ProjectSyncHost.PullLatestAsync();
-            if (pull.Incoming == 0) { AppNotify.Success("Pull latest", "Up to date: nothing has changed online."); return; }
-            if (pull.NeedsReview)
-            {
-                var dlg = new ContentDialog
-                {
-                    Title = "Changes arrived from elsewhere",
-                    Content = new TextBlock
-                    {
-                        TextWrapping = TextWrapping.Wrap,
-                        Text = $"{pull.Incoming} row(s) changed online, and you have {pull.UnsentLocal} unsent change(s) here. Taking the online changes replaces your unsent edits to the same rows; your other unsent edits stay and are still sent. Take the online changes?",
-                    },
-                    PrimaryButtonText = "Take online changes",
-                    CloseButtonText = "Not now",
-                    XamlRoot = Content.XamlRoot,
-                };
-                if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
-            }
-            BBSApp.Services.Connect.ProjectSyncHost.ApplyPull(pull);
-            NavigateTo(_activeTag);
-            RefreshWindowTitle();
-            RefreshConnectBadge();
-            AppNotify.Success("Pull latest", $"{pull.Incoming} row(s) brought in from AORMS.");
-        }
-        catch (Exception ex) { AppNotify.Error("Pull latest", BBSApp.Services.Connect.ConnectService.Describe(ex)); }
-    }
-
-    private void ConnectBadge_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
-    private void ConnectSignIn_Click(object sender, RoutedEventArgs e) => _ = ConnectFlowAsync();
-
-    private void ConnectSignOut_Click(object sender, RoutedEventArgs e)
-    {
-        BBSApp.Services.Connect.ConnectService.SignOut();
-        RefreshConnectBadge();
-        AppNotify.Info("AORMS", "Signed out. O-CoreOp works on its own until you sign in again.");
-    }
-
-    private async Task ConnectFlowAsync()
-    {
-        var cs = BBSApp.Services.Connect.ConnectService.State;
-        if (cs == BBSApp.Services.Connect.ConnectState.SessionReplaced) { await OfferTakeOverAsync(); return; }
-        if (cs == BBSApp.Services.Connect.ConnectState.SignedIn) { await ShowConnectAccountAsync(); return; }
-        await ShowSignInDialogAsync();
-    }
-
-    private async Task ShowConnectAccountAsync()
-    {
-        var dlg = new ContentDialog
-        {
-            Title = "AORMS",
-            Content = new TextBlock { Text = BBSApp.Services.Connect.ConnectService.Details, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true },
-            PrimaryButtonText = "Sign out",
-            CloseButtonText = "Close",
-            XamlRoot = Content.XamlRoot,
-        };
-        if (await dlg.ShowAsync() == ContentDialogResult.Primary) ConnectSignOut_Click(this, new RoutedEventArgs());
-    }
-
-    private async Task OfferTakeOverAsync()
-    {
-        var dlg = new ContentDialog
-        {
-            Title = "AORMS is in use on another computer",
-            Content = new TextBlock
-            {
-                Text = "You are signed in to AORMS on another computer. Only one computer can use O-CoreOp with AORMS at a time. Sign in here instead?",
-                TextWrapping = TextWrapping.Wrap,
-            },
-            PrimaryButtonText = "Sign in here",
-            CloseButtonText = "Not now",
-            XamlRoot = Content.XamlRoot,
-        };
-        if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
-        var err = await BBSApp.Services.Connect.ConnectService.TakeOverAsync();
-        RefreshConnectBadge();
-        if (err is null) AppNotify.Success("AORMS", "Signed in on this computer.");
-        else AppNotify.Error("AORMS", err);
-    }
-
-    private async Task ShowSignInDialogAsync()
-    {
-        var email = new TextBox { Header = "Email", Text = BBSApp.Services.Connect.ConnectService.RememberedEmail ?? "", InputScope = new InputScope { Names = { new InputScopeName(InputScopeNameValue.EmailSmtpAddress) } } };
-        var password = new PasswordBox { Header = "Password" };
-        var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = new SolidColorBrush(Microsoft.UI.Colors.Firebrick), Visibility = Visibility.Collapsed };
-        var dlg = new ContentDialog
-        {
-            Title = "Sign in to AORMS",
-            Content = new StackPanel
-            {
-                Spacing = 10, MinWidth = 320,
-                Children =
-                {
-                    new TextBlock { Text = $"Server: {BBSApp.Services.Connect.ConnectService.BaseUrl}", Opacity = 0.7, FontSize = 12 },
-                    email, password, error,
-                },
-            },
-            PrimaryButtonText = "Sign in",
-            CloseButtonText = "Cancel",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = Content.XamlRoot,
-        };
-        string? notConnected = null;
-        dlg.PrimaryButtonClick += async (_, a) =>
-        {
-            var d = a.GetDeferral();
-            try
-            {
-                if (string.IsNullOrWhiteSpace(email.Text) || string.IsNullOrEmpty(password.Password))
-                {
-                    error.Text = "Enter your email and password."; error.Visibility = Visibility.Visible; a.Cancel = true; return;
-                }
-                dlg.IsPrimaryButtonEnabled = false;
-                var err = await BBSApp.Services.Connect.ConnectService.SignInAsync(email.Text, password.Password);
-                dlg.IsPrimaryButtonEnabled = true;
-                if (err is null) return;
-                if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.NotConnected) { notConnected = err; return; }
-                error.Text = err; error.Visibility = Visibility.Visible; password.Password = ""; a.Cancel = true;
-            }
-            finally { d.Complete(); }
-        };
-        await dlg.ShowAsync();
-        password.Password = "";
-        RefreshConnectBadge();
-        if (notConnected is not null) AppNotify.Warning("AORMS", notConnected);
-        else if (BBSApp.Services.Connect.ConnectService.State == BBSApp.Services.Connect.ConnectState.SignedIn)
-            AppNotify.Success("AORMS", BBSApp.Services.Connect.ConnectService.Details);
-    }
-
-    private void SyncBadge_Click(object sender, RoutedEventArgs e)
-    {
-        RefreshSyncBadge();
-        NavigateTo("settings_project");
-    }
-
-    private void RefreshSyncBadge()
-    {
-        if (SyncBadgeText is null) return;
-        try
-        {
-            SyncBadgeText.Text = ProjectSyncService.StatusSummary();
-        }
-        catch
-        {
-            SyncBadgeText.Text = "Sync unavailable";
-        }
-        AutomationProperties.SetName(SyncBadge, SyncBadgeText.Text);
-    }
-
-    private async Task PullJointMeasurementsAsync()
-    {
-        AppNotify.Info("Pull JM", "Fetching approved joint measurements from hub…");
-        var result = await JointMeasurementPull.PullAsync().ConfigureAwait(true);
-        RefreshSyncBadge();
-        if (!string.IsNullOrWhiteSpace(result.Error))
-        {
-            AppNotify.Error("Pull JM failed", result.Error);
-            return;
-        }
-
-        AppNotify.Success(
-            "Pull JM",
-            $"{result.Bundles} measurement(s) · {result.MbRowsAdded} MB row(s) · {result.RateItemsAdded} rate item(s) · project {result.ProjectId}");
-        NavigateTo("earthwork");
     }
 
     /// <summary>Marks the navigation item of the page being shown, without navigating again.</summary>
@@ -1345,7 +963,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         ProjectStore.Current.Reset();
         RefreshWindowTitle();
         UpdatePersonaBadge();
-        RefreshSyncBadge();
         SelectNavTag("dashboard");
     }
 
@@ -1367,7 +984,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         await ShowCadImportPreviewAsync(prep, "Import from CAD");
     }
 
-    /// <summary>The preview dialog shared by "Import from CAD" (a file) and "Online projects" (the portal). Nothing is written before Import.</summary>
+    /// <summary>The preview dialog for "Import from CAD". Nothing is written before Import.</summary>
     internal async Task ShowCadImportPreviewAsync(CadImportService.Prepared prep, string title)
     {
         var plan = prep.Plan;
@@ -1405,100 +1022,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         CadImportService.Apply(prep);
         RefreshWindowTitle();
         AppNotify.Success("Import from CAD", plan.Summary);
-    }
-
-    // ── Online projects (AORMS) ───────────────────────────────────────────────────────────────────
-
-    private void OnlineProjects_Click(object sender, RoutedEventArgs e) => _ = ShowOnlineProjectsAsync();
-
-    private async Task ShowOnlineProjectsAsync()
-    {
-        if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn)
-        {
-            AppNotify.Info("AORMS", "Sign in to AORMS first (File > Sign in to AORMS).");
-            await ConnectFlowAsync();
-            if (BBSApp.Services.Connect.ConnectService.State != BBSApp.Services.Connect.ConnectState.SignedIn) return;
-        }
-
-        List<Aorms.Connect.OnlineProject> projects;
-        try { projects = await BBSApp.Services.Connect.ConnectService.ListProjectsAsync(); }
-        catch (Exception ex)
-        {
-            AppNotify.Error("Online projects", BBSApp.Services.Connect.ConnectService.Describe(ex));
-            RefreshConnectBadge();
-            return;
-        }
-        if (projects.Count == 0)
-        {
-            AppNotify.Info("Online projects", "Your AORMS studio has no projects yet.");
-            return;
-        }
-
-        var info = ProjectStore.Current.Info;
-        var list = new ListView { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 320, MinWidth = 440 };
-        foreach (var p in projects)
-        {
-            var linked = p.ProjectOfficeId == info.AormsProjectOfficeId;
-            list.Items.Add(new ListViewItem
-            {
-                Tag = p,
-                Content = $"{p.Ref}  ·  {p.Title}{(string.IsNullOrWhiteSpace(p.City) ? "" : "  ·  " + p.City)}"
-                          + (p.IsBound ? "  ·  has O-CoreOp data" : "  ·  not bound yet")
-                          + (linked ? "  ·  linked to this project" : ""),
-            });
-            if (linked) list.SelectedIndex = list.Items.Count - 1;
-        }
-        if (list.SelectedIndex < 0) list.SelectedIndex = 0;
-
-        var status = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.75, FontSize = 12,
-            Text = "Link ties the open project to the AORMS project. Import CAD take-off reads the newest measurement published from O-Draft and shows a preview first." };
-        var dlg = new ContentDialog
-        {
-            Title = "Online projects",
-            Content = new StackPanel { Spacing = 10, Children = { list, status } },
-            PrimaryButtonText = "Import CAD take-off",
-            SecondaryButtonText = "Link to this project",
-            CloseButtonText = "Close",
-            XamlRoot = Content.XamlRoot,
-        };
-        var result = await dlg.ShowAsync();
-        if (list.SelectedItem is not ListViewItem { Tag: Aorms.Connect.OnlineProject sel }) return;
-
-        if (result == ContentDialogResult.Secondary)
-        {
-            info.AormsProjectOfficeId = sel.ProjectOfficeId;
-            info.AormsAqcId = sel.Aqc?.Id ?? "";
-            ProjectStore.Current.Notify();
-            AppNotify.Success("Online projects", $"Linked to {sel.Ref} · {sel.Title}. Save the project to keep the link.");
-            return;
-        }
-        if (result != ContentDialogResult.Primary) return;
-
-        if (sel.Aqc is null)
-        {
-            AppNotify.Info("Online projects", $"{sel.Ref} has no O-CoreOp data yet, so no CAD take-off has been published to it.");
-            return;
-        }
-        string? json;
-        try { json = await BBSApp.Services.Connect.ConnectService.PullCadTakeoffAsync(sel.Aqc.Id); }
-        catch (Exception ex)
-        {
-            AppNotify.Error("CAD take-off", BBSApp.Services.Connect.ConnectService.Describe(ex));
-            return;
-        }
-        if (json is null)
-        {
-            AppNotify.Info("CAD take-off", $"No CAD take-off has been published to {sel.Ref} yet. Publish it from O-Draft first.");
-            return;
-        }
-        CadImportService.Prepared prep;
-        try { prep = CadImportService.PrepareJson(json); }
-        catch (Exception ex)
-        {
-            AppNotify.Error("CAD take-off", "The published take-off could not be read: " + ex.Message);
-            return;
-        }
-        await ShowCadImportPreviewAsync(prep, $"Import CAD take-off from {sel.Ref}");
     }
 
     private async void ExportCad_Click(object sender, RoutedEventArgs e)
@@ -1548,7 +1071,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         ProjectStore.Current.Shared = null;
         RefreshWindowTitle();
         UpdatePersonaBadge();
-        RefreshSyncBadge();
         SelectNavTag("dashboard");
         AppNotify.Success("Project opened", ProjectStore.Current.Name);
     }

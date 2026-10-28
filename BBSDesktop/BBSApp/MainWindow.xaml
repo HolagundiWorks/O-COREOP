@@ -76,13 +76,6 @@
                 <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click"/>
                 <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click"/>
                 <MenuFlyoutItem Text="Undo last CAD import" Click="UndoCadImport_Click"/>
-                <MenuFlyoutItem Text="Publish project status" Click="PublishStatus_Click"/>
-                <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Sign in to AORMS…" Click="ConnectSignIn_Click"/>
-                <MenuFlyoutItem Text="Online projects…" Click="OnlineProjects_Click"/>
-                <MenuFlyoutItem Text="Push project online…" Click="PushOnline_Click"/>
-                <MenuFlyoutItem Text="Pull latest from AORMS" Click="PullLatest_Click"/>
-                <MenuFlyoutItem Text="Sign out of AORMS" Click="ConnectSignOut_Click"/>
                 <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Exit" Click="Exit_Click" AccessKey="X"/>
             </MenuBarItem>
@@ -90,9 +83,7 @@
                 <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project"/>
                 <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering"/>
                 <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost"/>
-                <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Bind from Connect…" Click="BindProject_Click"/>
-            </MenuBarItem>
+                            </MenuBarItem>
             <MenuBarItem Title="Help" AccessKey="H">
                 <MenuFlyoutItem Text="About" Click="About_Click"/>
             </MenuBarItem>
@@ -137,7 +128,7 @@
                     </Frame.ContentTransitions>
                 </Frame>
 
-                <!-- Status strip: calculator, the hub tools and the two status chips -->
+                <!-- Status strip: calculator, theme, company chip -->
                 <Border Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteHeaderHeight}"
                         Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}"
                         BorderThickness="0" CornerRadius="{StaticResource SuiteCornerControl}" AutomationProperties.Name="Status">
@@ -153,12 +144,6 @@
                         </Button>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                             <hcw:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
-                            <Button Content="Bind" Style="{StaticResource HcwGhostButton}" Click="BindProject_Click"
-                                    AutomationProperties.Name="Bind project to Connect catalog"
-                                    ToolTipService.ToolTip="Bind to AORMS Connect catalog"/>
-                            <Button x:Name="DockFlushBtn" Content="Flush" Style="{StaticResource HcwGhostButton}" Click="Flush_Click"
-                                    AutomationProperties.Name="Flush outbox to hub"
-                                    ToolTipService.ToolTip="Flush outbox to hub"/>
                             <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
                                     Click="CompanyBadge_Click"
                                     AutomationProperties.Name="Company file"
@@ -166,22 +151,6 @@
                                 <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
                                            Foreground="{ThemeResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
                                            Text="Company · not open"/>
-                            </Button>
-                            <Button x:Name="ConnectBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
-                                    Click="ConnectBadge_Click"
-                                    AutomationProperties.Name="AORMS account"
-                                    ToolTipService.ToolTip="AORMS sign-in ? sign in or see your account">
-                                <TextBlock x:Name="ConnectBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
-                                           Foreground="{ThemeResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                           Text="AORMS · signed out"/>
-                            </Button>
-                            <Button x:Name="SyncBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
-                                    Click="SyncBadge_Click"
-                                    AutomationProperties.Name="Hub sync"
-                                    ToolTipService.ToolTip="Hub sync status ? open project settings">
-                                <TextBlock x:Name="SyncBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
-                                           Foreground="{ThemeResource HcwInkBrush}" MaxWidth="140" TextTrimming="CharacterEllipsis"
-                                           Text="Sync?"/>
                             </Button>
                         </StackPanel>
                     </Grid>
