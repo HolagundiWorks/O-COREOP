@@ -19,7 +19,7 @@ namespace Office.Ai;
 /// </summary>
 public sealed class LocalLlm : IDisposable
 {
-    public const int ContextTokens = 8192;
+    public const int ContextTokens = 16384;
     /// <summary>Room kept free for the answer when a conversation is trimmed to fit.</summary>
     public const int ReserveTokens = 1024;
 
