@@ -46,4 +46,4 @@ Measuring happens in O-Draft, with its take-off toolbars. The Take-off page list
 - An old shared take-off server left running on 7420/7421 (for the global `takeoff.vdb`) blocks O-Draft from serving the project; stop it (`shilpid`, `shilpi-http` in Task Manager) and reopen the drawing.
 - The shared take-off server and its page (start server, server address) are gone from the Take-off page; the code (`ShilpiTakeoffService`) still reads one.
 - A project's annotated drawings are still kept beside the project file in an `.assets` folder, not inside it.
-- Checked with a hand-started `shilpid` and gateway standing in for O-Draft (open, save through the gateway, a recorded row raising the message in O-CoreOp). O-Draft's own server start (`ProjectServer`) builds but was not run.
+- Run end to end on 2026-10-29 with the real O-Draft (control port): opening a drawing started the server and wrote the pointer; O-CoreOp followed it, showed "Live: O-Draft is serving…", listed the take-off `takeoff.record` had just recorded, and saved its project through the gateway (the file kept both). The servers end with O-Draft, also when it is killed (job object).
