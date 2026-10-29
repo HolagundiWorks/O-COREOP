@@ -62,30 +62,19 @@
                  AutomationProperties.Name="Menu bar">
             <!-- Company first ? work ? Exit (same File shape as O-Studio / OSAS). -->
             <MenuBarItem Title="File" AccessKey="F">
-                <MenuFlyoutItem Text="Open company from OSAS…" Click="CompanyOpen_Click" AccessKey="O">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8F1;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Close company" Click="CompanyClose_Click" AccessKey="C">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8BB;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE710;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Open…" Click="Open_Click">
+                <MenuFlyoutItem Text="Open ShilpiDB project…" Click="Open_Click" AccessKey="O">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8E5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="OpenActiveItem" Text="Open O-Draft's project" Click="OpenActive_Click" IsEnabled="False">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE8A7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem Text="Save" Click="Save_Click" AccessKey="S">

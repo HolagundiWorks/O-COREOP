@@ -56,8 +56,9 @@ public sealed class TakeoffPage : Page
                     new TextBlock
                     {
                         TextWrapping = TextWrapping.Wrap,
-                        Text = "Drawings and PDFs are measured in O-Draft, which records the take-off in ShilpiDB. Both apps use one shared take-off server, so a "
-                             + "take-off appears here as soon as O-Draft has recorded it. Pick a drawing, read it, review what would change, then import. "
+                        Text = "Drawings and PDFs are measured in O-Draft with its take-off toolbars, which record the take-off in the ShilpiDB file beside the drawing. "
+                             + "That file is this project's file, so a take-off appears here as soon as O-Draft has recorded it. Pick a drawing, read it, review what would change, "
+                             + "then import; rows can be edited here by hand afterwards. "
                              + "Importing again updates the same rows and never duplicates them. Plaster, painting, skirting and shuttering are derived here, not imported.",
                     },
                     _mode,
@@ -79,7 +80,16 @@ public sealed class TakeoffPage : Page
         _read.Click += async (_, _) => await ReadAsync();
         _annotated.Click += async (_, _) => await FetchAnnotatedAsync();
         _drawings.SelectionChanged += (_, _) => UpdateButtons();
-        _poll.Tick += async (_, _) => { if (!_busy && _mode.SelectedIndex == 0) await RefreshAsync(quiet: true); };
+        _poll.Tick += async (_, _) =>
+        {
+            // the file is read again only when it has changed (O-Draft recorded or updated a take-off)
+            var p = ProjectFile;
+            DateTime now = p is not null && File.Exists(p) ? File.GetLastWriteTimeUtc(p) : DateTime.MinValue;
+            if (_busy || now == _stamp) return;
+            _stamp = now;
+            UpdateMode();
+            await RefreshAsync(quiet: true);
+        };
         Loaded += async (_, _) =>
         {
             UpdateMode(); ShowStored(); _poll.Start();
@@ -132,23 +142,22 @@ public sealed class TakeoffPage : Page
         Background = Application.Current.Resources.TryGetValue("HcwEdgeBrush", out var edge) && edge is Brush br ? br : new SolidColorBrush(Microsoft.UI.Colors.Gray),
     };
 
-    bool UseFile => _mode.SelectedIndex == 1;
+    /// <summary>The take-off is read from the project's own ShilpiDB file, the one beside the drawing that O-Draft records into.</summary>
+    static string? ProjectFile => ProjectFiles.IsShilpi(ProjectStore.Current.FilePath) ? ProjectStore.Current.FilePath : null;
 
-    TakeoffSource? Source()
-    {
-        if (!UseFile) return new TakeoffSource.Gateway(_gateway.Text.Trim());
-        var path = ProjectStore.Current.Info.TakeoffVdbPath;
-        return string.IsNullOrWhiteSpace(path) ? null : new TakeoffSource.VdbFile(path);
-    }
+    TakeoffSource? Source() => ProjectFile is { } path && File.Exists(path) ? new TakeoffSource.VdbFile(path) : null;
+
+    DateTime _stamp = DateTime.MinValue;
 
     ShilpiDrawing? Selected => (_drawings.SelectedItem as ListViewItem)?.Tag as ShilpiDrawing;
 
     void UpdateMode()
     {
-        _gateway.Visibility = _start.Visibility = UseFile ? Visibility.Collapsed : Visibility.Visible;
-        _choose.Visibility = _file.Visibility = UseFile ? Visibility.Visible : Visibility.Collapsed;
-        var p = ProjectStore.Current.Info.TakeoffVdbPath;
-        _file.Text = string.IsNullOrWhiteSpace(p) ? "None chosen yet." : p;
+        _mode.Visibility = _gateway.Visibility = _start.Visibility = _choose.Visibility = Visibility.Collapsed;
+        var p = ProjectFile;
+        _file.Text = p is null
+            ? "No ShilpiDB project is open. Use File > Open ShilpiDB project (or File > Open O-Draft's project) to read a take-off."
+            : File.Exists(p) ? "Reading the take-off from " + p : p + " does not exist yet: record the take-off in O-Draft, then Refresh.";
         UpdateButtons();
     }
 
@@ -245,7 +254,7 @@ public sealed class TakeoffPage : Page
     async Task RefreshAsync(bool quiet = false)
     {
         var src = Source();
-        if (src is null) { _list = new(); FillList(); if (!quiet) _status.Text = "Choose a take-off file."; return; }
+        if (src is null) { _list = new(); FillList(); if (!quiet) _status.Text = "No take-off yet: the project's ShilpiDB file does not exist or no project is open."; return; }
         if (_busy) return;
         _busy = true; UpdateButtons();
         try
@@ -268,7 +277,7 @@ public sealed class TakeoffPage : Page
                     ? "No take-off has been recorded yet. Record one in O-Draft."
                     : $"{_list.Count} drawing(s) with a recorded take-off.";
                 if (_list.Count > 0 && ProjectStore.Current.Shared is null)
-                    text += " Open or link a company-file project so drawings that carry a project_ref can be marked as this project.";
+                    text += "";
                 _status.Text = text;
             }
         }
@@ -276,7 +285,7 @@ public sealed class TakeoffPage : Page
         {
             _list = new(); FillList();
             if (!quiet) _status.Text = ex.Message;
-            else _status.Text = "The shared take-off server is not reachable. " + (ShilpiTakeoffService.FindBinDirectory() is null ? "ShilpiDB is not installed." : "Press Start the shared server.");
+            else _status.Text = ex.Message;
         }
         finally { _busy = false; UpdateButtons(); }
     }

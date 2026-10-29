@@ -2,6 +2,8 @@
 
 Written 2026-10-19 on the owner's instruction, revised the same day after the owner's answers (section 1). **Status: version 1.** O-CoreOp's reader side is built and checked (section 9). O-Draft's writer (`takeoff.record` / `takeoff.annotate`, trust fields, `project_ref`) is built in the O-DRAFT repo; remaining writer gaps and product E2E are listed in [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md). Nothing was built on the first draft of this contract, so version 1 was revised in place instead of becoming version 2.
 
+> **Superseded in part (2026-10-29):** decision 3 below (one shared server, one database for all projects) is replaced by one ShilpiDB file per project, beside the drawing, read and written directly. See [PROJECT-FILE.md](PROJECT-FILE.md). The record layout in section 4 is unchanged.
+
 ## 1. Decisions (owner, 2026-10-19)
 
 1. **Drawing and PDF take-off is done in O-Draft** (repository `HolagundiWorks/O-DRAFT`, earlier AADT), not in O-CoreOp. O-CoreOp's PDF take-off panel is removed. **PDF underlay and calibration are O-Draft's to build.**

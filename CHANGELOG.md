@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed (2026-10-29)
+- **The project file is a ShilpiDB file.** A project is the `.vdb` beside the drawing, the one O-Draft records its take-off in; the estimate, running bills, tasks, quantities, purchase orders and the rest are stored in it as record kind `0x60` and every other record is kept on save. File > Open ShilpiDB project, File > Open O-Draft's project (O-Draft publishes its active drawing in `%LOCALAPPDATA%\OSASctive-project.json`; O-CoreOp follows it when nothing is unsaved). Open company, Company projects and Close company are gone from the File menu. The Take-off page reads the project's own file and no longer needs the shared server. Old `.bbsproj` files still open. See `docs/PROJECT-FILE.md`. Tests: `ShilpiProjectFileTests`, `ActiveProjectTests`.
+
 ### Added (2026-10-29)
 - **Local assistant model.** The Ask bar now runs on Olmo 3 7B Instruct on this computer: `Office.Ai` starts llama.cpp's `llama-server` hidden on loopback (ends with the app) and `OlmoChat` builds the model's own prompt and reads its function calls. A stored Anthropic key is used only when the model is not installed. O-Draft reaches the same model through the suite's local AI Core contract on `127.0.0.1:8742` while this app is open. See `docs/LOCAL-MODEL.md`. Tests: `OlmoChatTests`.
 - **Phases from O-Draft.** The estimation phase and running-bill phase a dimension was given in O-Draft (`phase`, `bill_phase` on the take-off row) are imported onto the masonry, column, lintel and slab rows and shown as the "Est. phase" and "Bill phase" columns. A phase changed in the drawing updates the row on re-import without touching its geometry hash or a row edited here; a file with no phases leaves a phase typed here alone. Openings take their wall's phases in O-Draft. Tests: `PhaseImportTests`.

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
+using Office.Shared;
 using BBSApp.Models;
 using BBSApp.Services;
 using BBSApp.Services.Ai;
@@ -75,6 +76,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Office.Ai.LocalLlmHost.Shutdown();
         };
         _aiCore = Office.Ai.AiCoreListener.TryStart();
+        StartActiveProjectWatch();
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
     }
@@ -1092,23 +1094,63 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         var picker = new FileOpenPicker();
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
-        picker.FileTypeFilter.Add(".bbsproj");
+        picker.FileTypeFilter.Add(ProjectFiles.Extension);
+        picker.FileTypeFilter.Add(".bbsproj");     // a project from before: opens, and Save as puts it in a ShilpiDB file
         picker.FileTypeFilter.Add(".json");
         var file = await picker.PickSingleFileAsync();
         if (file is null) return;
-        var root = EngineClient.LoadProject(file.Path, out var err);
-        if (root is null)
+        OpenProjectFile(file.Path);
+    }
+
+    private DateTime _activeStamp = DateTime.MaxValue;
+    private string? _activePath;
+
+    /// <summary>
+    /// Follow the drawing O-Draft has open: O-Draft keeps a pointer to it and its ShilpiDB file (<see cref="ActiveProject"/>). When the pointer
+    /// changes, the project here is switched to that file if it has no unsaved changes, else the user is told and can switch from the File menu.
+    /// </summary>
+    private void StartActiveProjectWatch()
+    {
+        var t = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        t.Tick += (_, _) => CheckActiveProject();
+        t.Start();
+        CheckActiveProject();
+    }
+
+    private void CheckActiveProject()
+    {
+        DateTime stamp;
+        try { stamp = File.Exists(ActiveProject.PointerPath) ? File.GetLastWriteTimeUtc(ActiveProject.PointerPath) : DateTime.MinValue; }
+        catch { return; }
+        if (stamp == _activeStamp) return;
+        _activeStamp = stamp;
+
+        var active = ActiveProject.Read();
+        _activePath = active?.ShilpiDb;
+        bool differs = _activePath is not null && !ActiveProject.SamePath(_activePath, ProjectStore.Current.FilePath);
+        OpenActiveItem.IsEnabled = differs;
+        if (!differs || active is null) return;
+        if (!ProjectStore.Current.IsDirty) OpenProjectFile(_activePath!);
+        else AppNotify.Warning("O-Draft", $"O-Draft has {Path.GetFileName(active.Drawing)} open. Save this project, then File > Open O-Draft's project to work on the same ShilpiDB file.");
+    }
+
+    private void OpenActive_Click(object sender, RoutedEventArgs e)
+    {
+        if (_activePath is not null) OpenProjectFile(_activePath);
+    }
+
+    /// <summary>Make the project in a ShilpiDB file (or a project file from before) the open one.</summary>
+    internal void OpenProjectFile(string path)
+    {
+        if (!ProjectFiles.OpenInto(ProjectStore.Current, path, out var err))
         {
             AppNotify.Error("Open failed", err ?? "Could not open project.");
             return;
         }
-        ProjectStore.Current.LoadFrom(root);
-        ProjectStore.Current.FilePath = file.Path;
-        ProjectStore.Current.Shared = null;
         RefreshWindowTitle();
         UpdatePersonaBadge();
         SelectNavTag("dashboard");
-        AppNotify.Success("Project opened", ProjectStore.Current.Name);
+        AppNotify.Success("Project opened", $"{ProjectStore.Current.Name}  ·  {Path.GetFileName(path)}");
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -1123,7 +1165,13 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             SaveAs_Click(sender, e);
             return;
         }
-        if (!EngineClient.SaveProject(ProjectStore.Current.FilePath, ProjectStore.Current.ToJson(), out var err))
+        // A project from before (.bbsproj) is saved into a ShilpiDB file, never back into the old format.
+        if (!ProjectFiles.IsShilpi(ProjectStore.Current.FilePath))
+        {
+            SaveAs_Click(sender, e);
+            return;
+        }
+        if (!ProjectFiles.Save(ProjectStore.Current.FilePath, ProjectStore.Current.ToJson(), out var err))
             AppNotify.Error("Save failed", err ?? "Could not save.");
         else
         {
@@ -1141,12 +1189,20 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         picker.FileTypeChoices.Add(Branding.ProjectFileFilter, new List<string> { Branding.ProjectExtension });
         var file = await picker.PickSaveFileAsync();
         if (file is null) return;
-        if (!EngineClient.SaveProject(file.Path, ProjectStore.Current.ToJson(), out var err))
+        var from = ProjectStore.Current.FilePath;
+        // Saving into a file that already has records (a take-off O-Draft recorded) keeps them; a new file takes a copy of the take-off
+        // from the file this project came from, so the take-off stays with the project.
+        if (ProjectFiles.IsShilpi(from) && !File.Exists(file.Path) && !string.Equals(from, file.Path, StringComparison.OrdinalIgnoreCase))
+        {
+            try { File.Copy(from!, file.Path); } catch (Exception ex) { AppNotify.Error("Save failed", ex.Message); return; }
+        }
+        if (!ProjectFiles.Save(file.Path, ProjectStore.Current.ToJson(), out var err))
         {
             AppNotify.Error("Save failed", err ?? "Could not save.");
             return;
         }
         ProjectStore.Current.FilePath = file.Path;
+        ProjectStore.Current.Info.TakeoffVdbPath = file.Path;
         ProjectStore.Current.IsDirty = false;
         RefreshWindowTitle();
         AppNotify.Success("Saved", file.Name);
