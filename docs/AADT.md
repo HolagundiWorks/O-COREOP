@@ -28,7 +28,7 @@ Instructions for anyone (person or agent) working on AQC. Written 2026-10-11 on 
 | Walls, doors and windows (with standard marks), columns, lintels, rooms, floors, project details, beam depths | Derives plaster, painting, skirting, shuttering and the rest through its link rules |
 | Never computes finishes, rates or rebar | Owns the C++ engine, rates, BOQ, estimates and every number that carries money (the engine stays the single source of truth) |
 
-AQC's own PDF take-off (`TakeoffPage`) is for drawings that have no CAD source. **Open owner question:** whether to retire it, or keep it for those drawings. Do not remove it without the owner's say-so.
+AQC's own PDF take-off panel was removed on 2026-10-19; PDF take-off is done in O-Draft.
 
 ## The bridge file
 
