@@ -40,8 +40,6 @@ public sealed class AssistantService
     /// <summary>Why the assistant could not start, in words for the reply card (null when it started).</summary>
     public static string? LastProblem { get; private set; }
 
-    private static LocalLlm? s_local;
-
     /// <summary>
     /// Create the assistant. The local model (Olmo 3 7B, shared with O-Draft) is used when its file and the llama.cpp server are
     /// installed; only without them does a stored Anthropic key serve as a fallback. Null when neither is available.
@@ -49,15 +47,12 @@ public sealed class AssistantService
     public static async Task<AssistantService?> TryCreateAsync(IAppCommandBus bus, IAssistantConfirm confirm, DispatcherQueue ui)
     {
         LastProblem = null;
-        string? model = LocalModel.Find();
-        string? server = LocalModel.FindServer();
-        if (model is not null && server is not null)
+        if (LocalLlmHost.Installed)
         {
-            if (LocalModel.Problem(model) is { } bad) { LastProblem = bad; return null; }
             try
             {
-                s_local ??= await Task.Run(() => LocalLlm.StartAsync(model, server));
-                return new AssistantService(null, s_local, new AssistantTools(bus, confirm, null), ui);
+                var llm = await Task.Run(() => LocalLlmHost.GetAsync());
+                return new AssistantService(null, llm, new AssistantTools(bus, confirm, null), ui);
             }
             catch (Exception ex) { LastProblem = ex.Message; return null; }
         }
@@ -71,14 +66,11 @@ public sealed class AssistantService
             return new AssistantService(client, null, new AssistantTools(bus, confirm, client), ui);
         }
 
-        LastProblem = model is null
+        LastProblem = LocalModel.Find() is null
             ? $"The assistant model is not installed. Put {LocalModel.FileName} in {LocalModel.SharedDirectory}."
             : $"The model runtime is not installed. Unpack llama.cpp {LocalModel.RuntimeRelease} (Vulkan, Windows x64) into {LocalModel.RuntimeDirectory}.";
         return null;
     }
-
-    /// <summary>Stop the local model server (the app is closing). The server also ends with the app on its own.</summary>
-    public static void Shutdown() { s_local?.Dispose(); s_local = null; }
 
     public Task<string> AskAsync(string userText, IProgress<string>? partial = null) =>
         _local is not null ? AskLocalAsync(userText, partial) : AskCloudAsync(userText);

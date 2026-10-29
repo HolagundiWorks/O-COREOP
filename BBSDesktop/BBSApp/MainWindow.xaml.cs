@@ -35,6 +35,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private int _toastGeneration;
     private AssistantService? _assistant;
     private bool _assistantBusy;
+    private Office.Ai.AiCoreListener? _aiCore;   // lets O-Draft use the same local model
 
     public MainWindow()
     {
@@ -70,8 +71,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Hcw.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
-            AssistantService.Shutdown();
+            _aiCore?.Dispose();
+            Office.Ai.LocalLlmHost.Shutdown();
         };
+        _aiCore = Office.Ai.AiCoreListener.TryStart();
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
     }
