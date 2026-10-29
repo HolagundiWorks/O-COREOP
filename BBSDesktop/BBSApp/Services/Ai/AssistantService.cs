@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
+using System.Text;
+using System.Text.Json;
 using Anthropic;
 using Anthropic.Models.Messages;
 using Microsoft.UI.Dispatching;
+using Office.Ai;
+using Office.Shared;
 
 namespace BBSApp.Services.Ai;
 
@@ -18,34 +22,120 @@ public sealed class AssistantService
     private const string Model = "claude-opus-5";
     private const int MaxToolIterations = 6;
 
-    private readonly AnthropicClient _client;
+    private readonly AnthropicClient? _client;
+    private readonly LocalLlm? _local;
     private readonly AssistantTools _tools;
     private readonly DispatcherQueue _ui;
     private readonly List<MessageParam> _history = new();
+    private readonly List<ChatMessage> _chat = new();
 
-    private AssistantService(AnthropicClient client, AssistantTools tools, DispatcherQueue ui)
+    private AssistantService(AnthropicClient? client, LocalLlm? local, AssistantTools tools, DispatcherQueue ui)
     {
         _client = client;
+        _local = local;
         _tools = tools;
         _ui = ui;
     }
 
+    /// <summary>Why the assistant could not start, in words for the reply card (null when it started).</summary>
+    public static string? LastProblem { get; private set; }
+
+    private static LocalLlm? s_local;
+
     /// <summary>
-    /// Create the assistant if an API key is configured; otherwise return null so
-    /// the feature stays inert. Opt-in by design.
+    /// Create the assistant. The local model (Olmo 3 7B, shared with O-Draft) is used when its file and the llama.cpp server are
+    /// installed; only without them does a stored Anthropic key serve as a fallback. Null when neither is available.
     /// </summary>
-    public static AssistantService? TryCreate(IAppCommandBus bus, IAssistantConfirm confirm, DispatcherQueue ui)
+    public static async Task<AssistantService?> TryCreateAsync(IAppCommandBus bus, IAssistantConfirm confirm, DispatcherQueue ui)
     {
+        LastProblem = null;
+        string? model = LocalModel.Find();
+        string? server = LocalModel.FindServer();
+        if (model is not null && server is not null)
+        {
+            if (LocalModel.Problem(model) is { } bad) { LastProblem = bad; return null; }
+            try
+            {
+                s_local ??= await Task.Run(() => LocalLlm.StartAsync(model, server));
+                return new AssistantService(null, s_local, new AssistantTools(bus, confirm, null), ui);
+            }
+            catch (Exception ex) { LastProblem = ex.Message; return null; }
+        }
+
         var key = AssistantSettings.ApiKey;
         if (string.IsNullOrWhiteSpace(key))
             key = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
-        if (string.IsNullOrWhiteSpace(key)) return null;
-        var client = new AnthropicClient { ApiKey = key };
-        return new AssistantService(client, new AssistantTools(bus, confirm, client), ui);
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            var client = new AnthropicClient { ApiKey = key };
+            return new AssistantService(client, null, new AssistantTools(bus, confirm, client), ui);
+        }
+
+        LastProblem = model is null
+            ? $"The assistant model is not installed. Put {LocalModel.FileName} in {LocalModel.SharedDirectory}."
+            : $"The model runtime is not installed. Unpack llama.cpp {LocalModel.RuntimeRelease} (Vulkan, Windows x64) into {LocalModel.RuntimeDirectory}.";
+        return null;
     }
 
-    public async Task<string> AskAsync(string userText)
+    /// <summary>Stop the local model server (the app is closing). The server also ends with the app on its own.</summary>
+    public static void Shutdown() { s_local?.Dispose(); s_local = null; }
+
+    public Task<string> AskAsync(string userText, IProgress<string>? partial = null) =>
+        _local is not null ? AskLocalAsync(userText, partial) : AskCloudAsync(userText);
+
+    private const int MaxLocalCalls = 3;
+
+    /// <summary>The same tool loop against the local model: it answers in prose or asks for functions, results go back as environment turns.</summary>
+    private async Task<string> AskLocalAsync(string userText, IProgress<string>? partial)
     {
+        _chat.Add(new ChatMessage(ChatRole.User, userText));
+        string toolsJson = ToolsJson();
+        string instructions = SystemPrompt + "\n- Call a function only when it is needed, using the <function_calls> format; otherwise answer in plain prose.";
+        string last = "";
+
+        for (int iter = 0; iter < MaxToolIterations; iter++)
+        {
+            string prompt;
+            while ((prompt = OlmoChat.Build(instructions, toolsJson, _chat)).Length / 3 + LocalLlm.ReserveTokens > LocalLlm.ContextTokens && _chat.Count > 1)
+                _chat.RemoveRange(0, Math.Min(2, _chat.Count - 1));        // drop the oldest turns first
+
+            string answer = await _local!.CompleteAsync(prompt, 700, partial);
+            var calls = OlmoChat.ParseCalls(answer, out string prose);
+            _chat.Add(new ChatMessage(ChatRole.Assistant, answer));
+            if (prose.Length > 0) last = prose;
+            if (calls.Count == 0) return string.IsNullOrWhiteSpace(prose) ? answer : prose;
+
+            var results = new StringBuilder();
+            foreach (var call in calls.Take(MaxLocalCalls))
+            {
+                string result = await OnUiAsync(() => _tools.ExecuteAsync(call.Name, call.Arguments));
+                results.Append(call.Name).Append(" -> ").AppendLine(result);
+            }
+            _chat.Add(new ChatMessage(ChatRole.Tool, results.ToString().TrimEnd()));
+        }
+        return string.IsNullOrEmpty(last) ? "Stopped after several tool steps without a final answer." : last;
+    }
+
+    /// <summary>The tool signatures as the Olmo template expects them: a JSON array of name, description and a parameters schema.</summary>
+    private string ToolsJson()
+    {
+        var list = _tools.Definitions.Select(t => new Dictionary<string, object?>
+        {
+            ["name"] = t.Name,
+            ["description"] = t.Description,
+            ["parameters"] = new Dictionary<string, object?>
+            {
+                ["type"] = "object",
+                ["properties"] = t.InputSchema.Properties ?? new Dictionary<string, JsonElement>(),
+                ["required"] = t.InputSchema.Required ?? new List<string>(),
+            },
+        });
+        return JsonSerializer.Serialize(list);
+    }
+
+    private async Task<string> AskCloudAsync(string userText)
+    {
+        if (_client is null) return "The assistant is not available.";
         _history.Add(new MessageParam { Role = Role.User, Content = userText });
         string finalText = "";
 

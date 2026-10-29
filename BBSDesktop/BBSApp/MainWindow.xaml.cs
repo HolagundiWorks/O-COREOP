@@ -70,6 +70,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Hcw.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
+            AssistantService.Shutdown();
         };
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
@@ -669,26 +670,24 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         if (_assistantBusy) return;
 
-        _assistant ??= AssistantService.TryCreate(this, this, DispatcherQueue);
-        if (_assistant is null)
-        {
-            if (await PromptForKeyAsync())
-                _assistant = AssistantService.TryCreate(this, this, DispatcherQueue);
-            if (_assistant is null)
-            {
-                ShowAssistantReply("Assistant not enabled — no Anthropic API key provided.");
-                return;
-            }
-        }
-
         _assistantBusy = true;
-        AssistantReply.Text = "";
+        AssistantReply.Text = _assistant is null ? "Starting the assistant model…" : "";
         AiReplyHost.Visibility = Visibility.Visible;
         AssistantBusy.IsActive = true;
         AssistantBusy.Visibility = Visibility.Visible;
         try
         {
-            string reply = await _assistant.AskAsync(prompt);
+            _assistant ??= await AssistantService.TryCreateAsync(this, this, DispatcherQueue);
+            if (_assistant is null)
+            {
+                ShowAssistantReply(AssistantService.LastProblem ?? "The assistant is not available.");
+                return;
+            }
+            AssistantReply.Text = "";
+            // Words appear as the model writes them; a function call is not shown, only that work is going on.
+            var partial = new Progress<string>(t =>
+                AssistantReply.Text = t.Contains("<function", StringComparison.Ordinal) ? "Working…" : t);
+            string reply = await _assistant.AskAsync(prompt, partial);
             ShowAssistantReply(string.IsNullOrWhiteSpace(reply) ? "(no reply)" : reply);
         }
         catch (Exception ex) when (LooksLikeAuthError(ex))

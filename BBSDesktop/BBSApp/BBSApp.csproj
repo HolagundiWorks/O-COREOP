@@ -111,6 +111,7 @@
     <ProjectReference Include="..\..\..\o-ui\Hcw.Ui\Hcw.Ui.csproj" />
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
     <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
+    <ProjectReference Include="..\Office.Ai\Office.Ai.csproj" />
   </ItemGroup>
 
   <!-- The office engine (office.dll) comes from the O-Studio repository: build office-ffi there in release mode. Without it the
