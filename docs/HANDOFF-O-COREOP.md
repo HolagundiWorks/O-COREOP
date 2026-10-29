@@ -129,7 +129,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 
 - O-Draft implemented `takeoff.record` and `takeoff.annotate` (slots, `recording` to `complete`, shared server, chunked PDF) in its repository (committed in part; the slot and annotate work was uncommitted in its `.wt/slots` worktree when read). Its 11 tests pass, and its real-server test passed against an installed `shilpid` (both run here from a copy, so its repository was not touched).
 - **Read with this reader, and it agrees:** header, ids, slot (two independent `SlotFor` agree), 7 rows, nothing skipped. The **2026-10-19 fixture** still shows older gaps (rooms without level/length/breadth; openings without `wall_ref`; walls without thickness; schedule kind `Ventilator`); O-CoreOp fills those in the preview. Current O-Draft writes `wall_ref`, `thickness_mm` and room sides when measured — see [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) section 8 and [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10.
-- Regression fixture `fixtures/odraft-takeoff-records.json` and `ODraftOutputTests` (10 tests); `AQC.CadImport.Tests` is 64 passed.
+- Regression fixture `fixtures/odraft-takeoff-records.json` and `ODraftOutputTests` (10 tests); `AQC.CadImport.Tests` was 64 passed then (96 passed on 2026-10-28).
 - **Not checked:** O-Draft's real annotated PDF (its tests use a stand-in plotter), two drawings from O-Draft in one database, a linked project, several floors.
 
 **Debug pass 2026-10-19 (tests, review and driving the real app):**

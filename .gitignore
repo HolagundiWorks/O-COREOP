@@ -1,10 +1,8 @@
 # Build outputs
 BBSDesktop/build/
-BBSDesktop/build_test/
 BBSDesktop/tests/out/
 BBSDesktop/BBSApp/bin/
 BBSDesktop/BBSApp/obj/
-BBSDesktop/artifacts/
 **/CMakeFiles/
 **/CMakeCache.txt
 **/cmake_install.cmake
