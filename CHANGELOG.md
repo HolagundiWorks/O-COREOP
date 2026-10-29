@@ -39,7 +39,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   paths a user would. It can navigate the app, summarise the project, run the deterministic C++
   engine for RCC checks (read-only), and — each behind an explicit confirmation dialog — add RCC
   member rows, add civil-BOQ measurement rows (masonry, plaster, flooring, painting, PCC, etc.),
-  edit or delete a row by mark (RCC or civil), change covers/markups, draft office correspondence,
+  edit or delete a row by mark (RCC or civil), change covers/markups,
   add storeys/levels, and author/apply linked-item derivation rules. (The take-off tools
   `list_takeoff`, `commit_opening` and `read_drawing` were removed with the PDF take-off panel.) The C++
   engine stays the single source of truth for all numbers. Inert without an Anthropic API key;

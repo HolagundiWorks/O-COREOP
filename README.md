@@ -4,7 +4,7 @@
 
 O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
-RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (via ShilpiDB), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, correspondence, contracts, running-account billing, stores and HR.
+RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (via ShilpiDB), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, contracts, running-account billing, stores and HR.
 
 One project can be operated as either a **Project Manager / PMC** or a **Contractor**: each persona has its own letterhead and numbering series, and every letter, bill and order is branded and numbered accordingly.
 
@@ -93,12 +93,11 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | PO / report | Steel & materials PO; project PDF with BOQ tables + sketches, plus the annotated drawings O-Draft generated (one report page per PDF page) |
 | Personas | One project operated as **PM / PMC** or **Contractor** — declared in **File → Project settings**; each has its own letterhead + numbering series (`PMC/…` vs `CON/…`) |
 | Schedule | CPM / PERT scheduling with activity network + Gantt |
-| Correspondence | Letters, memos, notices, circulars, certificates, declarations, site instructions, work-order notes, interim payment certificates — FY auto-numbering, per-persona letterhead |
 | Contracts | Item-rate / lump-sum work orders & tenders, schedule of rates, standard-terms library, retention |
 | Accounts | RA bills with retention + statutory deductions (GST, TDS 194C, labour cess, GST-TDS), certify & number, cash/bank book, per-contractor ledger |
 | Stores | Purchase orders, goods-receipt notes, inventory, supplier / warehouse masters |
 | HR & resources | Sites, resources, employees, attendance & payroll (payroll register PDF) |
-| AI assistant | Opt-in copilot on the command bar — navigate, summarise the project, run the engine (read-only), and (each confirmed) add RCC rows, change covers/markups, draft correspondence, author/apply link rules. Needs an Anthropic API key (entered in-app, stored encrypted); inert without one |
+| AI assistant | Opt-in copilot on the command bar — navigate, summarise the project, run the engine (read-only), and (each confirmed) add RCC rows, change covers/markups, author/apply link rules. Needs an Anthropic API key (entered in-app, stored encrypted); inert without one |
 | Project file | `.bbsproj` (JSON, v17 — project info, personas, estimate markups, schedule, office, contracts, accounts, stores, HR, link rules) |
 
 ## Settings & data locations

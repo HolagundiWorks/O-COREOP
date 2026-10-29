@@ -31,9 +31,6 @@ public sealed class AssistantTools
         "concrete_from_rmc"
     };
 
-    // Correspondence type codes (LTR, MEMO, …), derived so they can't drift from the register.
-    private static readonly string[] DocCodes = DocTypeInfo.All.Select(t => t.Code).ToArray();
-
     // Linkable trade keys and derivation bases, derived from the registry so the
     // tool schema can never drift from LinkTradeRegistry / LinkBasisInfo.
     private static readonly string[] LinkTradeKeys = LinkTradeRegistry.All.Select(t => t.Key).ToArray();
@@ -93,7 +90,6 @@ public sealed class AssistantTools
         "run_calc" => Task.FromResult(RunCalc(input)),
         "add_element_row" => AddElementRowAsync(input),
         "update_setting" => UpdateSettingAsync(input),
-        "create_correspondence" => CreateCorrespondenceAsync(input),
         "list_link_rules" => Task.FromResult(ListLinkRules()),
         "add_link_rule" => AddLinkRuleAsync(input),
         "apply_links" => ApplyLinksAsync(input),
@@ -187,29 +183,6 @@ public sealed class AssistantTools
                     ["value"] = Schema(new { type = "string", description = "New value: a number for covers/markups, or true/false for concrete_from_rmc." })
                 },
                 Required = new List<string> { "path", "value" }
-            }
-        },
-        new Tool
-        {
-            Name = "create_correspondence",
-            Description = "Add a drafted office document to the correspondence register as an "
-                        + "editable draft. Types: LTR (letter), MEMO, NOTICE, CIRC (circular), "
-                        + "CERT (certificate), DECL (declaration), SI (site instruction), WON "
-                        + "(work-order note), IPC (interim payment certificate). Write the full "
-                        + "body yourself and pass it in `body`. It is issued under the current "
-                        + "persona and stays unnumbered until the user finalizes it. The user must "
-                        + "approve in a dialog before it is added — do not ask in chat first.",
-            InputSchema = new()
-            {
-                Properties = new Dictionary<string, JsonElement>
-                {
-                    ["type"] = Schema(new { type = "string", @enum = DocCodes, description = "Document type code." }),
-                    ["subject"] = Schema(new { type = "string", description = "Short subject line." }),
-                    ["body"] = Schema(new { type = "string", description = "The full drafted body text." }),
-                    ["to_name"] = Schema(new { type = "string", description = "Recipient name (for addressed types)." }),
-                    ["to_address"] = Schema(new { type = "string", description = "Recipient address (optional)." })
-                },
-                Required = new List<string> { "type", "body" }
             }
         },
         new Tool
@@ -552,53 +525,6 @@ public sealed class AssistantTools
         }
 
         return $"Unknown setting \"{path}\". Supported: {string.Join(", ", SettingPaths)}.";
-    }
-
-    private async Task<string> CreateCorrespondenceAsync(IReadOnlyDictionary<string, JsonElement> input)
-    {
-        string code = GetString(input, "type").Trim().ToUpperInvariant();
-        if (!DocCodes.Contains(code))
-            return $"Unknown correspondence type \"{code}\". Supported: {string.Join(", ", DocCodes)}.";
-
-        string subject = GetString(input, "subject").Trim();
-        string body = GetString(input, "body");
-        if (string.IsNullOrWhiteSpace(body))
-            return "Provide the drafted body text in `body`.";
-
-        var s = ProjectStore.Current;
-        var party = s.Parties.ActiveParty;
-        var doc = new OfficeDocument
-        {
-            TypeCode = code,
-            IssuedByRole = party.Role,
-            IssueDate = DateTime.Today,
-            ToName = GetString(input, "to_name").Trim(),
-            ToAddress = GetString(input, "to_address").Trim(),
-            Subject = subject,
-            Body = body
-        };
-
-        string preview;
-        try { preview = s.Office.PreviewNumber(doc, party.Company); }
-        catch { preview = "assigned on finalize"; }
-
-        string display = DocTypeInfo.DisplayFor(code);
-        string details =
-            $"{display} — added as a draft (number {preview}, assigned when you finalize it).\n"
-          + (DocTypeInfo.HasRecipient(code) && !string.IsNullOrWhiteSpace(doc.ToName) ? $"To: {doc.ToName}\n" : "")
-          + (string.IsNullOrWhiteSpace(subject) ? "" : $"Subject: {subject}\n")
-          + "\n" + Preview(body, 400);
-
-        if (!await _confirm.ConfirmAsync($"Add {display} draft?", details))
-            return $"Cancelled — no {display.ToLowerInvariant()} added.";
-
-        s.Office.Documents.Add(doc);
-        ProjectStore.Current.Notify();
-        AppNotify.Success($"{display} draft added", string.IsNullOrWhiteSpace(subject) ? display : subject);
-        _bus.Navigate("correspondence");
-        return $"Added a {display.ToLowerInvariant()} draft"
-             + (string.IsNullOrWhiteSpace(subject) ? "" : $" \"{subject}\"")
-             + ". It is unnumbered until you finalize it on the Correspondence page.";
     }
 
     // ——— Linked-item derivation tools ———
