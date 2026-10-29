@@ -219,7 +219,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private static NavCmd Cmd(string tag, string label, object? icon) => new(tag, label, icon);
 
     /// <summary>SVG theme icon, or 1–2 letter badge when the asset is missing.</summary>
-    private static FrameworkElement NavIcon(string tag)
+    internal static FrameworkElement NavIcon(string tag)
     {
         string? key = tag.ToLowerInvariant() switch
         {

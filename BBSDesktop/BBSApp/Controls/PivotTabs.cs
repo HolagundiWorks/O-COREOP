@@ -17,7 +17,6 @@ public static class PivotTabs
     public static void HideHeaders(Pivot pivot)
     {
         pivot.Loaded += (_, _) => Collapse(pivot);
-        pivot.LayoutUpdated += (_, _) => Collapse(pivot);
     }
 
     private static void Collapse(DependencyObject root)
