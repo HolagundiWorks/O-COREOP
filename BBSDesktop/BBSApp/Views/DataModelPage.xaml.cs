@@ -19,11 +19,60 @@ public sealed partial class DataModelPage : Page
         _table.SetAutomationName("Item table");
         TableHost.Child = _table;
         Loaded += OnLoaded;
+        Unloaded += (_, _) => DataModelBridge.Shared.RulesApplied -= OnRulesApplied;
     }
 
     private bool Definitions => (ViewCombo.SelectedItem as ComboBoxItem)?.Tag as string == "definitions";
 
-    private void OnLoaded(object sender, RoutedEventArgs e) => Render();
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        DataModelBridge.Shared.RulesApplied -= OnRulesApplied;
+        DataModelBridge.Shared.RulesApplied += OnRulesApplied;
+        Render();
+    }
+
+    private void OnRulesApplied(int count)
+    {
+        Render();
+        Info.Title = "Links updated from O-Dynamo";
+        Info.Message = $"{count} link rules are now in this project. Apply them from the Item links page.";
+        Info.Severity = InfoBarSeverity.Success;
+    }
+
+    private async void OpenDynamo_Click(object sender, RoutedEventArgs e)
+    {
+        var bridge = DataModelBridge.Shared;
+        var host = bridge.FindHost();
+        if (host is null)
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow!));
+            picker.FileTypeFilter.Add(".exe");
+            var file = await picker.PickSingleFileAsync();
+            if (file is null || !file.Name.Equals(DataModelBridge.HostExe, StringComparison.OrdinalIgnoreCase))
+            {
+                Info.Title = "O-Dynamo not found";
+                Info.Message = $"Choose {DataModelBridge.HostExe} from your O-Dynamo folder to edit the links visually.";
+                Info.Severity = InfoBarSeverity.Warning;
+                return;
+            }
+            bridge.RememberHost(file.Path);
+            host = file.Path;
+        }
+        try
+        {
+            bridge.Open(host);
+            Info.Title = "Opened in O-Dynamo";
+            Info.Message = "Drag a dot from one item to another to link them, edit a link on the right, then Save to O-CoreOp.";
+            Info.Severity = InfoBarSeverity.Informational;
+        }
+        catch (Exception ex)
+        {
+            Info.Title = "Could not start O-Dynamo";
+            Info.Message = ex.Message;
+            Info.Severity = InfoBarSeverity.Warning;
+        }
+    }
 
     private void ViewCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

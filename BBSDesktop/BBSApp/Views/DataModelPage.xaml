@@ -26,6 +26,9 @@
                     <ComboBoxItem Content="Relationships" Tag="relationships" IsSelected="True"/>
                     <ComboBoxItem Content="Definitions" Tag="definitions"/>
                 </ComboBox>
+                <Button Content="Edit in O-Dynamo" Style="{StaticResource PrimaryButtonStyle}"
+                        Click="OpenDynamo_Click" AutomationProperties.Name="Edit the item links visually in O-Dynamo"
+                        ToolTipService.ToolTip="Open the items and their link rules as a graph in O-Dynamo. Save there to apply the links here."/>
                 <Button Content="Export ERD" Style="{StaticResource SecondaryButtonStyle}"
                         Click="ExportSchema_Click" AutomationProperties.Name="Export the ERD as DBML and SQL"
                         ToolTipService.ToolTip="Regenerate the logical ERD (aqc-core.dbml + .sql) for dbdiagram.io."/>
