@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Horizontal DPC course -->
+  <path d="M4 10h16"/>
+  <path d="M4 13h16"/>
+  <path d="M6 7v3"/>
+  <path d="M18 7v3"/>
+  <path d="M6 13v4"/>
+  <path d="M18 13v4"/>
+</svg>
