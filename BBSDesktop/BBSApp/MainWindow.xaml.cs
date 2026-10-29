@@ -1154,15 +1154,11 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         UpdatePersonaBadge();
         SelectNavTag("dashboard");
         AppNotify.Success("Project opened", $"{ProjectStore.Current.Name}  ·  {Path.GetFileName(path)}");
+        _ = LinkOpenProjectToStudioAsync();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (ProjectStore.Current.Shared is not null)
-        {
-            _ = SaveToCompanyAsync();
-            return;
-        }
         if (string.IsNullOrEmpty(ProjectStore.Current.FilePath))
         {
             SaveAs_Click(sender, e);

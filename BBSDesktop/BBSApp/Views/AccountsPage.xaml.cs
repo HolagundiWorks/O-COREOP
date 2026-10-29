@@ -260,37 +260,6 @@ public sealed partial class AccountsPage : Page
         AppNotify.Success("Saved", "RA bill");
     }
 
-    private async void ShareDraft_Click(object sender, RoutedEventArgs e)
-    {
-        if (_current is null) { AppNotify.Info("Nothing to share", "Create an RA bill first."); return; }
-        SaveBill();
-        if (ProjectStore.Current.Shared is null || !CompanyService.IsOpen)
-        {
-            AppNotify.Warning("Share draft", "Open a project from the company file (launched from Studio) before sharing a draft.");
-            return;
-        }
-        try
-        {
-            var preview = string.IsNullOrWhiteSpace(_current.Number)
-                ? _book.PreviewBillNumber(_current, Company)
-                : _current.Number;
-            var saved = await CompanyService.ShareRaBillDraftAsync(
-                _current.Id,
-                _current.ToJson(),
-                _current.Gross,
-                _current.Net,
-                preview,
-                _current.Party);
-            AppNotify.Success(
-                "Shared to Studio",
-                $"RA draft · {StudioDraftShare.RaDraftKind(_current.Id)} · revision {saved.Revision}. Approve in Studio.");
-        }
-        catch (OfficeException ex)
-        {
-            AppNotify.Error("Share draft failed", ex.Message);
-        }
-    }
-
     private async void CertifyBill_Click(object sender, RoutedEventArgs e)
     {
         if (_current is null) { AppNotify.Info("Nothing to certify", "Create an RA bill first."); return; }
@@ -300,7 +269,7 @@ public sealed partial class AccountsPage : Page
         {
             Title = "Certify RA bill locally",
             Content = $"Assign local number {_book.PreviewBillNumber(_current, Company)} and lock this bill in CoreOp only? "
-                      + "Suite approval still happens in Studio after Share draft to Studio. Net payable Rs. {_current.Net:N2}.",
+                      + "Suite approval still happens in Studio, which reads the project file. Net payable Rs. {_current.Net:N2}.",
             PrimaryButtonText = "Certify locally",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,

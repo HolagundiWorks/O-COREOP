@@ -87,11 +87,6 @@
                         <FontIcon Glyph="&#xE792;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff">
                     <MenuFlyoutItem.Icon>

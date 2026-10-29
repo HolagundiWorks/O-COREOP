@@ -153,101 +153,6 @@ public static class CompanyService
         Changed?.Invoke();
     }
 
-    public static Task<IReadOnlyList<SharedProject>> ProjectsAsync() => Task.Run(() => Require().Projects());
-
-    public static Task<IReadOnlyList<SharedClient>> ClientsAsync() => Task.Run(() => Require().Clients());
-
-    /// <summary>False when this company session was opened from the suite — clients/projects are created only in Studio.</summary>
-    public static bool CanCreateClientsAndProjects => CompanyOfficePolicy.AllowsClientProjectCreate(_company);
-
-    public static Task<long> CreateProjectAsync(string name, long? clientId, string newClientName, string site) =>
-        Task.Run(() =>
-        {
-            var company = Require();
-            CompanyOfficePolicy.RequireClientProjectCreate(company);
-            var client = clientId ?? company.CreateClient(newClientName);
-            return company.CreateProject(name, client, site);
-        });
-
-    /// <summary>
-    /// Shares an estimate snapshot into the company file as <see cref="StudioDraftShare.EstimateDraftKind"/> with state
-    /// <c>draft</c> for Studio's inbox. Does not certify or lock anything in CoreOp.
-    /// </summary>
-    public static Task<(long Revision, string ChecksumSha256)> ShareEstimateDraftAsync(JsonObject estimatePayload, double grandTotal, string? rateBookVersionName) =>
-        Task.Run(() =>
-        {
-            var company = Require();
-            var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "Link this project to the company file before sharing a draft with Studio.");
-            var project = ArtifactRefs.ProjectRef(company.Uuid, link.ProjectId);
-            var checksumBody = ArtifactRefs.EstimateChecksumBody(estimatePayload);
-            var revision = (uint)Math.Max(1, company.DocumentRevision(link.ProjectId, StudioDraftShare.EstimateDraftKind) + 1);
-            var artifact = ArtifactRefs.Estimate(project, "estimate_draft", revision, checksumBody);
-            var envelope = StudioDraftShare.BuildEnvelope(
-                "estimate",
-                StudioDraftShare.StateDraft,
-                company.User,
-                DateTimeOffset.UtcNow,
-                artifact,
-                StudioDraftShare.EstimateSummary(grandTotal, rateBookVersionName, ProjectStore.Current.Info.Name),
-                estimatePayload);
-            return StudioDraftShare.PutDraft(company, link.ProjectId, StudioDraftShare.EstimateDraftKind, envelope);
-        });
-
-    /// <summary>
-    /// Shares a running-account bill into the company file as <c>aqc.ra.draft.&lt;bill_id&gt;</c> with state <c>draft</c>
-    /// for Studio's inbox. Local Certify in CoreOp is interim only and is not the suite approval gate.
-    /// </summary>
-    public static Task<(long Revision, string ChecksumSha256)> ShareRaBillDraftAsync(string billId, JsonObject billPayload, double gross, double net, string? numberOrPreview, string? party) =>
-        Task.Run(() =>
-        {
-            var company = Require();
-            var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "Link this project to the company file before sharing a draft with Studio.");
-            var kind = StudioDraftShare.RaDraftKind(billId);
-            var project = ArtifactRefs.ProjectRef(company.Uuid, link.ProjectId);
-            var checksumBody = billPayload.ToJsonString();
-            var revision = (uint)Math.Max(1, company.DocumentRevision(link.ProjectId, kind) + 1);
-            var artifact = ArtifactRefs.RunningBill(project, billId, revision, checksumBody);
-            var envelope = StudioDraftShare.BuildEnvelope(
-                "ra_bill",
-                StudioDraftShare.StateDraft,
-                company.User,
-                DateTimeOffset.UtcNow,
-                artifact,
-                StudioDraftShare.RaBillSummary(billId, numberOrPreview ?? "", gross, net, party),
-                billPayload);
-            return StudioDraftShare.PutDraft(company, link.ProjectId, kind, envelope);
-        });
-
-    /// <summary>
-    /// Opens a project from the company file into the app. When it has no document yet (it was made in O-Studio), the app starts a
-    /// new project with its name, client and site filled in from the office's record.
-    /// </summary>
-    public static async Task<string> LoadIntoAppAsync(SharedProject project)
-    {
-        var document = await Task.Run(() => Require().GetDocument(project.Id));
-        var store = ProjectStore.Current;
-        if (document is null)
-        {
-            store.Reset();
-            store.Info.Name = project.Name;
-            store.Name = project.Name;
-            store.Info.ClientName = project.ClientName;
-            store.Info.Location = project.SiteAddress;
-            store.Shared = new SharedProjectLink(project.Id, 0);
-            await RefreshDetailsAsync();
-            store.IsDirty = true;
-            return $"{project.Name} is new here; it is saved to the company file when you save.";
-        }
-        if (JsonNode.Parse(document.Body) is not JsonObject root)
-            throw new OfficeException(1, "The saved project could not be read.");
-        store.LoadFrom(root);
-        store.FilePath = null;
-        store.Shared = new SharedProjectLink(project.Id, document.Revision);
-        await RefreshDetailsAsync();
-        store.IsDirty = false;
-        return $"{project.Name}, revision {document.Revision}, last saved by {document.UpdatedBy}.";
-    }
-
     /// <summary>
     /// Takes the company's details (kept in OSAS) and the project's details (kept in O-Studio) from the company file for the open project,
     /// so reports and title blocks print what those apps hold now. Does nothing when the project is not linked to the company file.
@@ -266,91 +171,17 @@ public static class CompanyService
     }
 
     /// <summary>
-    /// Saves the open project to the company file at the revision it was loaded from. Throws <see cref="OfficeException"/> when another
-    /// app has saved since; the message says to reload and nothing is overwritten.
+    /// Tie the open project to a Studio project (the take-off header names it) and take its details from the company file, read only. False when
+    /// the company file is not open or is another company's.
     /// </summary>
-    public static Task SaveCurrentAsync(long? toProjectId = null) =>
-        Task.Run(() =>
-        {
-            var store = ProjectStore.Current;
-            var link = store.Shared;
-            var projectId = toProjectId ?? link?.ProjectId ?? throw new OfficeException(2, "This project is not linked to the company file.");
-            var expected = toProjectId is null || link?.ProjectId == toProjectId ? link?.Revision ?? 0 : Require().DocumentRevision(projectId);
-            var saved = Require().SaveDocument(projectId, expected, store.ToJson().ToJsonString());
-            store.Shared = new SharedProjectLink(projectId, saved.Revision);
-            store.IsDirty = false;
-        });
-
-    /// <summary>What a look at the company file found.</summary>
-    public enum PollResult
+    public static async Task<bool> LinkProjectAsync(string? companyUuid, long projectId)
     {
-        /// <summary>Nothing the open project cares about changed.</summary>
-        None,
-
-        /// <summary>The other app saved the open project and this window had nothing unsaved, so it should reload it now.</summary>
-        ReloadNow,
-
-        /// <summary>The other app saved the open project, but this window has unsaved changes. The next save will refuse and offer a reload.</summary>
-        ConflictPending,
-    }
-
-    /// <summary>
-    /// Looks for a change made by the other app. It asks the engine only for the change counter and the revision of the open project's
-    /// document, and does not count as activity. When the document has moved on: with nothing unsaved here the project should be reloaded
-    /// (live sync); with unsaved changes the link is marked so a save refuses and asks for a reload.
-    /// </summary>
-    public static Task<PollResult> PollAsync() =>
-        Task.Run(() =>
-        {
-            var company = _company;
-            var link = ProjectStore.Current.Shared;
-            if (company is null)
-                return PollResult.None;
-            var watch = company.Watch(link?.ProjectId);
-            if (!watch.SchemaOk)
-                throw new OfficeException(1, "Another app has upgraded this company file. Update O-CoreOp to keep working with it.");
-            var changed = watch.Version != _lastDataVersion;
-            _lastDataVersion = watch.Version;
-            if (changed && link is not null)
-            {
-                // Someone changed the company file: OSAS may have changed the company's details or O-Studio the project's.
-                try
-                {
-                    var store = ProjectStore.Current;
-                    store.Info.ApplyCompanyFile(company.DocumentContext(link.ProjectId));
-                    store.Parties.FollowCompanyFile(store.Info);
-                    store.Name = store.Info.Name;
-                }
-                catch (OfficeException)
-                {
-                    // The project may have been archived or removed in O-Studio; the open document is left as it is.
-                }
-            }
-            if (link is null || watch.Revision == link.Revision || watch.Revision == 0)
-                return PollResult.None;
-            if (!ProjectStore.Current.IsDirty)
-                return PollResult.ReloadNow;
-            if (link.ChangedElsewhere)
-                return PollResult.None;
-            link.ChangedElsewhere = true;
-            return PollResult.ConflictPending;
-        });
-
-    /// <summary>Loads the open project again from the company file (what the other app saved), replacing what is in the window.</summary>
-    public static async Task<string> ReloadOpenAsync()
-    {
-        var link = ProjectStore.Current.Shared ?? throw new OfficeException(2, "This project is not linked to the company file.");
-        var document = await Task.Run(() => Require().GetDocument(link.ProjectId));
-        if (document is null || JsonNode.Parse(document.Body) is not JsonObject root)
-            throw new OfficeException(1, "The saved project could not be read.");
+        var company = _company;
+        if (company is null || string.IsNullOrEmpty(companyUuid) || company.Uuid != companyUuid) return false;
         var store = ProjectStore.Current;
-        store.LoadFrom(root);
-        store.FilePath = null;
-        store.Shared = new SharedProjectLink(link.ProjectId, document.Revision);
+        if (store.Shared?.ProjectId == projectId) return true;
+        store.Shared = new SharedProjectLink(projectId, 0);
         await RefreshDetailsAsync();
-        store.IsDirty = false;
-        return $"{store.Name}, revision {document.Revision}, saved by {document.UpdatedBy}.";
+        return true;
     }
-
-    static SharedCompany Require() => _company ?? throw new OfficeException(2, "No company file is open.");
 }

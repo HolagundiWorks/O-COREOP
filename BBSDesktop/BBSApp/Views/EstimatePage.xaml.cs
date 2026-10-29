@@ -227,54 +227,14 @@ public sealed partial class EstimatePage : Page
         var link = ProjectStore.Current.Shared;
         if (company is null || link is null)
         {
-            ProjectRefText.Text = "Company project: not linked. Open a project from the company file to put a ProjectRef on this estimate.";
+            ProjectRefText.Text = "Studio project: not linked. A take-off recorded from a Studio project links it and puts a ProjectRef on this estimate.";
             return;
         }
         var artifact = result.ArtifactRef;
         var rev = artifact?["revision"]?.GetValue<uint>() ?? 0;
         ProjectRefText.Text =
             $"Company project · {company.Name} · project id {link.ProjectId} · ProjectRef v1 · estimate ArtifactRef revision {rev}. " +
-            "O-Studio fee proposals read the grand total from the saved company-file document.";
-    }
-
-    private async void ShareDraft_Click(object sender, RoutedEventArgs e)
-    {
-        if (_result is null)
-        {
-            Info.Title = "Share draft";
-            Info.Message = "Calculate an estimate first.";
-            Info.Severity = InfoBarSeverity.Warning;
-            Info.IsOpen = true;
-            return;
-        }
-        if (ProjectStore.Current.Shared is null || !CompanyService.IsOpen)
-        {
-            Info.Title = "Share draft";
-            Info.Message = "Open a project from the company file (launched from Studio) before sharing a draft.";
-            Info.Severity = InfoBarSeverity.Warning;
-            Info.IsOpen = true;
-            return;
-        }
-        try
-        {
-            var payload = EstimateCalculator.ToJson(_result);
-            var saved = await CompanyService.ShareEstimateDraftAsync(payload, _result.GrandTotal, _result.RateBookVersionName);
-            Info.Title = "Shared to Studio";
-            Info.Message =
-                $"Draft estimate written as {StudioDraftShare.EstimateDraftKind} (revision {saved.Revision}). " +
-                "Approve or request a revision in Studio — CoreOp does not lock this as suite-approved.";
-            Info.Severity = InfoBarSeverity.Success;
-            Info.IsOpen = true;
-            AppNotify.Success("Shared to Studio", $"Estimate draft · revision {saved.Revision}");
-        }
-        catch (OfficeException ex)
-        {
-            Info.Title = "Share draft";
-            Info.Message = ex.Message;
-            Info.Severity = InfoBarSeverity.Error;
-            Info.IsOpen = true;
-            AppNotify.Error("Share draft failed", ex.Message);
-        }
+            "O-Studio reads the grand total from the saved project file.";
     }
 
     private async void ExportPdf_Click(object sender, RoutedEventArgs e)

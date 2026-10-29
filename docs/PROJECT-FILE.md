@@ -2,6 +2,10 @@
 
 An O-CoreOp project is a ShilpiDB file (`.vdb`). It sits beside the drawing (`house.dwg` and `house.takeoff.vdb`), it is the file O-Draft records its take-off in, and it holds everything O-CoreOp keeps for the project: the estimate and its revisions, running bills, pending tasks, quantities, purchase orders, contracts, stores, rates and settings. The company file stays as it is (it has the company's own data); a project no longer has a file of its own.
 
+## The company file is Studio's
+
+O-CoreOp does not open, save to or share into the company file. Studio signs the person in and opens O-CoreOp from its card (`OSAS_COMPANY`, one-time `OSAS_TICKET`); the company file is then **read only** here: the company's details and the Studio project's details (client, site and so on) go into reports and title blocks. The Studio project is the one the take-off header names (`project_ref`: company uuid and project id) when it is the same company. The company badge says where the details come from; Save to company file, the project chooser, create client or project, the polling and conflict dialog and the Share draft to Studio buttons are gone.
+
 ## Opening
 
 - **File > Open ShilpiDB project…** picks the `.vdb`. A file with a project in it opens that project. A file O-Draft has just made, with a take-off but no project yet, opens as a new project named after the drawing; the first Save adds the project to the same file. A project from before (`.bbsproj`, `.json`) still opens, and Save writes it into a ShilpiDB file (Save as).

@@ -208,6 +208,9 @@ public sealed class TakeoffPage : Page
             if (d.Slot == selected) _drawings.SelectedItem = item;
         }
         if (_drawings.SelectedItem is null && _drawings.Items.Count > 0) _drawings.SelectedIndex = 0;
+        // a drawing recorded from a Studio project names it: take that project's details from the company file
+        if (_list.FirstOrDefault(d => d.ProjectRefId is not null) is { } named)
+            _ = App.MainWindow!.LinkOpenProjectToStudioAsync(named.ProjectRefCompany, named.ProjectRefId);
         UpdateButtons();
     }
 

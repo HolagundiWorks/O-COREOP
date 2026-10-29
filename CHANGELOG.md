@@ -6,6 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Changed (2026-10-29)
+- **The company file is Studio's.** O-CoreOp reads company and project details from it (read only, project named by the take-off header) and no longer saves to it: Save to company file, the project chooser, create client or project, polling, the reload dialog and the Share draft to Studio buttons (estimate, RA bill) are removed. Studio reads the project file instead.
 - **The project file is a ShilpiDB file.** A project is the `.vdb` beside the drawing, the one O-Draft records its take-off in; the estimate, running bills, tasks, quantities, purchase orders and the rest are stored in it as record kind `0x60` and every other record is kept on save. File > Open ShilpiDB project, File > Open O-Draft's project (O-Draft publishes its active drawing in `%LOCALAPPDATA%\OSASctive-project.json`; O-CoreOp follows it when nothing is unsaved). Open company, Company projects and Close company are gone from the File menu. The Take-off page reads the project's own file and no longer needs the shared server. Old `.bbsproj` files still open. **Live:** O-Draft runs `shilpid` and the gateway on the active drawing's file and says so in the pointer; O-CoreOp then reads and saves through the gateway and is told within two seconds when O-Draft records a take-off. See `docs/PROJECT-FILE.md`. Tests: `ShilpiProjectFileTests`, `ActiveProjectTests`.
 
 ### Added (2026-10-29)

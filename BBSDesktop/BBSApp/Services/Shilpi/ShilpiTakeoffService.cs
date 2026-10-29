@@ -103,6 +103,13 @@ public static class ShilpiTakeoffService
         }, ct).ConfigureAwait(false);
     }
 
+    /// <summary>The Studio project a take-off header names (company uuid and project id), from the first drawing that has one.</summary>
+    public static async Task<(string? Company, long? ProjectId)> FirstProjectRefAsync(TakeoffSource source, CancellationToken ct = default)
+    {
+        var d = (await ListDrawingsAsync(source, ct).ConfigureAwait(false)).FirstOrDefault(x => x.ProjectRefId is not null);
+        return (d?.ProjectRefCompany, d?.ProjectRefId);
+    }
+
     /// <summary>Reads one drawing's take-off (rows only, never the annotated PDF).</summary>
     public static async Task<ShilpiTakeoff.Result> ReadDrawingAsync(TakeoffSource source, uint slot, IProgress<string>? status = null, CancellationToken ct = default)
     {
