@@ -122,6 +122,9 @@ public sealed class AiCoreListener : IDisposable
         {
             var llm = await LocalLlmHost.GetAsync(_stop.Token).ConfigureAwait(false);
             string answer = await llm.CompleteAsync(sb.ToString(), maxTokens, null, _stop.Token).ConfigureAwait(false);
+            // A model that has asked for a tool goes on to invent the result; nothing after the call is wanted.
+            foreach (var close in new[] { "</tool_call>", "</function_calls>" })
+                if (answer.IndexOf(close, StringComparison.Ordinal) is var at and >= 0) { answer = answer[..(at + close.Length)]; break; }
             await Reply(ctx, 200, JsonSerializer.Serialize(new { status = "ok", message = new { role = "assistant", content = answer } }));
         }
         finally { _one.Release(); }
