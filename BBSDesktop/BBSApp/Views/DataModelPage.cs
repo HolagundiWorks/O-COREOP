@@ -48,6 +48,8 @@ public sealed class DataModelPage : Page
     TextBlock _formula = null!;
     TextBlock _warning = null!;
     StackPanel _editor = null!;
+    StackPanel _component = null!;
+    ComponentDef? _selComp;
 
     LinkRule? _selected;
     bool _loading;
@@ -405,8 +407,8 @@ public sealed class DataModelPage : Page
             Height = NodeH(c),
             CornerRadius = new CornerRadius(4),
             Background = Res("HcwWhiteBrush"),
-            BorderBrush = Res("HcwEdgeBrush"),
-            BorderThickness = new Thickness(1),
+            BorderBrush = ReferenceEquals(_selComp, c) ? Rgb(255, 170, 60) : Res("HcwEdgeBrush"),
+            BorderThickness = new Thickness(ReferenceEquals(_selComp, c) ? 2 : 1),
         };
         ToolTipService.SetToolTip(node, $"{c.Display} ({ComponentCatalog.Group(c.GroupKey)?.Display})\n{c.Note}{Materials(c)}");
         node.PointerPressed += (_, e) =>
@@ -415,6 +417,7 @@ public sealed class DataModelPage : Page
             var at = e.GetCurrentPoint(_surface).Position;
             _dragNode = c.Key;
             _dragOffset = (p.X - at.X, p.Y - at.Y);
+            ShowComponent(c);
             _surface.CapturePointer(e.Pointer);
             e.Handled = true;
         };
@@ -625,6 +628,8 @@ public sealed class DataModelPage : Page
         var panel = new StackPanel { Spacing = 10, Padding = new Thickness(14) };
         panel.Children.Add(_title);
         panel.Children.Add(Legend());
+        _component = new StackPanel { Spacing = 8, Visibility = Visibility.Collapsed };
+        panel.Children.Add(_component);
         panel.Children.Add(_editor);
         return panel;
     }
@@ -642,9 +647,70 @@ public sealed class DataModelPage : Page
         return l;
     }
 
+    // ——— Component panel: how the item is specified and measured in a DSR-style schedule ———
+
+    static TextBlock Heading(string text) => new() { Text = text, FontSize = 11, Opacity = 0.6, Margin = new Thickness(0, 6, 0, 0) };
+    static TextBlock Body(string text) => new() { Text = text, FontSize = 12, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+
+    void ShowComponent(ComponentDef c)
+    {
+        _selected = null;
+        _editor.Visibility = Visibility.Collapsed;
+        _selComp = c;
+        _title.Text = c.Display;
+        _component.Children.Clear();
+        _component.Visibility = Visibility.Visible;
+
+        var group = ComponentCatalog.Group(c.GroupKey)?.Display ?? c.GroupKey;
+        var dsr = DsrCatalog.For(c.Key);
+        _component.Children.Add(Body($"{group}. {c.Note}"));
+
+        if (dsr is not null)
+        {
+            _component.Children.Add(Heading("DSR sub-head"));
+            _component.Children.Add(Body(DsrCatalog.SubHead(dsr.SubHeadKey)?.Name ?? dsr.SubHeadKey));
+
+            _component.Children.Add(Heading("Rate-book item"));
+            _component.Children.Add(Body(RateItemText(c)));
+
+            _component.Children.Add(Heading("Item wording"));
+            _component.Children.Add(Body(dsr.ItemWording));
+
+            _component.Children.Add(Heading("Measured in " + dsr.MeasuredIn));
+            _component.Children.Add(Body(dsr.MeasurementRule));
+
+            if (dsr.Materials.Count > 0)
+            {
+                _component.Children.Add(Heading("Materials and their standards"));
+                foreach (var m in dsr.Materials)
+                    _component.Children.Add(Body(m.Material + (m.Standard.Length > 0 ? " — " + m.Standard : " — as the specification clause says") + (m.Note.Length > 0 ? ". " + m.Note : "")));
+            }
+        }
+
+        _component.Children.Add(Heading("Parameters"));
+        _component.Children.Add(Body("In: " + (c.Inputs.Count == 0 ? "none (measured)" : string.Join(", ", c.Inputs.Select(p => $"{p.Name} ({MeasureInfo.Colour(p.Measure)})")))));
+        _component.Children.Add(Body("Out: " + string.Join(", ", c.Outputs.Select(p => $"{p.Name} ({MeasureInfo.Colour(p.Measure)})"))));
+        Redraw();
+    }
+
+    /// <summary>The rate-book item the estimate prices this component on (the user's DSR import supplies the code, wording and rate).</summary>
+    static string RateItemText(ComponentDef c)
+    {
+        if (c.GroupKey == ComponentCatalog.Rcc) return "RCC is priced from the concrete, formwork and steel items of its own pages.";
+        RateBookStore.Current.EnsureLoaded();
+        var version = RateBookStore.Current.ActiveOrFirst();
+        var code = EstimateCalculator.CodeForElement(c.Key, c.Unit);
+        if (version is null) return $"{code}: no rate book is loaded.";
+        var index = RateBookStore.Current.IndexByCode(version);
+        return index.TryGetValue(code, out var ri)
+            ? $"{code}: {ri.Description} — ₹{ri.Rate.ToString("0.##", CultureInfo.InvariantCulture)} per {ri.Unit} (“{version.Name}”)."
+            : $"{code}: not in “{version.Name}”. Add it to the rate book, or import the DSR item and give it this code.";
+    }
+
     void Select(LinkRule? rule)
     {
         _selected = rule;
+        if (rule is not null || _selComp is not null) { _selComp = null; _component.Visibility = Visibility.Collapsed; }
         _loading = true;
         _editor.Visibility = rule is null ? Visibility.Collapsed : Visibility.Visible;
         if (rule is null)

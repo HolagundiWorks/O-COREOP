@@ -113,3 +113,44 @@ public class ComponentCatalogTests
         Assert.Contains("automatically", reason);
     }
 }
+
+public class DsrCatalogTests
+{
+    [Fact]
+    public void Every_component_has_a_dsr_reference_under_a_known_sub_head()
+    {
+        foreach (var c in ComponentCatalog.All)
+        {
+            var d = DsrCatalog.For(c.Key);
+            Assert.True(d is not null, $"{c.Key} has no DSR reference");
+            Assert.NotNull(DsrCatalog.SubHead(d!.SubHeadKey));
+            Assert.False(string.IsNullOrWhiteSpace(d.ItemWording));
+            Assert.False(string.IsNullOrWhiteSpace(d.MeasuredIn));
+            Assert.False(string.IsNullOrWhiteSpace(d.MeasurementRule));
+        }
+    }
+
+    [Fact]
+    public void There_is_no_reference_for_a_component_that_does_not_exist()
+    {
+        Assert.All(DsrCatalog.All, d => Assert.NotNull(ComponentCatalog.ByKey(d.ComponentKey)));
+        Assert.Equal(ComponentCatalog.All.Count, DsrCatalog.All.Count);
+    }
+
+    [Fact]
+    public void Concrete_members_name_the_standards_for_their_materials()
+    {
+        var d = DsrCatalog.For("rcc.slabs")!;
+        Assert.Contains(d.Materials, m => m.Material == "Reinforcement steel" && m.Standard.Contains("IS 1786"));
+        Assert.Contains(d.Materials, m => m.Material == "Cement" && m.Standard.Contains("IS 269"));
+        Assert.Contains(d.Materials, m => m.Standard.Contains("IS 383"));
+    }
+
+    [Fact]
+    public void Masonry_is_measured_the_way_the_app_computes_it()
+    {
+        var d = DsrCatalog.For("Masonry")!;
+        Assert.Contains("0.1", d.MeasurementRule);
+        Assert.Contains("half", d.MeasurementRule, StringComparison.OrdinalIgnoreCase);
+    }
+}
