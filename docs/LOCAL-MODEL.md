@@ -13,7 +13,7 @@ Overrides: `OSAS_MODEL` names a model file, `OSAS_LLAMA_SERVER` names `llama-ser
 
 ## How it runs
 
-`Office.Ai` (`BBSDesktop/Office.Ai`) starts `llama-server` as a hidden child process the first time anyone asks, on a free port of 127.0.0.1, behind a random key, 16384 tokens of context, one slot. A Windows job object ends it with the app, even if the app crashes. The GPU is used as far as its memory allows (the server fits layers on its own); the rest runs on the CPU. On this machine's RTX 4060 laptop GPU it answers at about 15 tokens a second and loads in about 7 seconds.
+`Office.Ai` (`BBSDesktop/Office.Ai`) starts `llama-server` as a hidden child process the first time anyone asks, on a free port of 127.0.0.1, behind a random key, 8192 tokens of context, one slot. A Windows job object ends it with the app, even if the app crashes. The GPU is used as far as its memory allows (the server fits layers on its own); the rest runs on the CPU. On this machine's RTX 4060 laptop GPU it answers at about 15 tokens a second and loads in about 7 seconds.
 
 The in-process .NET binding (LLamaSharp 0.27/0.30) was tried first and dropped: 0.30 does not find its native library on .NET 8, and 0.27's bundled llama.cpp crashes creating the context for this model. Running the official server avoids both and moves with llama.cpp releases.
 
@@ -37,7 +37,7 @@ O-Draft's own in-process llama.cpp (`aad-llm`, crate `llama-cpp-2` 0.1.159) cann
 
 ## O-Draft's assistant
 
-O-Draft's agent reads Olmo's `<tool_call>` JSON form (what its prompt asks for) and, since 2026-10-29, Olmo's own `<function_calls>name(arg=json)</function_calls>` form. Against O-Draft's real 16 KB tool prompt through this facade the model chose `audit_drawing`, `get_drawing_summary` and `purge_unused` correctly after the hint in `osas_ai.rs` was added (without it, "remove unused layers" was refused and a greeting triggered a tool call). The facade cuts a reply after the tool call, as the model otherwise invents the result. Run end to end on 2026-10-29 in O-Draft's window with this app serving the model: "remove unused layers and blocks" gave `get_drawing_summary`, then `purge_unused`, then the Allow/Decline bar; after Allow the model reported the 15 layers removed, and one `undo` ("Purge") restored all 18. Two things had to change for that: the model context went from 8K to 16K tokens (O-Draft's tool prompt alone is about 5K, so the second turn was refused as too long), and the hint now says to follow the schema exactly, never to ask permission in chat, and to call the tool after a result. Without the last sentence the model asked "shall I proceed?" instead of calling the tool.
+O-Draft's agent reads Olmo's `<tool_call>` JSON form (what its prompt asks for) and, since 2026-10-29, Olmo's own `<function_calls>name(arg=json)</function_calls>` form. Against O-Draft's real 16 KB tool prompt through this facade the model chose `audit_drawing`, `get_drawing_summary` and `purge_unused` correctly after the hint in `osas_ai.rs` was added (without it, "remove unused layers" was refused and a greeting triggered a tool call). The facade cuts a reply after the tool call, as the model otherwise invents the result. Not run: the full loop in O-Draft's window (tool result back to the model, confirmation, undo).
 
 ## Not done
 
