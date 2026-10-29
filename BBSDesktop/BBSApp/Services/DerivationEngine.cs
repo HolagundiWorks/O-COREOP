@@ -87,6 +87,10 @@ public static class DerivationEngine
             AddNode(work, c.Element, node);
         }
 
+        // RCC members are measured on their own pages. A rule can read them (never write them): concrete volume,
+        // formwork contact area and run length per member, so plaster, waterproofing or a PCC bed can follow them.
+        SeedRcc(work, store, levels);
+
         // Masonry nodes carry the net area of ONE face (opening-deducted) and the wall
         // run length — so Area-basis rules give both faces at factor 2, and Length-basis
         // rules (→ DPC) read the run. Same geometry as the finishes reconcile flow.
@@ -260,6 +264,44 @@ public static class DerivationEngine
         }
         if (removed > 0) store.Notify();
         return removed;
+    }
+
+    private static readonly Dictionary<string, string> RccKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Column"] = "rcc.columns", ["Beam"] = "rcc.beams", ["Pedestal"] = "rcc.pedestals", ["Lintel"] = "rcc.lintels",
+        ["Slab"] = "rcc.slabs", ["Footing"] = "rcc.footings", ["Wall"] = "rcc.walls", ["Stairs"] = "rcc.stairs", ["Stair"] = "rcc.stairs"
+    };
+
+    /// <summary>
+    /// Adds one node per RCC member (by mark and level): <c>VolumeM3</c> from the concrete BOQ, <c>AreaM2</c> the formwork contact area,
+    /// <c>LengthM</c> the member's run (beam span, column height, slab span, footing length, wall length).
+    /// </summary>
+    private static void SeedRcc(Dictionary<string, List<NodeQty>> work, ProjectStore store, IReadOnlySet<string>? levels)
+    {
+        var nodes = new Dictionary<(string Key, string Mark, string Level), NodeQty>();
+        NodeQty Get(string key, string mark, string level)
+        {
+            var id = (key, string.IsNullOrWhiteSpace(mark) ? "—" : mark, level ?? "");
+            if (!nodes.TryGetValue(id, out var n))
+                nodes[id] = n = new NodeQty { Mark = id.Item2, Level = id.Item3, Count = 1 };
+            return n;
+        }
+
+        foreach (var c in MaterialsCalculator.BuildConcreteBoq(store, levels))
+            if (RccKeys.TryGetValue(c.Element, out var k)) Get(k, c.Mark, c.Level).VolumeM3 += c.VolumeM3;
+
+        foreach (var p in ShutteringCalculator.FromRcc(store, levels))
+        {
+            if (!RccKeys.TryGetValue(p.MemberType, out var k)) continue;
+            var n = Get(k, p.Mark, p.Level);
+            n.AreaM2 += p.AreaM2;
+            double run = Math.Max(Mm(p.DimSnapshot, "length"), Mm(p.DimSnapshot, "height")) / 1000.0;
+            if (run > n.LengthM) n.LengthM = run;
+            if (n.BreadthM <= 0) n.BreadthM = Mm(p.DimSnapshot, "breadth") / 1000.0;
+        }
+
+        foreach (var ((key, _, _), node) in nodes)
+            AddNode(work, key, node);
     }
 
     private static string Inv(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);

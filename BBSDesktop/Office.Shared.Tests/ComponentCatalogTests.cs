@@ -46,6 +46,10 @@ public class ComponentCatalogTests
     [InlineData("Flooring", "Area", "Screed")]
     [InlineData("Earthwork", "Area", "PCC")]
     [InlineData("Screed", "Area", "Waterproofing")]
+    [InlineData("rcc.slabs", "Area", "Plaster")]       // soffit plaster
+    [InlineData("rcc.slabs", "Area", "Waterproofing")] // roof treatment
+    [InlineData("rcc.beams", "Area", "Painting")]
+    [InlineData("rcc.footings", "Area", "PCC")]        // bed under footings
     public void The_standard_relationships_are_allowed(string from, string basis, string to)
     {
         var (ok, reason) = FlowRules.Check(C(from), Out(from, basis), C(to));
@@ -55,7 +59,10 @@ public class ComponentCatalogTests
     [Theory]
     [InlineData("rcc.columns", "Volume", "Masonry")]
     [InlineData("Masonry", "Volume", "rcc.beams")]
-    [InlineData("rcc.slabs", "Area", "Plaster")]
+    [InlineData("rcc.slabs", "Area", "Skirting")]
+    [InlineData("rcc.columns", "Length", "Parapet")]
+    [InlineData("rcc.slabs", "Area", "PCC")]
+    [InlineData("Plaster", "Area", "rcc.slabs")]
     [InlineData("Plaster", "Area", "Masonry")]
     [InlineData("Painting", "Area", "Flooring")]
     [InlineData("DPC", "Length", "Skirting")]
@@ -73,6 +80,12 @@ public class ComponentCatalogTests
         var (ok, reason) = FlowRules.Check(C("rcc.columns"), Out("rcc.columns", "Volume"), C("Masonry"));
         Assert.False(ok);
         Assert.Contains("RCC and masonry", reason);
+    }
+
+    [Fact]
+    public void Rcc_volume_cannot_go_where_only_area_is_taken()
+    {
+        Assert.False(FlowRules.Check(C("rcc.slabs"), Out("rcc.slabs", "Volume"), C("Plaster")).Ok);
     }
 
     [Fact]

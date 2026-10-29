@@ -54,8 +54,9 @@ public sealed record Port(string Name, Measure Measure, string Basis = "");
 public sealed record ComponentGroup(string Key, string Display, string Role);
 
 /// <summary>
-/// A sub component: one work item. <see cref="Derivable"/> items are trades the estimate can derive from other trades (they can be
-/// linked); the others (RCC) are measured on their own pages and only supply quantities the model explains.
+/// A sub component: one work item. Every one can be the source of a link rule; whether it can also be a target is decided by
+/// <see cref="FlowRules"/> (RCC and openings are measured on their own, so nothing feeds them). <see cref="Derivable"/> is false only for
+/// a component whose quantities are never read by the estimate.
 /// </summary>
 public sealed record ComponentDef(
     string Key,
@@ -92,7 +93,7 @@ public static class ComponentCatalog
     static readonly Port[] None = Array.Empty<Port>();
 
     static ComponentDef Rcc_(string key, string display, string icon, string note) =>
-        new("rcc." + key, display, Rcc, "m³", false, icon, None, new[] { OutLength, OutArea, OutVolume }, note);
+        new("rcc." + key, display, Rcc, "m³", true, icon, None, new[] { OutLength, OutArea, OutVolume }, note);
 
     public static IReadOnlyList<ComponentDef> All { get; } = new[]
     {
@@ -167,6 +168,9 @@ public static class FlowRules
     // Which main component may feed which. A group feeding itself is listed where it makes sense (earthwork to its bed).
     static readonly HashSet<(string From, string To)> Allowed = new()
     {
+        (ComponentCatalog.Rcc, ComponentCatalog.Finishes),
+        (ComponentCatalog.Rcc, ComponentCatalog.Protection),
+        (ComponentCatalog.Rcc, ComponentCatalog.Earthwork),
         (ComponentCatalog.Masonry, ComponentCatalog.Finishes),
         (ComponentCatalog.Masonry, ComponentCatalog.Protection),
         (ComponentCatalog.Earthwork, ComponentCatalog.Earthwork),
@@ -182,6 +186,11 @@ public static class FlowRules
         ("Flooring", "Screed"),
         ("Flooring", "Skirting"),
     };
+
+    // What RCC may feed: the finishes and treatments applied to a concrete surface, and the PCC bed under footings. Not skirting, DPC, coping
+    // or parapet (those run along walls) and never masonry.
+    static readonly HashSet<string> RccTargets = new(StringComparer.OrdinalIgnoreCase)
+        { "Plaster", "Painting", "Waterproofing", "Flooring", "Screed", "VDF", "PCC" };
 
     public static bool GroupMayFeed(string fromGroup, string toGroup) => Allowed.Contains((fromGroup, toGroup));
 
@@ -217,6 +226,13 @@ public static class FlowRules
             return (false, WhyGroupNot(source.GroupKey, target.GroupKey));
         if (!FlowRules.GroupMayFeed(source.GroupKey, target.GroupKey))
             return (false, WhyGroupNot(source.GroupKey, target.GroupKey));
+        if (source.GroupKey == ComponentCatalog.Rcc)
+        {
+            if (!RccTargets.Contains(target.Key))
+                return (false, $"{target.Display} does not follow RCC: it is applied to a wall or run along one, not to a concrete member.");
+            if (target.Key == "PCC" && source.Key != "rcc.footings")
+                return (false, "A PCC bed sits under footings only.");
+        }
         if (source.GroupKey == target.GroupKey && !Chains.Contains((source.Key, target.Key)))
             return (false, $"{target.Display} does not follow {source.Display}: a finish follows the surface it is applied to, in the order the work is done.");
         if (ComponentCatalog.InputFor(target, output.Measure) is null)

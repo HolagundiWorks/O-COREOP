@@ -120,7 +120,7 @@ public static class SchemaExport
         b.AppendLine("  default_basis varchar [note: 'Area | Volume | Length | Perimeter | Count']");
         b.AppendLine("  Note: '''");
         b.AppendLine("  The linkable trades — graph nodes of the derivation model (LinkTradeRegistry):");
-        foreach (var t in LinkTradeRegistry.All)
+        foreach (var t in LinkTradeRegistry.Sources)
             b.AppendLine($"    • {t.Key} — {t.Display} ({t.Unit}, {LinkBasisInfo.Label(t.DefaultBasis)})");
         b.AppendLine("  '''");
         b.AppendLine("}");
@@ -492,7 +492,7 @@ public static class SchemaExport
 
         // ── Seed: reference & library data (from the registries) ──
         b.AppendLine("-- Trades (LinkTradeRegistry)");
-        foreach (var t in LinkTradeRegistry.All)
+        foreach (var t in LinkTradeRegistry.Sources)
             b.AppendLine($"INSERT INTO trade(key,display,unit,default_basis) VALUES ({Q(t.Key)},{Q(t.Display)},{Q(t.Unit)},{Q(LinkBasisInfo.Label(t.DefaultBasis))});");
         b.AppendLine();
         b.AppendLine("-- Materials");

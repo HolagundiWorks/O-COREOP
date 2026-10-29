@@ -45,10 +45,10 @@ public sealed partial class LinkRulesPage : Page
     {
         SourceCombo.Items.Clear();
         TargetCombo.Items.Clear();
-        foreach (var t in LinkTradeRegistry.All)
+        foreach (var t in LinkTradeRegistry.Sources)
         {
-            SourceCombo.Items.Add(new ComboBoxItem { Content = t.Display, Tag = t.Key });
-            TargetCombo.Items.Add(new ComboBoxItem { Content = t.Display, Tag = t.Key });
+            SourceCombo.Items.Add(new ComboBoxItem { Content = t.SourceOnly ? "RCC · " + t.Display : t.Display, Tag = t.Key });
+            if (!t.SourceOnly) TargetCombo.Items.Add(new ComboBoxItem { Content = t.Display, Tag = t.Key });
         }
     }
 

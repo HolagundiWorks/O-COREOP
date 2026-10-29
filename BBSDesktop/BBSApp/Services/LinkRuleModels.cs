@@ -146,8 +146,9 @@ public sealed class LinkRule
 /// <summary>A linkable trade (graph node) — one civil / finish work item.</summary>
 public sealed class TradeDef
 {
-    public TradeDef(string key, string display, string unit, LinkBasis defaultBasis)
+    public TradeDef(string key, string display, string unit, LinkBasis defaultBasis, bool sourceOnly = false)
     {
+        SourceOnly = sourceOnly;
         Key = key;
         Display = display;
         Unit = unit;
@@ -159,6 +160,8 @@ public sealed class TradeDef
     public string Display { get; }
     public string Unit { get; }
     public LinkBasis DefaultBasis { get; }
+    /// <summary>True for RCC members: their quantities are measured on their own pages, so a rule can read them but never write them.</summary>
+    public bool SourceOnly { get; }
 }
 
 /// <summary>The set of trades that can appear as a source or target of a link rule.</summary>
@@ -186,10 +189,26 @@ public static class LinkTradeRegistry
         new TradeDef("Windows", "Windows", "nos", LinkBasis.Count)
     };
 
+    /// <summary>RCC members. A rule can use one as its source (plaster on a soffit, waterproofing over a slab, a PCC bed under footings) but never as its target.</summary>
+    public static readonly IReadOnlyList<TradeDef> Rcc = new[]
+    {
+        new TradeDef("rcc.columns", "Columns", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.beams", "Beams", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.pedestals", "Pedestals", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.lintels", "Lintels", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.slabs", "Slabs", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.footings", "Footings", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.walls", "Retaining walls", "m³", LinkBasis.Volume, true),
+        new TradeDef("rcc.stairs", "Stairs", "m³", LinkBasis.Volume, true)
+    };
+
+    /// <summary>Everything a rule can read: the trades plus the RCC members.</summary>
+    public static readonly IReadOnlyList<TradeDef> Sources = All.Concat(Rcc).ToList();
+
     public static TradeDef? ByKey(string? key)
     {
         if (string.IsNullOrWhiteSpace(key)) return null;
-        foreach (var t in All)
+        foreach (var t in Sources)
             if (t.Key.Equals(key.Trim(), StringComparison.OrdinalIgnoreCase))
                 return t;
         return null;

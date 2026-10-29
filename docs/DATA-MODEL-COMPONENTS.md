@@ -22,9 +22,9 @@ The Data model tab (Outputs > Data model) draws the work items of a project and 
 
 Ports: **in** is what the component takes; **out** is what it gives. "Measured" means its quantities come from the drawing or its own page, not from another item.
 
-### RCC structure: measured, supplies quantities; nothing feeds it
+### RCC structure: measured on its own pages; a source in link rules, never a target
 
-Not link-rule trades: the estimate reads them from their own pages. Each gives **out: Length (yellow), Area (blue), Volume (red)** and takes nothing.
+The derivation engine reads each member (by mark and level) from its page: **Volume** is the concrete volume, **Area** is the formwork contact area, **Length** is the member's run (beam span, column clear height, slab span, footing length, wall length). Each gives **out: Length (yellow), Area (blue), Volume (red)** and takes nothing. Pedestals, lintels and stairs give only what their pages measure (formwork area; no concrete volume yet).
 
 | Sub component | Page | Materials (concrete and steel) |
 |---|---|---|
@@ -91,7 +91,7 @@ Rows feed columns. ✓ allowed (and then only if the colours match); blank is re
 
 | From \ To | RCC | Formwork | Masonry | Earthwork | Finishes | Protection | Openings |
 |---|---|---|---|---|---|---|---|
-| RCC structure | | automatic only | | | | | |
+| RCC structure | | automatic only | | footings → PCC bed only | ✓ (plaster, paint, flooring, screed, VDF) | ✓ (waterproofing only) | |
 | Formwork | | | | | | | |
 | Masonry | | | | | ✓ | ✓ | |
 | Earthwork and bed | | | | ✓ (chain below) | | | |
@@ -112,7 +112,8 @@ Inside a main component only these chains exist:
 |---|---|
 | RCC ↔ masonry (either way) | Separate trades measured on their own; neither is derived from the other. |
 | anything → RCC | RCC is measured from the drawing; nothing can feed it. |
-| RCC → anything but formwork | RCC quantities are measured, not derived; only formwork follows from RCC. |
+| RCC → skirting, DPC, coping, parapet, plinth protection | Those are applied to a wall or run along one, not to a concrete member. |
+| RCC → PCC bed from anything but footings | A PCC bed sits under footings only. |
 | RCC → Formwork by hand | Formwork follows the RCC automatically; no link is needed. |
 | a finish → masonry, earthwork or openings | Those are measured on their own. |
 | a finish or protection item → an earlier step (Painting → Plastering, Skirting → Flooring) | A finish follows the surface it is applied to, in the order the work is done. |
@@ -132,9 +133,16 @@ Inside a main component only these chains exist:
 
 A new connection from masonry's area to plaster or paint starts at ×2 (a wall has two faces); every other new connection starts at ×1.
 
+## Components that stay unlinked
+
+- **Shuttering** takes nothing by hand: the estimate rebuilds it from the RCC pages.
+- **Doors and Windows** only count; they have no input and nothing in the estimate derives from a count yet.
+- **Protection items** (waterproofing, DPC, coping, parapet, plinth protection) take a link but give out nothing that any item accepts: they end the line.
+- **Earthwork** takes nothing in (measured); it feeds the PCC bed.
+
 ## Not done yet
 
-- RCC items are shown and explain the rules, but they cannot be a source in a link rule: the derivation engine reads civil trade sheets only. Extending it to read RCC pages would let plaster on RCC and formwork links become real rules.
+- Pedestals, lintels and stairs have no concrete volume in the concrete BOQ yet, so a volume link from them derives nothing.
 - Materials are listed per component from `SchemaExport` (cement, sand and so on); finishes other than plaster have no material recipe yet.
 - The Item links page does not yet apply the hierarchy; only this screen does.
 - Layout is not saved with the project.

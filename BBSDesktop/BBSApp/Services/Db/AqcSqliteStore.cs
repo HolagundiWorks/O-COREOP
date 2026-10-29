@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS estimate_line(
         Ins(con, "INSERT INTO project(id,name,format_version) VALUES($id,$n,$v)",
             ("$id", ProjectId), ("$n", store.Name), ("$v", 17));
 
-        foreach (var t in LinkTradeRegistry.All)
+        foreach (var t in LinkTradeRegistry.Sources)
             Ins(con, "INSERT INTO trade(key,display,unit,default_basis) VALUES($k,$d,$u,$b)",
                 ("$k", t.Key), ("$d", t.Display), ("$u", t.Unit), ("$b", LinkBasisInfo.Label(t.DefaultBasis)));
 

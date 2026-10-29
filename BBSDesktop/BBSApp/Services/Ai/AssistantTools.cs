@@ -589,6 +589,7 @@ public sealed class AssistantTools
         var srcDef = LinkTradeRegistry.ByKey(source);
         var tgtDef = LinkTradeRegistry.ByKey(target);
         if (srcDef is null) return $"Unknown source trade \"{source}\". Supported: {string.Join(", ", LinkTradeKeys)}.";
+        if (tgtDef is { SourceOnly: true }) return $"{tgtDef.Display} is measured on its own page; a rule can read it but not write it. Pick another target.";
         if (tgtDef is null) return $"Unknown target trade \"{target}\". Supported: {string.Join(", ", LinkTradeKeys)}.";
 
         var basis = LinkBasisInfo.Parse(GetString(input, "basis"));
