@@ -211,6 +211,55 @@
                     </Frame.ContentTransitions>
                 </Frame>
 
+                <!-- Floating Ask bar (as in O-Draft): fixed bottom-centre over the page, solid pill, reply card above it. -->
+                <StackPanel x:Name="AiBar" Grid.Row="2" Spacing="6" Margin="0,0,0,24" Width="520"
+                            HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                            AutomationProperties.Name="Ask the assistant">
+                    <Border x:Name="AiReplyHost" Visibility="Collapsed" CornerRadius="12" Padding="12,8"
+                            Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="1">
+                        <Grid>
+                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="AssistantReply" FontSize="{StaticResource SuiteFontBody}" TextWrapping="Wrap"
+                                           Foreground="{ThemeResource HcwInkBrush}" IsTextSelectionEnabled="True"/>
+                            </ScrollViewer>
+                            <ProgressRing x:Name="AssistantBusy" IsActive="False" Visibility="Collapsed"
+                                          Width="20" Height="20" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <Border x:Name="AiPill" Height="40" CornerRadius="20" Padding="6,4"
+                            Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="1">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource HcwSoftBrush}" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource SuiteFontBody}" Foreground="{ThemeResource HcwMutedBrush}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBox x:Name="AiInput" Grid.Column="1" BorderThickness="0" CornerRadius="0" Background="Transparent"
+                                     FontSize="{StaticResource SuiteFontBody}" VerticalAlignment="Center"
+                                     PlaceholderText="Ask about this project…" AcceptsReturn="False" TextWrapping="NoWrap"
+                                     AutomationProperties.Name="Ask the assistant" KeyDown="AiInput_KeyDown">
+                                <TextBox.Resources>
+                                    <Thickness x:Key="TextControlBorderThemeThickness">0</Thickness>
+                                    <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+                                    <CornerRadius x:Key="ControlCornerRadius">0</CornerRadius>
+                                    <SolidColorBrush x:Key="TextControlBackground" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent"/>
+                                </TextBox.Resources>
+                            </TextBox>
+                            <Button Grid.Column="2" Width="32" Height="32" MinWidth="32" MinHeight="32" Padding="0" CornerRadius="16"
+                                    Background="{ThemeResource HcwInkBrush}" BorderThickness="0" VerticalAlignment="Center"
+                                    Click="AiSend_Click" AutomationProperties.Name="Send" ToolTipService.ToolTip="Send">
+                                <FontIcon Glyph="&#xE898;" FontSize="{StaticResource SuiteIconSize}" Foreground="{ThemeResource HcwWhiteBrush}"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
                 <!-- Status strip: calculator, theme, company chip -->
                 <Border x:Name="StatusStrip" Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteStatusBarHeight}"
                         Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}"
@@ -300,17 +349,8 @@
                                  FontSize="{StaticResource SuiteFontBody}" MinHeight="{StaticResource SuiteControlMinHeight}"
                                  IsReadOnly="True" AcceptsReturn="False"
                                  Foreground="{ThemeResource HcwAccentTextBrush}"/>
-                        <Grid x:Name="AssistantReplyHost" Visibility="Collapsed">
-                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="AssistantReply" FontSize="12" TextWrapping="Wrap"
-                                           Foreground="{ThemeResource HcwInkBrush}"
-                                           IsTextSelectionEnabled="True"/>
-                            </ScrollViewer>
-                            <ProgressRing x:Name="AssistantBusy" IsActive="False" Visibility="Collapsed"
-                                          Width="20" Height="20" HorizontalAlignment="Center"/>
-                        </Grid>
                         <TextBlock FontSize="11" Foreground="{ThemeResource HcwMutedBrush}"
-                                   Text="Enter to run · Esc to clear"/>
+                                   Text="Enter to calculate · anything else goes to the Ask bar"/>
                     </StackPanel>
                 </Border>
             </Grid>

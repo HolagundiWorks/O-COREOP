@@ -621,18 +621,17 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             }
             else if (!string.IsNullOrWhiteSpace(text))
             {
+                CalcInput.Text = "";
+                AiInput.Text = text;
                 _ = AskAssistantAsync(text);
             }
         }
         else if (e.Key == VirtualKey.Escape)
         {
-            if (!string.IsNullOrEmpty(CalcInput.Text) || !string.IsNullOrEmpty(CalcResult.Text)
-                || AssistantReplyHost.Visibility == Visibility.Visible)
+            if (!string.IsNullOrEmpty(CalcInput.Text) || !string.IsNullOrEmpty(CalcResult.Text))
             {
                 CalcInput.Text = "";
                 CalcResult.Text = "";
-                AssistantReply.Text = "";
-                AssistantReplyHost.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -641,6 +640,29 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             }
             e.Handled = true;
         }
+    }
+
+    private void AiSend_Click(object sender, RoutedEventArgs e) => SubmitAiBar();
+
+    private void AiInput_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Enter)
+        {
+            e.Handled = true;
+            SubmitAiBar();
+        }
+        else if (e.Key == VirtualKey.Escape)
+        {
+            e.Handled = true;
+            if (!string.IsNullOrEmpty(AiInput.Text)) AiInput.Text = "";
+            else { AssistantReply.Text = ""; AiReplyHost.Visibility = Visibility.Collapsed; }
+        }
+    }
+
+    private void SubmitAiBar()
+    {
+        var text = (AiInput.Text ?? "").Trim();
+        if (text.Length > 0) _ = AskAssistantAsync(text);
     }
 
     private async Task AskAssistantAsync(string prompt)
@@ -661,7 +683,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
         _assistantBusy = true;
         AssistantReply.Text = "";
-        AssistantReplyHost.Visibility = Visibility.Visible;
+        AiReplyHost.Visibility = Visibility.Visible;
         AssistantBusy.IsActive = true;
         AssistantBusy.Visibility = Visibility.Visible;
         try
@@ -690,7 +712,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     private void ShowAssistantReply(string text)
     {
-        AssistantReplyHost.Visibility = Visibility.Visible;
+        AiReplyHost.Visibility = Visibility.Visible;
         AssistantReply.Text = text;
     }
 
