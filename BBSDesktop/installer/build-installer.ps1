@@ -181,6 +181,27 @@ if ($shilpiSrc) {
     Write-Warning "shilpid.exe / shilpi-http.exe not found — installer will not include the ShilpiDB engine. Set SHILPIDB_BIN or build ..\shilpidb."
 }
 
+# --- llama.cpp runtime for the local assistant model (llama-server, Vulkan build, MIT) ---
+# Pinned release and SHA-256 as in Office.Ai\LocalModel.cs. LLAMA_RUNTIME_ZIP may name an already downloaded copy.
+$LlamaRelease = 'b11976'
+$LlamaSha256 = 'fd94feb540bb6dc3c95e2dac24ef5ced3bfeb7e09175db4d6291f898158b8c10'
+$LlamaUrl = "https://github.com/ggml-org/llama.cpp/releases/download/$LlamaRelease/llama-$LlamaRelease-bin-win-vulkan-x64.zip"
+$cacheDir = Join-Path $DesktopDir 'artifacts\cache'
+New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
+$llamaZip = if ($env:LLAMA_RUNTIME_ZIP) { $env:LLAMA_RUNTIME_ZIP } else { Join-Path $cacheDir "llama-$LlamaRelease-vulkan-x64.zip" }
+if (-not (Test-Path -LiteralPath $llamaZip)) {
+    Write-Host "Downloading llama.cpp $LlamaRelease ..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $LlamaUrl -OutFile $llamaZip -UseBasicParsing
+}
+$got = (Get-FileHash -LiteralPath $llamaZip -Algorithm SHA256).Hash.ToLowerInvariant()
+if ($got -ne $LlamaSha256) { throw "llama.cpp runtime zip has SHA-256 $got, expected $LlamaSha256" }
+$runtimeDir = Join-Path $PublishDir 'runtime'
+if (Test-Path -LiteralPath $runtimeDir) { Remove-Item -LiteralPath $runtimeDir -Recurse -Force }
+Expand-Archive -LiteralPath $llamaZip -DestinationPath $runtimeDir -Force
+if (-not (Test-Path -LiteralPath (Join-Path $runtimeDir 'llama-server.exe'))) { throw "llama-server.exe is not in $llamaZip" }
+Write-Host "Assistant runtime : llama.cpp $LlamaRelease bundled in runtime\"
+# The model (4.5 GB) is not in the installer: Setup offers to download it, verified, into %LocalAppData%\HumanCentricWorks\models.
+
 # --- Inno Setup ---
 $iscc = Find-ISCC
 if (-not $iscc) {

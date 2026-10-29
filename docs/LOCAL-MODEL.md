@@ -31,8 +31,15 @@ While O-CoreOp is open it answers the suite's existing local contract on `127.0.
 
 O-Draft's own in-process llama.cpp (`aad-llm`, crate `llama-cpp-2` 0.1.159) cannot load this model: its vendored llama.cpp has no `olmo3` architecture. So O-Draft reaches the model through this contract, and its Ask bar works while O-CoreOp is running. Loading the file in O-Draft itself would need a newer `llama-cpp-2`.
 
+## Installer
+
+`BBSDesktop/installer/build-installer.ps1` downloads the pinned llama.cpp release (SHA-256 checked, cached under `artifacts\cache`, or `LLAMA_RUNTIME_ZIP`) and bundles it in `runtime\` beside the app. The model is not in Setup (4.5 GB): the wizard has a task "Download the assistant model", on by default, that fetches it from the pinned Hugging Face revision with its SHA-256 checked and puts it in `%LOCALAPPDATA%\HumanCentricWorks\models`, where O-Draft also looks. An existing file is kept, a failed download does not stop the install (the Ask bar says where the file goes), and uninstalling leaves the model for O-Draft. The script compiles; the staging step was run on its own; the download task was not run in a real Setup.
+
+## O-Draft's assistant
+
+O-Draft's agent reads Olmo's `<tool_call>` JSON form (what its prompt asks for) and, since 2026-10-29, Olmo's own `<function_calls>name(arg=json)</function_calls>` form. Against O-Draft's real 16 KB tool prompt through this facade the model chose `audit_drawing`, `get_drawing_summary` and `purge_unused` correctly after the hint in `osas_ai.rs` was added (without it, "remove unused layers" was refused and a greeting triggered a tool call). The facade cuts a reply after the tool call, as the model otherwise invents the result. Not run: the full loop in O-Draft's window (tool result back to the model, confirmation, undo).
+
 ## Not done
 
-- The installer does not yet place the model and runtime; they were put in the folders above by hand.
 - The CUDA build of llama.cpp (faster on NVIDIA cards, 280 MB) is not used.
-- O-Draft's assistant still instructs the model in Qwen's `<tool_call>` JSON form; Olmo follows it in prose but is trained on `<function_calls>`, so tool calling from O-Draft is untested.
+- O-Draft needs this app open to use the model (its own llama.cpp cannot load Olmo 3).
