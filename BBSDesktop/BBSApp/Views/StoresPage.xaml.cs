@@ -39,6 +39,7 @@ public sealed partial class StoresPage : Page
     {
         _initialTab = tab;
         InitializeComponent();
+        BBSApp.Controls.PivotTabs.HideHeaders(MainPivot);
         _s.EnsureSeeded();
         _loading = true;
         PrefixBox.Text = _s.Prefix;

@@ -36,6 +36,7 @@ public sealed partial class ContractsPage : Page
     {
         _initialTab = tab;
         InitializeComponent();
+        BBSApp.Controls.PivotTabs.HideHeaders(MainPivot);
         _reg.EnsureSeeded();
         _loading = true;
         NewKindBox.ItemsSource = KindNames; NewKindBox.SelectedIndex = 0;

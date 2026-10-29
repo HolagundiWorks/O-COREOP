@@ -126,11 +126,9 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             VirtualKey.Number2 or VirtualKey.NumberPad2 => "rcc",
             VirtualKey.Number3 or VirtualKey.NumberPad3 => "civil",
             VirtualKey.Number4 or VirtualKey.NumberPad4 => "schedule",
-            VirtualKey.Number5 or VirtualKey.NumberPad5 => "office",
-            VirtualKey.Number6 or VirtualKey.NumberPad6 => "contracts",
-            VirtualKey.Number7 or VirtualKey.NumberPad7 => "accounts",
-            VirtualKey.Number8 or VirtualKey.NumberPad8 => "stores",
-            VirtualKey.Number9 or VirtualKey.NumberPad9 => "outputs",
+            VirtualKey.Number5 or VirtualKey.NumberPad5 => "contracts",
+            VirtualKey.Number6 or VirtualKey.NumberPad6 => "stores",
+            VirtualKey.Number7 or VirtualKey.NumberPad7 => "outputs",
             _ => null
         };
         if (tab is null) return;
@@ -186,21 +184,11 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Cmd("schedule_network", "Network", Glyph("\uE774")),       // Globe
             Cmd("schedule_gantt", "Gantt", Glyph("\uE787")),           // CalendarWeek
         }));
-        _tabs.Add(new RibbonTab("office", "Office", new[]
-        {
-            Cmd("correspondence", "Correspondence", Glyph("\uE715")), // Mail
-        }));
         _tabs.Add(new RibbonTab("contracts", "Contracts", new[]
         {
             Cmd("contracts_list", "Contracts", Glyph("\uE8C8")),       // PageList
             Cmd("contracts_rates", "Rate schedule", Glyph("\uE8CB")),  // BulletedList2
             Cmd("contracts_terms", "Terms", Glyph("\uE90F")),          // Page
-        }));
-        _tabs.Add(new RibbonTab("accounts", "Accounts", new[]
-        {
-            Cmd("accounts_bills", "Running bills", Glyph("\uE8C9")),   // DockLeft (bill strip)
-            Cmd("accounts_cash", "Cash book", Glyph("\uE8EF")),        // Money
-            Cmd("accounts_ledger", "Ledger", Glyph("\uE8F1")),         // Dictionary
         }));
         _tabs.Add(new RibbonTab("stores", "Stores", new[]
         {
@@ -208,13 +196,6 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Cmd("stores_grn", "Goods receipt", Glyph("\uE7B8")),       // Package
             Cmd("stores_inventory", "Inventory", Glyph("\uE81E")),     // ViewAll / boxes
             Cmd("stores_masters", "Masters", Glyph("\uE8B7")),         // Repair
-        }));
-        _tabs.Add(new RibbonTab("hr", "HR & resources", new[]
-        {
-            Cmd("org_sites", "Sites", Glyph("\uE707")),                // MapPin
-            Cmd("org_resources", "Resources", Glyph("\uE8F2")),        // OpenFile
-            Cmd("org_employees", "Employees", Glyph("\uE716")),        // Contact
-            Cmd("org_payroll", "Payroll", Glyph("\uE8EA")),            // PaymentCard
         }));
         _tabs.Add(new RibbonTab("outputs", "Outputs", new[]
         {
@@ -523,21 +504,13 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             "schedule" or "schedule_activities" => new SchedulePage(SchedulePage.ScheduleTab.Activities),
             "schedule_network" => new SchedulePage(SchedulePage.ScheduleTab.Network),
             "schedule_gantt" => new SchedulePage(SchedulePage.ScheduleTab.Gantt),
-            "office" or "correspondence" => new CorrespondencePage(),
             "contracts" or "contracts_list" => new ContractsPage(ContractsPage.ContractsTab.Contracts),
             "contracts_rates" => new ContractsPage(ContractsPage.ContractsTab.Rates),
             "contracts_terms" => new ContractsPage(ContractsPage.ContractsTab.Terms),
-            "accounts" or "accounts_bills" => new AccountsPage(AccountsPage.AccountsTab.Bills),
-            "accounts_cash" => new AccountsPage(AccountsPage.AccountsTab.Cash),
-            "accounts_ledger" => new AccountsPage(AccountsPage.AccountsTab.Ledger),
             "stores" or "stores_po" => new StoresPage(StoresPage.StoresTab.Orders),
             "stores_grn" => new StoresPage(StoresPage.StoresTab.Grn),
             "stores_inventory" => new StoresPage(StoresPage.StoresTab.Inventory),
             "stores_masters" => new StoresPage(StoresPage.StoresTab.Masters),
-            "hr" or "org_sites" => new OrgPage(OrgPage.OrgTab.Sites),
-            "org_resources" => new OrgPage(OrgPage.OrgTab.Resources),
-            "org_employees" => new OrgPage(OrgPage.OrgTab.Employees),
-            "org_payroll" => new OrgPage(OrgPage.OrgTab.Payroll),
             "quantities" => new QuantitiesPage(),
             "po" => new PurchaseOrderPage(),
             "estimate" => new EstimatePage(),

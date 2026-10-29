@@ -29,6 +29,7 @@ public sealed partial class SchedulePage : Page
     {
         _initialTab = tab;
         InitializeComponent();
+        BBSApp.Controls.PivotTabs.HideHeaders(SchedulePivot);
         _loading = true;
         StartDatePicker.Date = new DateTimeOffset(_schedule.StartDate);
         SelectWorkWeek(_schedule.WorkingDaysPerWeek);
