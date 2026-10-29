@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using System.IO;
-using Path = Microsoft.UI.Xaml.Shapes.Path;
 using BBSApp.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -11,30 +10,33 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using Office.Shared;
 using Windows.Foundation;
 using Windows.UI;
+using MeasureKind = Office.Shared.Measure;
+using Path = Microsoft.UI.Xaml.Shapes.Path;
 
 namespace BBSApp.Views;
 
 /// <summary>
 /// Data model (O-Dynamo): the work items and the rules that derive one item's quantity from another, drawn as a graph.
-/// An item is a node, a rule is an arrow ("target = factor x measure of source"). A ribbon of icons adds items and
-/// tools; dragging from an item's right-hand dot to another item makes a rule; a rule is edited on the right. Edits go
-/// straight into the project's link rules (the same rules the Item links page lists).
+/// Each component has input parameters on its left and output parameters on its right, coloured by what they carry: yellow
+/// linear, blue area, red volume. A connection joins an output to an input of the same colour, so it says which of a
+/// component's measures feeds the next (masonry's length feeds skirting, its area both faces feeds plaster, its volume prices
+/// the bricks). Which main component may feed which is fixed by <see cref="FlowRules"/>; RCC cannot be joined to masonry.
+/// Right-click the canvas to add a component. Edits go straight into the project's link rules.
 /// </summary>
 public sealed class DataModelPage : Page
 {
-    const double NodeW = 196, NodeH = 54, ColGap = 110, RowGap = 22, Pad = 28, Port = 6;
+    const double NodeW = 214, HeaderH = 30, RowH = 22, ColGap = 120, RowGap = 24, Pad = 28, Port = 6;
 
     // Layout survives leaving the page; it is not saved with the project.
-    static readonly Dictionary<string, Point> Positions = new();
+    static readonly Dictionary<string, Point> Positions = new(StringComparer.OrdinalIgnoreCase);
     static readonly HashSet<string> Shown = new(StringComparer.OrdinalIgnoreCase);
     static bool _shownSeeded;
 
     readonly Canvas _surface = new() { Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)) };
-    readonly StackPanel _inspector = new() { Spacing = 10, Padding = new Thickness(14), IsHitTestVisible = true };
-    readonly TextBlock _status = new() { FontSize = 12, Opacity = 0.8, TextWrapping = TextWrapping.Wrap };
-    readonly Dictionary<string, Button> _itemButtons = new(StringComparer.OrdinalIgnoreCase);
+    readonly TextBlock _status = new() { FontSize = 12, Opacity = 0.85, TextWrapping = TextWrapping.Wrap };
 
     TextBlock _title = null!;
     TextBox _name = null!;
@@ -44,15 +46,15 @@ public sealed class DataModelPage : Page
     ToggleSwitch _enabled = null!;
     ToggleSwitch _perItem = null!;
     TextBlock _formula = null!;
+    TextBlock _warning = null!;
     StackPanel _editor = null!;
 
     LinkRule? _selected;
     bool _loading;
     string? _dragNode;
     (double X, double Y) _dragOffset;
-    string? _linkFrom;
+    (string Key, Office.Shared.Port Port)? _linkFrom;
     Line? _rubber;
-    uint _pointer;
 
     LinkRuleBook Book => ProjectStore.Current.LinkRules;
 
@@ -78,20 +80,20 @@ public sealed class DataModelPage : Page
         var body = new Grid();
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(300) });
-        var scroll = new ScrollViewer
+        body.Children.Add(new ScrollViewer
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             HorizontalScrollMode = ScrollMode.Disabled,
             VerticalScrollMode = ScrollMode.Disabled,
             Content = _surface,
-        };
-        _surface.PointerPressed += OnSurfacePressed;
+        });
+        _surface.PointerPressed += (_, e) => { if (e.GetCurrentPoint(_surface).Properties.IsLeftButtonPressed) Select(null); };
         _surface.PointerMoved += OnSurfaceMoved;
         _surface.PointerReleased += OnSurfaceReleased;
         _surface.PointerCanceled += (_, _) => EndGesture();
         _surface.PointerCaptureLost += (_, _) => EndGesture();
-        body.Children.Add(scroll);
+        _surface.RightTapped += OnSurfaceRightTapped;
 
         var side = new Border
         {
@@ -110,7 +112,12 @@ public sealed class DataModelPage : Page
         root.Children.Add(_status);
 
         Content = root;
-        Loaded += (_, _) => { Arrange(onlyMissing: true); Redraw(); Say("Click an item in the ribbon to put it on the canvas. Drag from an item's right-hand dot to another item to link them."); };
+        Loaded += (_, _) =>
+        {
+            Arrange(onlyMissing: true);
+            Redraw();
+            Say("Right-click the canvas to add a component. Drag from a coloured dot on a component's right to a dot of the same colour on another.");
+        };
     }
 
     // ——— Ribbon ———
@@ -118,21 +125,39 @@ public sealed class DataModelPage : Page
     static Brush Res(string key) =>
         Application.Current.Resources.TryGetValue(key, out var v) && v is Brush b ? b : new SolidColorBrush(Microsoft.UI.Colors.Gray);
 
+    static string GroupGlyph(string group) => group switch
+    {
+        ComponentCatalog.Rcc => "",
+        ComponentCatalog.Formwork => "",
+        ComponentCatalog.Masonry => "",
+        ComponentCatalog.Earthwork => "",
+        ComponentCatalog.Finishes => "",
+        ComponentCatalog.Protection => "",
+        _ => "",
+    };
+
     Border BuildRibbon()
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Padding = new Thickness(10, 6, 10, 6) };
 
-        row.Children.Add(Group("Items", ItemButtons()));
+        var groups = new List<UIElement>();
+        foreach (var g in ComponentCatalog.Groups)
+        {
+            var b = RibbonButton(g.Display, GroupGlyph(g.Key), $"{g.Display}: {g.Role} Click for its sub components.", null);
+            b.Flyout = BuildGroupMenu(g);
+            groups.Add(b);
+        }
+        row.Children.Add(Group("Add component", groups));
         row.Children.Add(Divider());
         row.Children.Add(Group("Links", new UIElement[]
         {
-            RibbonButton("Link", "", "Drag from an item's right-hand dot to another item", null),
             RibbonButton("Delete link", "", "Delete the selected link (Delete key)", DeleteLink),
-            RibbonButton("Arrange", "", "Lay the items out again by what feeds what", () => { Positions.Clear(); Arrange(false); Redraw(); }),
+            RibbonButton("Arrange", "", "Lay the components out again by what feeds what", () => { Positions.Clear(); Arrange(false); Redraw(); }),
         }));
         row.Children.Add(Divider());
         row.Children.Add(Group("Project", new UIElement[]
         {
+            RibbonButton("Rules", "", "The colours and what may be connected to what", ShowRules),
             RibbonButton("Defaults", "", "Replace the project's links with the standard library", ResetDefaults),
             RibbonButton("Export ERD", "", "Write the logical ERD (aqc-core.dbml and .sql) for dbdiagram.io", ExportSchema),
         }));
@@ -153,16 +178,22 @@ public sealed class DataModelPage : Page
         };
     }
 
-    IEnumerable<UIElement> ItemButtons()
+    /// <summary>Text-only menu of a main component's sub components, built each time it opens so it shows what is already on the canvas.</summary>
+    MenuFlyout BuildGroupMenu(ComponentGroup g)
     {
-        foreach (var t in LinkTradeRegistry.All)
+        var menu = new MenuFlyout();
+        menu.Opening += (_, _) =>
         {
-            var key = t.Key;
-            var b = RibbonButton(t.Display, null, $"{t.Display} ({t.Unit}): put it on the canvas, or take it off when it has no links", () => ToggleItem(key), MainWindow.NavIcon(key));
-            _itemButtons[key] = b;
-            yield return b;
-        }
-        RefreshItemButtons();
+            menu.Items.Clear();
+            foreach (var c in ComponentCatalog.InGroup(g.Key))
+            {
+                var item = new MenuFlyoutItem { Text = c.Display, IsEnabled = !Shown.Contains(c.Key) };
+                ToolTipService.SetToolTip(item, c.Note);
+                item.Click += (_, _) => AddComponent(c, null);
+                menu.Items.Add(item);
+            }
+        };
+        return menu;
     }
 
     static StackPanel Group(string caption, IEnumerable<UIElement> buttons)
@@ -177,17 +208,15 @@ public sealed class DataModelPage : Page
 
     static Border Divider() => new() { Width = 1, Margin = new Thickness(8, 4, 8, 4), Background = Res("HcwEdgeBrush") };
 
-    Button RibbonButton(string label, string? glyph, string tip, Action? click, UIElement? icon = null)
+    Button RibbonButton(string label, string glyph, string tip, Action? click)
     {
-        UIElement glyphOrIcon = icon ?? new FontIcon { Glyph = glyph ?? "", FontSize = 20, FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets") };
-        if (icon is FrameworkElement fe) { fe.Width = 22; fe.Height = 22; }
         var content = new StackPanel { Spacing = 3, HorizontalAlignment = HorizontalAlignment.Center };
-        content.Children.Add(new Border { Height = 24, HorizontalAlignment = HorizontalAlignment.Center, Child = glyphOrIcon });
-        content.Children.Add(new TextBlock { Text = label, FontSize = 10, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 60, HorizontalAlignment = HorizontalAlignment.Center });
+        content.Children.Add(new FontIcon { Glyph = glyph, FontSize = 20, FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets") });
+        content.Children.Add(new TextBlock { Text = label, FontSize = 10, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 84, TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center });
         var b = new Button
         {
             Content = content,
-            Width = 66,
+            Width = 90,
             Padding = new Thickness(4, 6, 4, 6),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderThickness = new Thickness(0),
@@ -196,49 +225,57 @@ public sealed class DataModelPage : Page
         if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
         b.Height = 58;
         b.MinHeight = 58;
-        b.VerticalContentAlignment = VerticalAlignment.Center;
         ToolTipService.SetToolTip(b, tip);
         AutomationProperties.SetName(b, label);
         if (click is not null) b.Click += (_, _) => click();
-        else b.IsHitTestVisible = false; // "Link" is a hint for the drag, not a command
-        if (click is null) b.Opacity = 0.7;
         return b;
     }
 
-    void RefreshItemButtons()
+    void AddComponent(ComponentDef c, Point? at)
     {
-        foreach (var (key, b) in _itemButtons)
-            b.Background = Shown.Contains(key) ? Res("HcwEdgeBrush") : new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        Shown.Add(c.Key);
+        if (at is { } p) Positions[c.Key] = new Point(Math.Max(0, p.X), Math.Max(0, p.Y));
+        else Arrange(onlyMissing: true);
+        Redraw();
+        Say($"{c.Display} added. {c.Note}");
     }
 
-    void ToggleItem(string key)
+    void RemoveComponent(ComponentDef c)
     {
-        if (Shown.Contains(key))
+        if (Book.Rules.Any(r => Same(r.SourceTrade, c.Key) || Same(r.TargetTrade, c.Key)))
         {
-            if (Book.Rules.Any(r => Same(r.SourceTrade, key) || Same(r.TargetTrade, key)))
-            {
-                Say($"{LinkTradeRegistry.Display(key)} has links; delete them first to take it off the canvas.");
-                return;
-            }
-            Shown.Remove(key);
+            Say($"{c.Display} has links; delete them first to take it off the canvas.");
+            return;
         }
-        else
-        {
-            Shown.Add(key);
-            Arrange(onlyMissing: true);
-        }
-        RefreshItemButtons();
+        Shown.Remove(c.Key);
         Redraw();
     }
 
     static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
-    // ——— Layout ———
+    // ——— Colours and geometry ———
+
+    static SolidColorBrush Rgb(byte r, byte g, byte b) => new(Color.FromArgb(255, r, g, b));
+
+    static SolidColorBrush MeasureBrush(MeasureKind m) => m switch
+    {
+        MeasureKind.Length => Rgb(240, 180, 40),
+        MeasureKind.Area => Rgb(70, 140, 245),
+        MeasureKind.Volume => Rgb(229, 72, 77),
+        _ => Rgb(140, 140, 140),
+    };
+
+    static IEnumerable<ComponentDef> VisibleComponents() => ComponentCatalog.All.Where(c => Shown.Contains(c.Key));
+
+    static double NodeH(ComponentDef c) => HeaderH + Math.Max(1, Math.Max(c.Inputs.Count, c.Outputs.Count)) * RowH + 8;
+
+    Point InPortAt(ComponentDef c, int i) => new(Positions[c.Key].X, Positions[c.Key].Y + HeaderH + i * RowH + RowH / 2);
+    Point OutPortAt(ComponentDef c, int i) => new(Positions[c.Key].X + NodeW, Positions[c.Key].Y + HeaderH + i * RowH + RowH / 2);
 
     void Arrange(bool onlyMissing)
     {
-        var visible = LinkTradeRegistry.All.Where(t => Shown.Contains(t.Key)).ToList();
-        var depth = visible.ToDictionary(t => t.Key, _ => 0, StringComparer.OrdinalIgnoreCase);
+        var visible = VisibleComponents().ToList();
+        var depth = visible.ToDictionary(c => c.Key, _ => 0, StringComparer.OrdinalIgnoreCase);
         for (var pass = 0; pass < visible.Count; pass++)
         {
             var changed = false;
@@ -250,116 +287,134 @@ public sealed class DataModelPage : Page
             }
             if (!changed) break;
         }
-        foreach (var column in visible.GroupBy(t => depth[t.Key]).OrderBy(g => g.Key))
+        foreach (var column in visible.GroupBy(c => depth[c.Key]).OrderBy(g => g.Key))
         {
-            var row = 0;
-            foreach (var t in column.OrderBy(t => t.Display))
+            var y = Pad;
+            foreach (var c in column.OrderBy(c => c.Display))
             {
-                if (onlyMissing && Positions.ContainsKey(t.Key)) { row++; continue; }
-                Positions[t.Key] = new Point(Pad + column.Key * (NodeW + ColGap), Pad + row++ * (NodeH + RowGap));
+                if (!(onlyMissing && Positions.ContainsKey(c.Key)))
+                    Positions[c.Key] = new Point(Pad + column.Key * (NodeW + ColGap), y);
+                y += NodeH(c) + RowGap;
             }
         }
     }
 
     // ——— Drawing ———
 
-    Point OutPort(string k) => new(Positions[k].X + NodeW, Positions[k].Y + NodeH / 2);
-    Point InPort(string k) => new(Positions[k].X, Positions[k].Y + NodeH / 2);
-
     void Redraw()
     {
         _surface.Children.Clear();
         double maxX = 0, maxY = 0;
-        foreach (var t in LinkTradeRegistry.All.Where(t => Shown.Contains(t.Key)))
+        foreach (var c in VisibleComponents())
         {
-            if (!Positions.ContainsKey(t.Key)) Arrange(true);
-            var p = Positions[t.Key];
+            if (!Positions.ContainsKey(c.Key)) Arrange(true);
+            var p = Positions[c.Key];
             maxX = Math.Max(maxX, p.X + NodeW + Pad);
-            maxY = Math.Max(maxY, p.Y + NodeH + Pad);
+            maxY = Math.Max(maxY, p.Y + NodeH(c) + Pad);
         }
         _surface.Width = Math.Max(maxX + 160, 900);
         _surface.Height = Math.Max(maxY + 120, 520);
 
-        foreach (var r in Book.Rules.Where(r => Shown.Contains(r.SourceTrade) && Shown.Contains(r.TargetTrade))) DrawEdge(r);
-        foreach (var t in LinkTradeRegistry.All.Where(t => Shown.Contains(t.Key))) DrawNode(t);
-        RefreshItemButtons();
+        DrawBuiltInFormwork();
+        foreach (var r in Book.Rules) DrawEdge(r);
+        foreach (var c in VisibleComponents()) DrawNode(c);
     }
 
-    static SolidColorBrush Rgb(byte r, byte g, byte b) => new(Color.FromArgb(255, r, g, b));
+    static PathGeometry Curve(Point a, Point b)
+    {
+        var dx = Math.Max(40, Math.Abs(b.X - a.X) / 2);
+        var fig = new PathFigure { StartPoint = a };
+        fig.Segments.Add(new BezierSegment { Point1 = new Point(a.X + dx, a.Y), Point2 = new Point(b.X - dx, b.Y), Point3 = b });
+        var g = new PathGeometry();
+        g.Figures.Add(fig);
+        return g;
+    }
+
+    /// <summary>Formwork is rebuilt from RCC by the estimate itself; show that as a faint fixed link when both ends are on the canvas.</summary>
+    void DrawBuiltInFormwork()
+    {
+        var shuttering = ComponentCatalog.ByKey("Shuttering");
+        if (shuttering is null || !Shown.Contains(shuttering.Key)) return;
+        var into = shuttering.Inputs.ToList().FindIndex(p => p.Measure == MeasureKind.Area);
+        foreach (var rcc in VisibleComponents().Where(c => c.GroupKey == ComponentCatalog.Rcc))
+        {
+            var from = rcc.Outputs.ToList().FindIndex(p => p.Measure == MeasureKind.Area);
+            _surface.Children.Add(new Path
+            {
+                Data = Curve(OutPortAt(rcc, from), InPortAt(shuttering, into)),
+                Stroke = Rgb(120, 120, 120),
+                StrokeThickness = 1.5,
+                StrokeDashArray = new DoubleCollection { 1, 3 },
+                IsHitTestVisible = false,
+            });
+        }
+    }
 
     void DrawEdge(LinkRule r)
     {
-        var a = OutPort(r.SourceTrade);
-        var b = InPort(r.TargetTrade);
-        var dx = Math.Max(40, Math.Abs(b.X - a.X) / 2);
-        // A geometry can belong to one shape only, so the visible line and its wide click target each get their own.
-        PathGeometry Curve()
-        {
-            var fig = new PathFigure { StartPoint = a };
-            fig.Segments.Add(new BezierSegment { Point1 = new Point(a.X + dx, a.Y), Point2 = new Point(b.X - dx, b.Y), Point3 = b });
-            var g = new PathGeometry();
-            g.Figures.Add(fig);
-            return g;
-        }
-        var selected = ReferenceEquals(r, _selected);
-        var stroke = !r.Enabled ? Rgb(130, 130, 130) : selected ? Rgb(255, 170, 60) : Rgb(90, 150, 240);
+        var src = ComponentCatalog.ByKey(r.SourceTrade);
+        var dst = ComponentCatalog.ByKey(r.TargetTrade);
+        if (src is null || dst is null || !Shown.Contains(src.Key) || !Shown.Contains(dst.Key)) return;
+        var outPort = ComponentCatalog.OutputFor(src, LinkBasisInfo.Label(r.Basis));
+        var inPort = outPort is null ? null : ComponentCatalog.InputFor(dst, outPort.Measure);
+        var a = outPort is null ? new Point(Positions[src.Key].X + NodeW, Positions[src.Key].Y + HeaderH / 2) : OutPortAt(src, src.Outputs.ToList().IndexOf(outPort));
+        var b = inPort is null ? new Point(Positions[dst.Key].X, Positions[dst.Key].Y + HeaderH / 2) : InPortAt(dst, dst.Inputs.ToList().IndexOf(inPort));
 
-        var hit = new Path { Data = Curve(), Stroke = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), StrokeThickness = 14 };
+        var breaks = outPort is null || FlowRules.Check(src, outPort, dst) is { Ok: false };
+        var selected = ReferenceEquals(r, _selected);
+        var colour = r.Enabled ? MeasureBrush(outPort?.Measure ?? MeasureKind.Area) : Rgb(130, 130, 130);
+        var stroke = breaks ? Rgb(255, 90, 90) : colour;
+
+        var hit = new Path { Data = Curve(a, b), Stroke = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)), StrokeThickness = 14 };
         hit.PointerPressed += (_, e) => { Select(r); e.Handled = true; };
-        var line = new Path { Data = Curve(), Stroke = stroke, StrokeThickness = selected ? 3 : 2, IsHitTestVisible = false };
-        if (!r.Enabled) line.StrokeDashArray = new DoubleCollection { 4, 3 };
+        var line = new Path { Data = Curve(a, b), Stroke = stroke, StrokeThickness = selected ? 4 : 2, IsHitTestVisible = false };
+        if (!r.Enabled || breaks) line.StrokeDashArray = new DoubleCollection { 4, 3 };
         _surface.Children.Add(line);
         _surface.Children.Add(hit);
-
-        var arrow = new Microsoft.UI.Xaml.Shapes.Polygon
+        _surface.Children.Add(new Microsoft.UI.Xaml.Shapes.Polygon
         {
             Points = new PointCollection { b, new Point(b.X - 9, b.Y - 5), new Point(b.X - 9, b.Y + 5) },
             Fill = stroke,
             IsHitTestVisible = false,
-        };
-        _surface.Children.Add(arrow);
+        });
 
         var label = new TextBlock
         {
-            Text = $"×{r.Factor.ToString("0.###", CultureInfo.InvariantCulture)} {LinkBasisInfo.Label(r.Basis)}",
+            Text = (breaks ? "⚠ " : "") + $"×{r.Factor.ToString("0.###", CultureInfo.InvariantCulture)}",
             FontSize = 11,
             Foreground = stroke,
             IsHitTestVisible = false,
         };
-        Canvas.SetLeft(label, (a.X + b.X) / 2 - 28);
+        Canvas.SetLeft(label, (a.X + b.X) / 2 - 10);
         Canvas.SetTop(label, (a.Y + b.Y) / 2 - 18);
         _surface.Children.Add(label);
     }
 
-    void DrawNode(TradeDef t)
+    static string Materials(ComponentDef c)
     {
-        var p = Positions[t.Key];
-        var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
-        text.Children.Add(new TextBlock { Text = t.Display, FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis });
-        text.Children.Add(new TextBlock { Text = $"{t.Unit}  ·  {RateText(t)}", FontSize = 11, Opacity = 0.65 });
-        var icon = MainWindow.NavIcon(t.Key);
-        icon.Width = 22;
-        icon.Height = 22;
-        icon.VerticalAlignment = VerticalAlignment.Center;
-        icon.Margin = new Thickness(0, 0, 10, 0);
-        var inner = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(12, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };
-        inner.Children.Add(icon);
-        inner.Children.Add(text);
+        var names = SchemaExport.ItemMaterialEdges().Where(e => Same(e.Trade, c.Key)).Select(e => e.MaterialName).Distinct().ToList();
+        return names.Count == 0 ? "" : "\nMaterials: " + string.Join(", ", names);
+    }
+
+    void DrawNode(ComponentDef c)
+    {
+        var p = Positions[c.Key];
         var node = new Border
         {
             Width = NodeW,
-            Height = NodeH,
+            Height = NodeH(c),
             CornerRadius = new CornerRadius(4),
             Background = Res("HcwWhiteBrush"),
             BorderBrush = Res("HcwEdgeBrush"),
             BorderThickness = new Thickness(1),
-            Child = inner,
         };
+        ToolTipService.SetToolTip(node, $"{c.Display} ({ComponentCatalog.Group(c.GroupKey)?.Display})\n{c.Note}{Materials(c)}");
         node.PointerPressed += (_, e) =>
         {
-            _dragNode = t.Key;
-            _dragOffset = (p.X - e.GetCurrentPoint(_surface).Position.X, p.Y - e.GetCurrentPoint(_surface).Position.Y);
-            _pointer = e.Pointer.PointerId;
+            if (!e.GetCurrentPoint(_surface).Properties.IsLeftButtonPressed) return;
+            var at = e.GetCurrentPoint(_surface).Position;
+            _dragNode = c.Key;
+            _dragOffset = (p.X - at.X, p.Y - at.Y);
             _surface.CapturePointer(e.Pointer);
             e.Handled = true;
         };
@@ -367,41 +422,62 @@ public sealed class DataModelPage : Page
         Canvas.SetTop(node, p.Y);
         _surface.Children.Add(node);
 
-        var port = new Ellipse { Width = Port * 2, Height = Port * 2, Fill = Rgb(90, 150, 240), Stroke = Res("HcwWhiteBrush"), StrokeThickness = 2 };
-        ToolTipService.SetToolTip(port, "Drag to another item to link");
-        port.PointerPressed += (_, e) =>
-        {
-            _linkFrom = t.Key;
-            var from = OutPort(t.Key);
-            _rubber = new Line { X1 = from.X, Y1 = from.Y, X2 = from.X, Y2 = from.Y, Stroke = Rgb(255, 170, 60), StrokeThickness = 2, StrokeDashArray = new DoubleCollection { 3, 3 }, IsHitTestVisible = false };
-            _surface.Children.Add(_rubber);
-            _pointer = e.Pointer.PointerId;
-            _surface.CapturePointer(e.Pointer);
-            e.Handled = true;
-        };
-        Canvas.SetLeft(port, p.X + NodeW - Port);
-        Canvas.SetTop(port, p.Y + NodeH / 2 - Port);
-        _surface.Children.Add(port);
+        var icon = MainWindow.NavIcon(c.IconKey);
+        icon.Width = 16;
+        icon.Height = 16;
+        icon.IsHitTestVisible = false;
+        Canvas.SetLeft(icon, p.X + 10);
+        Canvas.SetTop(icon, p.Y + 7);
+        _surface.Children.Add(icon);
+        AddText(c.Display, p.X + 32, p.Y + 6, 13, true, NodeW - 44, 1);
 
-        var inPort = new Ellipse { Width = Port * 2, Height = Port * 2, Fill = Res("HcwWhiteBrush"), Stroke = Rgb(90, 150, 240), StrokeThickness = 2, IsHitTestVisible = false };
-        Canvas.SetLeft(inPort, p.X - Port);
-        Canvas.SetTop(inPort, p.Y + NodeH / 2 - Port);
-        _surface.Children.Add(inPort);
+        for (var i = 0; i < c.Inputs.Count; i++)
+        {
+            var at = InPortAt(c, i);
+            var dot = new Ellipse { Width = Port * 2, Height = Port * 2, Fill = Res("HcwWhiteBrush"), Stroke = MeasureBrush(c.Inputs[i].Measure), StrokeThickness = 3, IsHitTestVisible = false };
+            Canvas.SetLeft(dot, at.X - Port);
+            Canvas.SetTop(dot, at.Y - Port);
+            _surface.Children.Add(dot);
+            AddText(c.Inputs[i].Name, at.X + 12, at.Y - 8, 11, false, NodeW / 2 - 16, 0.8);
+        }
+        for (var j = 0; j < c.Outputs.Count; j++)
+        {
+            var at = OutPortAt(c, j);
+            var port = c.Outputs[j];
+            var dot = new Ellipse { Width = Port * 2, Height = Port * 2, Fill = MeasureBrush(port.Measure), Stroke = Res("HcwWhiteBrush"), StrokeThickness = 2 };
+            ToolTipService.SetToolTip(dot, $"{port.Name} ({MeasureInfo.Colour(port.Measure)}, {MeasureInfo.Unit(port.Measure)}): drag to a {MeasureInfo.Colour(port.Measure)} input");
+            var key = c.Key;
+            var index = j;
+            dot.PointerPressed += (_, e) =>
+            {
+                if (!e.GetCurrentPoint(_surface).Properties.IsLeftButtonPressed) return;
+                _linkFrom = (key, port);
+                var from = OutPortAt(c, index);
+                _rubber = new Line { X1 = from.X, Y1 = from.Y, X2 = from.X, Y2 = from.Y, Stroke = MeasureBrush(port.Measure), StrokeThickness = 2, StrokeDashArray = new DoubleCollection { 3, 3 }, IsHitTestVisible = false };
+                _surface.Children.Add(_rubber);
+                _surface.CapturePointer(e.Pointer);
+                e.Handled = true;
+            };
+            Canvas.SetLeft(dot, at.X - Port);
+            Canvas.SetTop(dot, at.Y - Port);
+            _surface.Children.Add(dot);
+            var t = AddText(port.Name, at.X - 12 - 80, at.Y - 8, 11, false, 80, 0.8);
+            t.TextAlignment = TextAlignment.Right;
+        }
     }
 
-    static string RateText(TradeDef t)
+    TextBlock AddText(string text, double x, double y, double size, bool bold, double width, double opacity)
     {
-        RateBookStore.Current.EnsureLoaded();
-        var version = RateBookStore.Current.ActiveOrFirst();
-        if (version is null) return "no rate";
-        var index = RateBookStore.Current.IndexByCode(version);
-        var code = EstimateCalculator.CodeForElement(t.Key, t.Unit);
-        return index.TryGetValue(code, out var ri) && ri.Rate > 0 ? "₹" + ri.Rate.ToString("0.##", CultureInfo.InvariantCulture) : "no rate";
+        var t = new TextBlock { Text = text, FontSize = size, IsHitTestVisible = false, Opacity = opacity, TextTrimming = TextTrimming.CharacterEllipsis };
+        if (width > 0) t.Width = width;
+        if (bold) t.FontWeight = Microsoft.UI.Text.FontWeights.SemiBold;
+        Canvas.SetLeft(t, x);
+        Canvas.SetTop(t, y);
+        _surface.Children.Add(t);
+        return t;
     }
 
     // ——— Pointer gestures ———
-
-    void OnSurfacePressed(object sender, PointerRoutedEventArgs e) => Select(null);
 
     void OnSurfaceMoved(object sender, PointerRoutedEventArgs e)
     {
@@ -418,6 +494,9 @@ public sealed class DataModelPage : Page
         }
     }
 
+    ComponentDef? ComponentAt(Point at) =>
+        VisibleComponents().FirstOrDefault(c => new Rect(Positions[c.Key], new Size(NodeW, NodeH(c))).Contains(at));
+
     void OnSurfaceReleased(object sender, PointerRoutedEventArgs e)
     {
         var at = e.GetCurrentPoint(_surface).Position;
@@ -426,27 +505,39 @@ public sealed class DataModelPage : Page
         _surface.ReleasePointerCaptures();
         if (from is null) return;
 
-        var target = LinkTradeRegistry.All.FirstOrDefault(t => Shown.Contains(t.Key) && new Rect(Positions[t.Key], new Size(NodeW, NodeH)).Contains(at))?.Key;
-        if (target is null || Same(target, from)) { Redraw(); return; }
-        if (WouldLoop(from, target)) { Say("That link would make an item depend on itself."); Redraw(); return; }
-        if (Book.Rules.Any(r => Same(r.SourceTrade, from) && Same(r.TargetTrade, target))) { Say("Those two items are already linked."); Redraw(); return; }
+        var src = ComponentCatalog.ByKey(from.Value.Key)!;
+        var target = ComponentAt(at);
+        if (target is null || Same(target.Key, src.Key)) { Redraw(); return; }
 
-        var src = LinkTradeRegistry.ByKey(from)!;
-        var tgt = LinkTradeRegistry.ByKey(target)!;
+        var port = from.Value.Port;
+        var (ok, reason) = FlowRules.Check(src, port, target);
+        if (!ok) { Say(reason); Redraw(); return; }
+        if (WouldLoop(src.Key, target.Key)) { Say("That link would make an item depend on itself."); Redraw(); return; }
+        if (Book.Rules.Any(r => Same(r.SourceTrade, src.Key) && Same(r.TargetTrade, target.Key)))
+        {
+            Say($"{src.Display} already feeds {target.Display}; click the link to change which measure it uses.");
+            Redraw();
+            return;
+        }
+
         var rule = new LinkRule
         {
-            Name = $"{tgt.Display} from {src.Display}",
+            Name = $"{target.Display} from {src.Display}",
             SourceTrade = src.Key,
-            TargetTrade = tgt.Key,
-            Basis = src.DefaultBasis,
-            Factor = 1,
-            TargetUnit = tgt.Unit,
+            TargetTrade = target.Key,
+            Basis = LinkBasisInfo.Parse(port.Basis),
+            Factor = DefaultFactor(src.Key, target.Key, port.Basis),
+            TargetUnit = target.Unit,
         };
         Book.Rules.Add(rule);
         ProjectStore.Current.Notify();
         Select(rule);
-        Say($"Linked {src.Display} to {tgt.Display}. Set the factor on the right.");
+        Say($"{src.Display} {port.Name.ToLowerInvariant()} now feeds {target.Display}. Set the factor on the right.");
     }
+
+    /// <summary>The usual factor: a wall has two faces, so plaster and paint take twice its area.</summary>
+    static double DefaultFactor(string source, string target, string basis) =>
+        Same(source, "Masonry") && Same(basis, "Area") && (Same(target, "Plaster") || Same(target, "Painting")) ? 2.0 : 1.0;
 
     void EndGesture()
     {
@@ -470,19 +561,53 @@ public sealed class DataModelPage : Page
         return false;
     }
 
+    // ——— Right-click: add a component ———
+
+    void OnSurfaceRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        var at = e.GetPosition(_surface);
+        var menu = new MenuFlyout();
+
+        var hit = ComponentAt(at);
+        if (hit is not null)
+        {
+            var remove = new MenuFlyoutItem { Text = $"Remove {hit.Display} from the canvas" };
+            remove.Click += (_, _) => RemoveComponent(hit);
+            menu.Items.Add(remove);
+            menu.Items.Add(new MenuFlyoutSeparator());
+        }
+
+        var add = new MenuFlyoutSubItem { Text = "Add component" };
+        foreach (var g in ComponentCatalog.Groups)
+        {
+            var sub = new MenuFlyoutSubItem { Text = g.Display };
+            foreach (var c in ComponentCatalog.InGroup(g.Key))
+            {
+                var item = new MenuFlyoutItem { Text = c.Display, IsEnabled = !Shown.Contains(c.Key) };
+                ToolTipService.SetToolTip(item, c.Note);
+                item.Click += (_, _) => AddComponent(c, at);
+                sub.Items.Add(item);
+            }
+            add.Items.Add(sub);
+        }
+        menu.Items.Add(add);
+        menu.ShowAt(_surface, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions { Position = at });
+        e.Handled = true;
+    }
+
     // ——— Inspector ———
 
     UIElement BuildInspector()
     {
         _title = new TextBlock { Text = "No link selected", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap };
         _name = new TextBox { Header = "Name" };
-        _basis = new ComboBox { Header = "Measure of the source", HorizontalAlignment = HorizontalAlignment.Stretch };
-        foreach (var b in LinkBasisInfo.All) _basis.Items.Add(LinkBasisInfo.Label(b));
+        _basis = new ComboBox { Header = "Measure taken from the source", HorizontalAlignment = HorizontalAlignment.Stretch };
         _factor = new NumberBox { Header = "Factor", Minimum = 0, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, SmallChange = 0.5, LargeChange = 1 };
         _rateOverride = new NumberBox { Header = "Rate for the derived lines (₹, 0 = from the rate book)", Minimum = 0, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact };
         _enabled = new ToggleSwitch { Header = "On", OnContent = "On", OffContent = "Off" };
         _perItem = new ToggleSwitch { Header = "One line per source item", OnContent = "Yes", OffContent = "One total" };
-        _formula = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+        _formula = new TextBlock { TextWrapping = TextWrapping.Wrap, Opacity = 0.85 };
+        _warning = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = Rgb(255, 120, 120) };
 
         _name.TextChanged += (_, _) => Apply();
         _basis.SelectionChanged += (_, _) => Apply();
@@ -495,11 +620,26 @@ public sealed class DataModelPage : Page
         delete.Click += (_, _) => DeleteLink();
 
         _editor = new StackPanel { Spacing = 10, Visibility = Visibility.Collapsed };
-        foreach (var c in new UIElement[] { _name, _basis, _factor, _rateOverride, _enabled, _perItem, _formula, delete }) _editor.Children.Add(c);
+        foreach (var c in new UIElement[] { _name, _basis, _factor, _rateOverride, _enabled, _perItem, _formula, _warning, delete }) _editor.Children.Add(c);
 
-        _inspector.Children.Add(_title);
-        _inspector.Children.Add(_editor);
-        return _inspector;
+        var panel = new StackPanel { Spacing = 10, Padding = new Thickness(14) };
+        panel.Children.Add(_title);
+        panel.Children.Add(Legend());
+        panel.Children.Add(_editor);
+        return panel;
+    }
+
+    static StackPanel Legend()
+    {
+        var l = new StackPanel { Spacing = 3 };
+        foreach (var m in new[] { MeasureKind.Length, MeasureKind.Area, MeasureKind.Volume })
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            row.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = MeasureBrush(m), VerticalAlignment = VerticalAlignment.Center });
+            row.Children.Add(new TextBlock { Text = $"{MeasureInfo.Colour(m)}: {m.ToString().ToLowerInvariant()} ({MeasureInfo.Unit(m)})", FontSize = 11, Opacity = 0.8 });
+            l.Children.Add(row);
+        }
+        return l;
     }
 
     void Select(LinkRule? rule)
@@ -515,7 +655,15 @@ public sealed class DataModelPage : Page
         {
             _title.Text = $"{LinkTradeRegistry.Display(rule.TargetTrade)} from {LinkTradeRegistry.Display(rule.SourceTrade)}";
             _name.Text = rule.Name;
-            _basis.SelectedItem = LinkBasisInfo.Label(rule.Basis);
+            _basis.Items.Clear();
+            var src = ComponentCatalog.ByKey(rule.SourceTrade);
+            var dst = ComponentCatalog.ByKey(rule.TargetTrade);
+            if (src is not null && dst is not null)
+                foreach (var o in src.Outputs.Where(o => ComponentCatalog.InputFor(dst, o.Measure) is not null))
+                    _basis.Items.Add(o.Name);
+            var label = LinkBasisInfo.Label(rule.Basis);
+            if (!_basis.Items.Contains(label)) _basis.Items.Add(label);
+            _basis.SelectedItem = label;
             _factor.Value = rule.Factor;
             _rateOverride.Value = rule.RateOverride;
             _enabled.IsOn = rule.Enabled;
@@ -528,16 +676,24 @@ public sealed class DataModelPage : Page
 
     void ShowFormula()
     {
+        _warning.Text = "";
         if (_selected is null) { _formula.Text = ""; return; }
         _formula.Text = $"{LinkTradeRegistry.Display(_selected.TargetTrade)} = {_selected.Factor.ToString("0.###", CultureInfo.InvariantCulture)} × "
                       + $"{LinkBasisInfo.Label(_selected.Basis).ToLowerInvariant()} of {LinkTradeRegistry.Display(_selected.SourceTrade)}";
+        var src = ComponentCatalog.ByKey(_selected.SourceTrade);
+        var dst = ComponentCatalog.ByKey(_selected.TargetTrade);
+        var port = src is null ? null : ComponentCatalog.OutputFor(src, LinkBasisInfo.Label(_selected.Basis));
+        if (src is null || dst is null || port is null)
+            _warning.Text = "This link uses a measure the source does not offer.";
+        else if (FlowRules.Check(src, port, dst) is { Ok: false } bad)
+            _warning.Text = "⚠ " + bad.Reason + " Delete this link, or keep it only if you know the estimate needs it.";
     }
 
     void Apply()
     {
         if (_loading || _selected is null) return;
         _selected.Name = _name.Text;
-        _selected.Basis = LinkBasisInfo.Parse(_basis.SelectedItem as string);
+        if (_basis.SelectedItem is string b) _selected.Basis = LinkBasisInfo.Parse(b);
         if (double.IsFinite(_factor.Value) && _factor.Value >= 0) _selected.Factor = _factor.Value;
         _selected.RateOverride = double.IsFinite(_rateOverride.Value) ? Math.Max(0, _rateOverride.Value) : 0;
         _selected.Enabled = _enabled.IsOn;
@@ -567,6 +723,33 @@ public sealed class DataModelPage : Page
     }
 
     // ——— Project ———
+
+    async void ShowRules()
+    {
+        var text = new TextBlock { TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+        var lines = new List<string>
+        {
+            "Colours: yellow is linear (m), blue is area (m²), red is volume (m³). An output connects only to an input of the same colour.",
+            "",
+            "Which main component may feed which:",
+        };
+        foreach (var from in ComponentCatalog.Groups)
+        {
+            var feeds = ComponentCatalog.Groups.Where(to => FlowRules.GroupMayFeed(from.Key, to.Key)).Select(to => to.Display).ToList();
+            lines.Add($"  {from.Display}: " + (feeds.Count == 0 ? "feeds nothing" : string.Join(", ", feeds)));
+        }
+        lines.Add("");
+        lines.Add("Inside a main component only these chains exist: Earthwork to PCC bed; Plastering to Painting; Flooring to Screed and to Skirting.");
+        lines.Add("RCC cannot be joined to masonry; formwork follows the RCC without a link. Nothing feeds RCC.");
+        text.Text = string.Join("\n", lines);
+        await new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Rules of the data model",
+            Content = new ScrollViewer { Content = text, MaxHeight = 420 },
+            CloseButtonText = "Close",
+        }.ShowAsync();
+    }
 
     async void ResetDefaults()
     {
