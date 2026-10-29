@@ -36,7 +36,7 @@ public sealed class DataModelPage : Page
     static bool _shownSeeded;
 
     readonly Canvas _surface = new() { Background = new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)) };
-    readonly TextBlock _status = new() { FontSize = 12, Opacity = 0.85, TextWrapping = TextWrapping.Wrap };
+    readonly TextBlock _status = new() { FontSize = Hcw.Ui.SuiteScale.FontBody, Opacity = 0.85, TextWrapping = TextWrapping.Wrap };
 
     TextBlock _title = null!;
     TextBox _name = null!;
@@ -204,7 +204,7 @@ public sealed class DataModelPage : Page
         foreach (var b in buttons) strip.Children.Add(b);
         var g = new StackPanel { Spacing = 2 };
         g.Children.Add(strip);
-        g.Children.Add(new TextBlock { Text = caption, FontSize = 10, Opacity = 0.6, HorizontalAlignment = HorizontalAlignment.Center });
+        g.Children.Add(new TextBlock { Text = caption, FontSize = Hcw.Ui.SuiteScale.FontCaption, Opacity = 0.6, HorizontalAlignment = HorizontalAlignment.Center });
         return g;
     }
 
@@ -213,8 +213,8 @@ public sealed class DataModelPage : Page
     Button RibbonButton(string label, string glyph, string tip, Action? click)
     {
         var content = new StackPanel { Spacing = 3, HorizontalAlignment = HorizontalAlignment.Center };
-        content.Children.Add(new FontIcon { Glyph = glyph, FontSize = 20, FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets") });
-        content.Children.Add(new TextBlock { Text = label, FontSize = 10, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 84, TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center });
+        content.Children.Add(new FontIcon { Glyph = glyph, FontSize = Hcw.Ui.SuiteScale.Double("SuiteFontIcon", 14) + 4, FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets") });
+        content.Children.Add(new TextBlock { Text = label, FontSize = Hcw.Ui.SuiteScale.FontCaption, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 84, TextAlignment = TextAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center });
         var b = new Button
         {
             Content = content,
@@ -225,8 +225,8 @@ public sealed class DataModelPage : Page
             CornerRadius = new CornerRadius(4),
         };
         if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
-        b.Height = 58;
-        b.MinHeight = 58;
+        b.Height = 52;
+        b.MinHeight = 52;
         ToolTipService.SetToolTip(b, tip);
         AutomationProperties.SetName(b, label);
         if (click is not null) b.Click += (_, _) => click();
@@ -383,7 +383,7 @@ public sealed class DataModelPage : Page
         var label = new TextBlock
         {
             Text = (breaks ? "⚠ " : "") + $"×{r.Factor.ToString("0.###", CultureInfo.InvariantCulture)}",
-            FontSize = 11,
+            FontSize = Hcw.Ui.SuiteScale.FontCaption,
             Foreground = stroke,
             IsHitTestVisible = false,
         };
@@ -641,7 +641,7 @@ public sealed class DataModelPage : Page
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
             row.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = MeasureBrush(m), VerticalAlignment = VerticalAlignment.Center });
-            row.Children.Add(new TextBlock { Text = $"{MeasureInfo.Colour(m)}: {m.ToString().ToLowerInvariant()} ({MeasureInfo.Unit(m)})", FontSize = 11, Opacity = 0.8 });
+            row.Children.Add(new TextBlock { Text = $"{MeasureInfo.Colour(m)}: {m.ToString().ToLowerInvariant()} ({MeasureInfo.Unit(m)})", FontSize = Hcw.Ui.SuiteScale.FontCaption, Opacity = 0.8 });
             l.Children.Add(row);
         }
         return l;
@@ -649,8 +649,8 @@ public sealed class DataModelPage : Page
 
     // ——— Component panel: how the item is specified and measured in a DSR-style schedule ———
 
-    static TextBlock Heading(string text) => new() { Text = text, FontSize = 11, Opacity = 0.6, Margin = new Thickness(0, 6, 0, 0) };
-    static TextBlock Body(string text) => new() { Text = text, FontSize = 12, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
+    static TextBlock Heading(string text) => new() { Text = text, FontSize = Hcw.Ui.SuiteScale.FontCaption, Opacity = 0.6, Margin = new Thickness(0, 6, 0, 0) };
+    static TextBlock Body(string text) => new() { Text = text, FontSize = Hcw.Ui.SuiteScale.FontBody, TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
 
     void ShowComponent(ComponentDef c)
     {

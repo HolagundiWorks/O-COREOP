@@ -12,7 +12,7 @@ One project can be operated as either a **Project Manager / PMC** or a **Contrac
 
 Quantities follow IS 456 / IS 1200–derived conventions — always cross-check against drawings.
 
-**Version:** 1.1.0 · **License:** [AGPL-3.0](LICENSE) (Community) or [Commercial](LICENSING.md) · see also [NOTICE](NOTICE) · [CHANGELOG](CHANGELOG.md) · [ROADMAP](docs/ROADMAP.md)
+**Version:** 1.1.0 · **License:** [AGPL-3.0](LICENSE) (Community) or [Commercial](LICENSING.md) · see also [NOTICE](NOTICE) · [CHANGELOG](CHANGELOG.md) · [ROADMAP](docs/ROADMAP.md) · [UI sizing](docs/UI-SIZING.md) · [Data model](docs/DATA-MODEL-COMPONENTS.md) · [CPWD DSR case study](docs/CPWD-DSR-CASE-STUDY.md)
 
 ## Stack
 

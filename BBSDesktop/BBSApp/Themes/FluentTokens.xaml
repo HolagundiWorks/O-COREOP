@@ -17,40 +17,40 @@
     <x:Double x:Key="SpacingXL">16</x:Double>
     <x:Double x:Key="SpacingXXL">20</x:Double>
     <x:Double x:Key="SpacingXXXL">24</x:Double>
-    <x:Double x:Key="PageMargin">12</x:Double>
-    <x:Double x:Key="SectionGap">8</x:Double>
-    <Thickness x:Key="PagePadding">12,10</Thickness>
-    <Thickness x:Key="CardPadding">12,10</Thickness>
-    <Thickness x:Key="CardPaddingCompact">10,8</Thickness>
+    <x:Double x:Key="PageMargin">16</x:Double>
+    <x:Double x:Key="SectionGap">12</x:Double>
+    <Thickness x:Key="PagePadding">16,12,16,16</Thickness>
+    <Thickness x:Key="CardPadding">12,8</Thickness>
+    <Thickness x:Key="CardPaddingCompact">8,4</Thickness>
 
     <!-- Type scale -->
     <!-- Hits: taskbar/ribbon 35 · dock/primary 44 (PORTAL_CHROME peer) -->
-    <x:Double x:Key="ControlFontSize">13</x:Double>
-    <x:Double x:Key="ControlMinHeight">35</x:Double>
-    <x:Double x:Key="HitTaskbar">35</x:Double>
-    <x:Double x:Key="HitDock">44</x:Double>
-    <x:Double x:Key="BodyFontSize">13</x:Double>
-    <x:Double x:Key="CaptionFontSize">12</x:Double>
+    <x:Double x:Key="ControlFontSize">12</x:Double>
+    <x:Double x:Key="ControlMinHeight">26</x:Double>
+    <x:Double x:Key="HitTaskbar">28</x:Double>
+    <x:Double x:Key="HitDock">32</x:Double>
+    <x:Double x:Key="BodyFontSize">12</x:Double>
+    <x:Double x:Key="CaptionFontSize">11</x:Double>
     <x:Double x:Key="MetaFontSize">11</x:Double>
-    <x:Double x:Key="FormGroupFontSize">12</x:Double>
-    <x:Double x:Key="SectionFontSize">15</x:Double>
-    <x:Double x:Key="TitleFontSize">22</x:Double>
-    <x:Double x:Key="RibbonTabFontSize">13</x:Double>
-    <x:Double x:Key="RibbonCommandCaptionSize">12</x:Double>
-    <x:Double x:Key="RibbonCommandIconSize">15</x:Double>
-    <x:Double x:Key="SuiteIconSize">15</x:Double>
+    <x:Double x:Key="FormGroupFontSize">11</x:Double>
+    <x:Double x:Key="SectionFontSize">13</x:Double>
+    <x:Double x:Key="TitleFontSize">18</x:Double>
+    <x:Double x:Key="RibbonTabFontSize">12</x:Double>
+    <x:Double x:Key="RibbonCommandCaptionSize">11</x:Double>
+    <x:Double x:Key="RibbonCommandIconSize">16</x:Double>
+    <x:Double x:Key="SuiteIconSize">16</x:Double>
     <x:Double x:Key="SuiteIconStroke">1.5</x:Double>
-    <x:Double x:Key="SuiteToolTile">36</x:Double>
+    <x:Double x:Key="SuiteToolTile">26</x:Double>
     <x:Double x:Key="SuiteDividerThickness">1</x:Double>
     <x:Double x:Key="BrandBarHeight">56</x:Double>
 
     <!-- Suite radius 2 px on every chrome control -->
     <CornerRadius x:Key="RadiusNone">0</CornerRadius>
-    <CornerRadius x:Key="RadiusButton">2</CornerRadius>
-    <CornerRadius x:Key="RadiusSmall">2</CornerRadius>
-    <CornerRadius x:Key="RadiusMedium">2</CornerRadius>
-    <CornerRadius x:Key="RadiusLarge">2</CornerRadius>
-    <CornerRadius x:Key="RadiusXLarge">2</CornerRadius>
+    <CornerRadius x:Key="RadiusButton">4</CornerRadius>
+    <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
+    <CornerRadius x:Key="RadiusMedium">4</CornerRadius>
+    <CornerRadius x:Key="RadiusLarge">4</CornerRadius>
+    <CornerRadius x:Key="RadiusXLarge">4</CornerRadius>
 
     <Thickness x:Key="CardStrokeThickness">1</Thickness>
 
@@ -83,7 +83,7 @@
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="LineHeight" Value="28"/>
+        <Setter Property="LineHeight" Value="24"/>
     </Style>
 
     <Style x:Key="PageSubtitleStyle" TargetType="TextBlock">
@@ -93,7 +93,7 @@
         <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
         <Setter Property="Margin" Value="0,2,0,0"/>
-        <Setter Property="LineHeight" Value="18"/>
+        <Setter Property="LineHeight" Value="16"/>
     </Style>
 
     <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
@@ -104,8 +104,8 @@
         <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="NoWrap"/>
         <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-        <Setter Property="Margin" Value="0,0,0,6"/>
-        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="LineHeight" Value="18"/>
     </Style>
 
     <Style x:Key="FormSectionStyle" TargetType="TextBlock">
@@ -113,7 +113,7 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="NoWrap"/>
-        <Setter Property="Margin" Value="0,12,0,4"/>
+        <Setter Property="Margin" Value="0,8,0,4"/>
         <Setter Property="CharacterSpacing" Value="20"/>
     </Style>
 
@@ -122,7 +122,7 @@
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="LineHeight" Value="18"/>
+        <Setter Property="LineHeight" Value="16"/>
     </Style>
 
     <Style x:Key="BodyStrongStyle" TargetType="TextBlock">
@@ -130,7 +130,7 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwInkBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="LineHeight" Value="18"/>
+        <Setter Property="LineHeight" Value="16"/>
     </Style>
 
     <Style x:Key="CaptionSecondaryStyle" TargetType="TextBlock">
@@ -138,7 +138,7 @@
         <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
-        <Setter Property="LineHeight" Value="16"/>
+        <Setter Property="LineHeight" Value="14"/>
     </Style>
 
     <Style x:Key="MetaTextStyle" TargetType="TextBlock">
@@ -163,23 +163,23 @@
     <Style x:Key="RibbonTabStyle" TargetType="ToggleButton">
         <Setter Property="MinHeight" Value="{StaticResource HitTaskbar}"/>
         <Setter Property="Height" Value="{StaticResource HitTaskbar}"/>
-        <Setter Property="Padding" Value="16,0,16,0"/>
+        <Setter Property="Padding" Value="12,0,12,0"/>
         <Setter Property="FontSize" Value="{StaticResource RibbonTabFontSize}"/>
         <Setter Property="FontFamily" Value="{StaticResource HcwFontFamily}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="CornerRadius" Value="2,2,0,0"/>
+        <Setter Property="CornerRadius" Value="4,4,0,0"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{ThemeResource HcwMutedBrush}"/>
-        <Setter Property="Margin" Value="0,0,4,0"/>
+        <Setter Property="Margin" Value="0,0,2,0"/>
         <Setter Property="VerticalAlignment" Value="Bottom"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
 
     <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
-        <Setter Property="MinHeight" Value="44"/>
-        <Setter Property="Padding" Value="16,0"/>
+        <Setter Property="MinHeight" Value="26"/>
+        <Setter Property="Padding" Value="12,2"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -190,7 +190,7 @@
 
     <Style x:Key="SecondaryButtonStyle" TargetType="Button">
         <Setter Property="MinHeight" Value="{StaticResource ControlMinHeight}"/>
-        <Setter Property="Padding" Value="12,4,12,5"/>
+        <Setter Property="Padding" Value="12,2,12,2"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -198,8 +198,8 @@
     </Style>
 
     <Style x:Key="ToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
-        <Setter Property="MinHeight" Value="35"/>
-        <Setter Property="Padding" Value="10,2,10,3"/>
+        <Setter Property="MinHeight" Value="22"/>
+        <Setter Property="Padding" Value="8,2,8,2"/>
         <Setter Property="FontSize" Value="{StaticResource CaptionFontSize}"/>
     </Style>
 
@@ -213,7 +213,7 @@
     <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
         <Setter Property="MinHeight" Value="{StaticResource ControlMinHeight}"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
-        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Padding" Value="8,2"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
     </Style>
 
@@ -226,20 +226,20 @@
     <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
         <Setter Property="MinHeight" Value="{StaticResource ControlMinHeight}"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
-        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Padding" Value="8,2"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}"/>
     </Style>
 
     <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DefaultComboBoxItemStyle}">
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
-        <Setter Property="Padding" Value="10,6"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="MinHeight" Value="22"/>
     </Style>
 
     <Style TargetType="MenuFlyoutItem" BasedOn="{StaticResource DefaultMenuFlyoutItemStyle}">
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
-        <Setter Property="Padding" Value="12,8"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="MinHeight" Value="22"/>
     </Style>
 
     <Style TargetType="MenuFlyoutPresenter" BasedOn="{StaticResource DefaultMenuFlyoutPresenterStyle}">
@@ -249,7 +249,7 @@
     <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
         <Setter Property="MinHeight" Value="{StaticResource ControlMinHeight}"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
-        <Setter Property="Padding" Value="12,4,12,5"/>
+        <Setter Property="Padding" Value="12,2,12,2"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusButton}"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -266,7 +266,7 @@
     </Style>
 
     <Style TargetType="MenuBar">
-        <Setter Property="Height" Value="28"/>
+        <Setter Property="Height" Value="24"/>
         <Setter Property="FontSize" Value="{StaticResource ControlFontSize}"/>
     </Style>
 

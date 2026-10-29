@@ -36,8 +36,8 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <!-- Scale comes from Hcw.Ui SuiteStyles. Do not redefine here. -->
-            <CornerRadius x:Key="ComboBoxItemCornerRadius">2</CornerRadius>
-            <CornerRadius x:Key="MenuFlyoutItemCornerRadius">2</CornerRadius>
+            <CornerRadius x:Key="ComboBoxItemCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="MenuFlyoutItemCornerRadius">4</CornerRadius>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -112,12 +112,12 @@ public sealed class TakeoffPage : Page
     static void StyleAsTextTool(Button b)
     {
         var label = b.Content as string ?? "";
-        b.Content = new TextBlock { Text = label, FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis };
-        b.MinHeight = 26;
+        b.Content = new TextBlock { Text = label, FontSize = Hcw.Ui.SuiteScale.FontBody, TextTrimming = TextTrimming.CharacterEllipsis };
+        b.MinHeight = Hcw.Ui.SuiteScale.ControlMinHeight;
         b.Padding = new Thickness(12, 0, 12, 0);
         b.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         b.BorderThickness = new Thickness(0);
-        b.CornerRadius = new CornerRadius(4);
+        b.CornerRadius = Hcw.Ui.SuiteScale.CornerControl;
         b.VerticalAlignment = VerticalAlignment.Center;
         if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
         AutomationProperties.SetName(b, label);

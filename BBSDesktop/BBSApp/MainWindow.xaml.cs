@@ -330,7 +330,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     // Ribbon tabs are drawn in code. Heights: the open tab is one pixel taller than the others so that it covers the
     // line under its ribbon and so joins whatever lies below (the sub ribbon for a section, the canvas for a page).
-    private const double RibbonTabHeight = 30;
+    private static double RibbonTabHeight => Hcw.Ui.SuiteScale.TabHeight;
     private const double RibbonLine = 1;
 
     /// <summary>
@@ -376,20 +376,20 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Content = new TextBlock
             {
                 Text = text,
-                FontSize = 13,
+                FontSize = Hcw.Ui.SuiteScale.FontBody,
                 FontWeight = open ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = open ? ink : muted,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 VerticalAlignment = VerticalAlignment.Center,
             },
             Height = open ? RibbonTabHeight + RibbonLine : RibbonTabHeight,
-            Padding = new Thickness(14, 0, 14, 0),
+            Padding = new Thickness(12, 0, 12, 0),
             Margin = new Thickness(0, 0, 2, 0),
             VerticalAlignment = VerticalAlignment.Top,
             Background = open ? joinsBrush : new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderBrush = edge,
             BorderThickness = open ? new Thickness(1, 1, 1, 0) : new Thickness(0),
-            CornerRadius = new CornerRadius(4, 4, 0, 0),
+            CornerRadius = new CornerRadius(Hcw.Ui.SuiteScale.CornerControl.TopLeft, Hcw.Ui.SuiteScale.CornerControl.TopLeft, 0, 0),
         };
         if (open)
         {
