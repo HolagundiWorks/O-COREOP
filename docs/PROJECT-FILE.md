@@ -9,16 +9,22 @@ An O-CoreOp project is a ShilpiDB file (`.vdb`). It sits beside the drawing (`ho
 - **File > New project** starts an empty project; Save as picks the `.vdb`.
 - The File menu no longer has Open company, Company projects or Close company.
 
+## Live: O-Draft runs the server
+
+While a saved drawing is active, O-Draft runs the ShilpiDB server on that file: `shilpid` on `127.0.0.1:7420` (autosave every 2 s) and the `shilpi-http` gateway on `127.0.0.1:7421`. 7420 is where `takeoff.record` records by default, so the take-off toolbars write into the project's own file with no setting. When the active drawing changes O-Draft saves the file and serves the new one; closing O-Draft saves and stops the server. It does not touch a server it did not start: if something else already answers on those ports, nothing is served, and the pointer has no `server`.
+
+While `server` is in the pointer and answers, **O-CoreOp does not touch the file**. It reads the project and the take-off through the gateway, saves the project through it (replace the kind-`0x60` records, then `POST /save`), and checks the record count every two seconds: when O-Draft records, updates or removes a take-off row, the Take-off page refreshes at once and a message says so. With no server (O-Draft closed, ShilpiDB not installed, ports taken) O-CoreOp reads and writes the file directly, as below.
+
 ## Active project (O-Draft to O-CoreOp)
 
 O-Draft keeps `%LOCALAPPDATA%\OSAS\active-project.json` current: it writes it when a saved drawing is opened, saved under a name, or its tab is chosen, and deletes it when no saved drawing is active or O-Draft closes.
 
 ```json
 { "format": "osas-active-project", "version": 1, "app": "O-Draft",
-  "drawing": "C:\\p\\house.dwg", "shilpidb": "C:\\p\\house.takeoff.vdb", "updated_utc": "2026-10-29T09:00:00Z" }
+  "drawing": "C:\\p\\house.dwg", "shilpidb": "C:\\p\\house.takeoff.vdb", "server": "http://127.0.0.1:7421", "updated_utc": "2026-10-29T09:00:00Z" }
 ```
 
-`shilpidb` is where O-Draft's `takeoff.record` writes with `file: true`: beside the drawing, extension replaced by `takeoff.vdb`. O-CoreOp reads the pointer every two seconds (`ActiveProject`, `Office.Shared`). A pointer without a rooted `.vdb` path, or in another format, is ignored.
+`server` is the gateway while O-Draft serves the file, else null; it must be an `http` address on this computer. `shilpidb` is where O-Draft's `takeoff.record` writes with `file: true`: beside the drawing, extension replaced by `takeoff.vdb`. O-CoreOp reads the pointer every two seconds (`ActiveProject`, `Office.Shared`). A pointer without a rooted `.vdb` path, or in another format, is ignored.
 
 ## What is in the file
 
@@ -36,7 +42,8 @@ Measuring happens in O-Draft, with its take-off toolbars. The Take-off page list
 
 ## Limits
 
-- **One writer at a time.** The file is read and written directly, with no server, so O-CoreOp saving and O-Draft recording at the same instant can lose one of the two writes (each save re-reads the file first, which makes the window a few milliseconds, but it is not locked). Save in O-CoreOp, record in O-Draft, one after the other.
+- **Served, one writer: the server.** Both apps go through it, so they can work at the same time. Direct file access (no server) remains for O-CoreOp alone; if O-Draft then starts serving the same file, a save made in the instant before can be overwritten by the server's first autosave, so open O-Draft first.
+- An old shared take-off server left running on 7420/7421 (for the global `takeoff.vdb`) blocks O-Draft from serving the project; stop it (`shilpid`, `shilpi-http` in Task Manager) and reopen the drawing.
 - The shared take-off server and its page (start server, server address) are gone from the Take-off page; the code (`ShilpiTakeoffService`) still reads one.
 - A project's annotated drawings are still kept beside the project file in an `.assets` folder, not inside it.
-- Not run end to end against a live O-Draft: the pointer was checked by writing it by hand, and O-Draft's side by its unit test and build.
+- Checked with a hand-started `shilpid` and gateway standing in for O-Draft (open, save through the gateway, a recorded row raising the message in O-CoreOp). O-Draft's own server start (`ProjectServer`) builds but was not run.
