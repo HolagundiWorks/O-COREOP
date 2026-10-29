@@ -95,7 +95,8 @@ public sealed class TakeoffPage : Page
             UpdateMode(); ShowStored(); _poll.Start();
             await RefreshAsync();
         };
-        Unloaded += (_, _) => _poll.Stop();
+        Unloaded += (_, _) => { _poll.Stop(); ServedProject.Changed -= OnServedChanged; };
+        Loaded += (_, _) => ServedProject.Changed += OnServedChanged;
     }
 
     /// <summary>
@@ -145,9 +146,16 @@ public sealed class TakeoffPage : Page
     /// <summary>The take-off is read from the project's own ShilpiDB file, the one beside the drawing that O-Draft records into.</summary>
     static string? ProjectFile => ProjectFiles.IsShilpi(ProjectStore.Current.FilePath) ? ProjectStore.Current.FilePath : null;
 
-    TakeoffSource? Source() => ProjectFile is { } path && File.Exists(path) ? new TakeoffSource.VdbFile(path) : null;
+    /// <summary>O-Draft's server when it serves the project file (live), else the file itself.</summary>
+    TakeoffSource? Source() =>
+        ProjectFile is not { } path ? null
+        : ServedProject.GatewayFor(path) is { } url ? new TakeoffSource.Gateway(url)
+        : File.Exists(path) ? new TakeoffSource.VdbFile(path) : null;
 
     DateTime _stamp = DateTime.MinValue;
+
+    // O-Draft recorded something in the served file: read the list again now, not at the next poll.
+    void OnServedChanged() => DispatcherQueue.TryEnqueue(async () => { if (!_busy) { UpdateMode(); await RefreshAsync(quiet: true); } });
 
     ShilpiDrawing? Selected => (_drawings.SelectedItem as ListViewItem)?.Tag as ShilpiDrawing;
 
@@ -157,6 +165,7 @@ public sealed class TakeoffPage : Page
         var p = ProjectFile;
         _file.Text = p is null
             ? "No ShilpiDB project is open. Use File > Open ShilpiDB project (or File > Open O-Draft's project) to read a take-off."
+            : ServedProject.GatewayFor(p) is not null ? "Live: O-Draft is serving " + p + ". A take-off it records appears here at once."
             : File.Exists(p) ? "Reading the take-off from " + p : p + " does not exist yet: record the take-off in O-Draft, then Refresh.";
         UpdateButtons();
     }

@@ -33,4 +33,20 @@ public class ActiveProjectTests
     [Fact]
     public void Paths_are_compared_without_regard_to_case() =>
         Assert.True(ActiveProject.SamePath(@"C:\P\House.vdb", @"c:\p\house.vdb"));
+
+    [Theory]
+    [InlineData("http://127.0.0.1:7421", "http://127.0.0.1:7421")]
+    [InlineData("http://localhost:7421/", "http://localhost:7421")]
+    [InlineData("http://192.168.1.5:7421", null)]       // a pointer must not send the project to another computer
+    [InlineData("https://127.0.0.1:7421", null)]
+    [InlineData("not a url", null)]
+    public void The_server_must_be_on_this_computer(string url, string? expected) => Assert.Equal(expected, ActiveProject.LoopbackUrl(url));
+
+    [Fact]
+    public void A_pointer_with_a_server_carries_it_and_one_without_has_none()
+    {
+        var with = ActiveProject.Parse(Good.Replace("\"updated_utc\"", "\"server\":\"http://127.0.0.1:7421\",\"updated_utc\""))!;
+        Assert.Equal("http://127.0.0.1:7421", with.Server);
+        Assert.Null(ActiveProject.Parse(Good)!.Server);
+    }
 }

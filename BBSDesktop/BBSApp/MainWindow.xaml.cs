@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
 using Office.Shared;
+using BBSApp.Services.Shilpi;
 using BBSApp.Models;
 using BBSApp.Services;
 using BBSApp.Services.Ai;
@@ -76,6 +77,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Office.Ai.LocalLlmHost.Shutdown();
         };
         _aiCore = Office.Ai.AiCoreListener.TryStart();
+        ServedProject.Changed += () => DispatcherQueue.TryEnqueue(() => AppNotify.Info("Take-off", "O-Draft updated the take-off. Open Take-off to review and import it."));
         StartActiveProjectWatch();
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
@@ -1119,6 +1121,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     private void CheckActiveProject()
     {
+        _ = ServedProject.PollAsync(ProjectStore.Current.FilePath);
         DateTime stamp;
         try { stamp = File.Exists(ActiveProject.PointerPath) ? File.GetLastWriteTimeUtc(ActiveProject.PointerPath) : DateTime.MinValue; }
         catch { return; }

@@ -6,7 +6,8 @@ using System.Text.Json;
 namespace Office.Shared;
 
 /// <summary>The drawing O-Draft has open and the ShilpiDB file that goes with it.</summary>
-public sealed record ActiveProjectInfo(string App, string Drawing, string ShilpiDb, DateTime UpdatedUtc);
+/// <param name="Server">The shilpi-http gateway (loopback only) while O-Draft serves <paramref name="ShilpiDb"/>, else null.</param>
+public sealed record ActiveProjectInfo(string App, string Drawing, string ShilpiDb, DateTime UpdatedUtc, string? Server = null);
 
 /// <summary>
 /// The pointer file O-Draft keeps current, <c>%LOCALAPPDATA%\OSAS\active-project.json</c>, so O-CoreOp can use the same ShilpiDB file as the
@@ -38,10 +39,15 @@ public static class ActiveProject
             DateTime when = r.TryGetProperty("updated_utc", out var u) && u.ValueKind == JsonValueKind.String
                             && DateTime.TryParse(u.GetString(), null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var t)
                 ? t : DateTime.MinValue;
-            return new ActiveProjectInfo(app, drawing, db, when);
+            string? server = r.TryGetProperty("server", out var sv) && sv.ValueKind == JsonValueKind.String ? LoopbackUrl(sv.GetString()) : null;
+            return new ActiveProjectInfo(app, drawing, db, when, server);
         }
         catch (JsonException) { return null; }
     }
+
+    /// <summary>The address if it is an http URL on this computer (a pointer must not send the project to another host), else null.</summary>
+    public static string? LoopbackUrl(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttp && u.IsLoopback ? u.GetLeftPart(UriPartial.Authority) : null;
 
     /// <summary>The pointer as it is now, or null when there is none or it names no usable file.</summary>
     public static ActiveProjectInfo? Read()

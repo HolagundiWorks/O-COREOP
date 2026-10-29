@@ -343,6 +343,36 @@ public sealed class ShilpiGatewayClient : IDisposable
         return results.Where(r => r is not null).Select(r => r!).ToList();
     }
 
+    /// <summary>How many records the database holds (a cheap way to notice that something was recorded).</summary>
+    public async Task<long> CountAsync(CancellationToken ct = default)
+    {
+        using var res = await _http.GetAsync("stats", ct).ConfigureAwait(false);
+        await EnsureOk(res).ConfigureAwait(false);
+        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
+        return doc.RootElement.GetProperty("count").GetInt64();
+    }
+
+    /// <summary>Insert or replace a record (zero-size box).</summary>
+    public async Task PutAsync(ulong id, byte[] payload, CancellationToken ct = default)
+    {
+        using var content = new ByteArrayContent(payload);
+        using var res = await _http.PutAsync($"records/{id.ToString(CultureInfo.InvariantCulture)}?minX=0&minY=0&maxX=0&maxY=0", content, ct).ConfigureAwait(false);
+        await EnsureOk(res).ConfigureAwait(false);
+    }
+
+    public async Task DeleteAsync(ulong id, CancellationToken ct = default)
+    {
+        using var res = await _http.DeleteAsync($"records/{id.ToString(CultureInfo.InvariantCulture)}", ct).ConfigureAwait(false);
+        if (res.StatusCode != HttpStatusCode.NotFound) await EnsureOk(res).ConfigureAwait(false);
+    }
+
+    /// <summary>Flush the server to its file.</summary>
+    public async Task SaveAsync(CancellationToken ct = default)
+    {
+        using var res = await _http.PostAsync("save", new StringContent(""), ct).ConfigureAwait(false);
+        await EnsureOk(res).ConfigureAwait(false);
+    }
+
     static async Task EnsureOk(HttpResponseMessage res)
     {
         if (res.IsSuccessStatusCode) return;

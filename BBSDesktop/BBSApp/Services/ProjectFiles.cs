@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
 using System.Text.Json.Nodes;
+using BBSApp.Services.Shilpi;
 using Office.Shared;
 
 namespace BBSApp.Services;
@@ -35,12 +36,16 @@ public static class ProjectFiles
         }
         try
         {
-            if (!File.Exists(path)) return new Opened(null, true);     // O-Draft has not recorded into it yet: a new project that Save creates the file for
-            var json = ShilpiProjectFile.GetProject(ShilpiProjectFile.Parse(File.ReadAllBytes(path)));
+            // O-Draft serves the file: ask the server, the file on disk may be a few seconds behind it
+            var gateway = ServedProject.GatewayFor(path);
+            if (gateway is null && !File.Exists(path)) return new Opened(null, true);   // not recorded yet: a new project that Save creates the file for
+            var json = gateway is not null
+                ? ServedProject.ReadProject(gateway)
+                : ShilpiProjectFile.GetProject(ShilpiProjectFile.Parse(File.ReadAllBytes(path)));
             if (json is null) return new Opened(null, true);
             return JsonNode.Parse(json) is JsonObject root ? new Opened(root, false) : throw new InvalidDataException("The project in this file is not a JSON object.");
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException or HttpRequestException)
         {
             error = ex.Message;
             return null;
@@ -53,10 +58,12 @@ public static class ProjectFiles
         error = null;
         try
         {
-            ShilpiProjectFile.SaveProject(path, project.ToJsonString());
+            // While O-Draft serves the file the server owns it (a write to the file would be overwritten at its next autosave): save through it
+            if (ServedProject.GatewayFor(path) is { } gateway) ServedProject.SaveProject(gateway, project.ToJsonString());
+            else ShilpiProjectFile.SaveProject(path, project.ToJsonString());
             return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException)
         {
             error = ex.Message;
             return false;
