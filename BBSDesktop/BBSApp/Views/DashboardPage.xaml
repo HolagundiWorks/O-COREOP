@@ -9,7 +9,7 @@
                     Padding="{StaticResource PagePadding}"
                     Transitions="{StaticResource PageContentTransitions}">
 
-            <!-- Soft brief — brand -->
+            <!-- Soft brief â€” brand -->
             <Grid>
                 <Border CornerRadius="8" Background="{ThemeResource HcwNeuDarkBrush}" Margin="6,6,0,0"/>
                 <Border CornerRadius="8" Background="{ThemeResource HcwNeuLightBrush}" Margin="0,0,6,6"/>
@@ -62,7 +62,7 @@
                 <StackPanel Spacing="6">
                     <TextBlock Text="Take-off" Style="{StaticResource SectionHeaderStyle}" Margin="0"/>
                     <TextBlock Style="{StaticResource CaptionSecondaryStyle}" TextWrapping="Wrap"
-                               Text="Project ? Take-off (O-Draft): drawings are measured in O-Draft and recorded in ShilpiDB; read the take-off here, review, then import. Formwork is auto from RCC. Yields and beam–slab deduct are under Settings. Open Quantities for a concrete / formwork / steel preview."/>
+                               Text="Project â€º Take-off (O-Draft): drawings are measured in O-Draft and recorded in ShilpiDB; read the take-off here, review, then import. Formwork is auto from RCC. Yields and beamâ€“slab deduct are under Settings. Open Quantities for a concrete / formwork / steel preview."/>
                 </StackPanel>
             </Border>
 

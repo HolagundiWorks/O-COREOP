@@ -8,7 +8,7 @@
     <!--
       Shell, the same structure as AOS:
       Caption (OS drag) ? document title only
-      MenuBar row ? File · Edit · Help
+      MenuBar row ? File Â· Edit Â· Help
       Left navigation pane ? the sections, grouped by job
       Work area ? page line, page, status strip, floating widgets
     -->
@@ -18,7 +18,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Caption — OS drag only (no MenuBar, no second brand name) -->
+        <!-- Caption â€” OS drag only (no MenuBar, no second brand name) -->
         <Grid x:Name="AppTitleBar" Grid.Row="0" Height="32" Padding="12,0,140,0"
               Background="{ThemeResource HcwFogBrush}">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
@@ -40,7 +40,7 @@
             </StackPanel>
         </Grid>
 
-        <!-- Shell at 1× (kept so a scale can be applied again) — layout size compensated in ScaleViewport_SizeChanged -->
+        <!-- Shell at 1Ã— (kept so a scale can be applied again) â€” layout size compensated in ScaleViewport_SizeChanged -->
         <Grid x:Name="ScaleViewport" Grid.Row="1" SizeChanged="ScaleViewport_SizeChanged"
               Background="{ThemeResource HcwFogBrush}">
             <Grid x:Name="ScaleHost" HorizontalAlignment="Left" VerticalAlignment="Top"
@@ -54,7 +54,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-        <!-- Suite menu strip — flat like O-Studio (File · Edit · Help). -->
+        <!-- Suite menu strip â€” flat like O-Studio (File Â· Edit Â· Help). -->
         <MenuBar x:Name="AppMenuBar" Grid.Row="0" Height="36" VerticalAlignment="Center"
                  Background="{ThemeResource HcwSoftBrush}"
                  Foreground="{ThemeResource HcwInkBrush}"
@@ -62,12 +62,12 @@
                  AutomationProperties.Name="Menu bar">
             <!-- Company first ? work ? Exit (same File shape as O-Studio / OSAS). -->
             <MenuBarItem Title="File" AccessKey="F">
-                <MenuFlyoutItem Text="Open company from OSAS…" Click="CompanyOpen_Click" AccessKey="O">
+                <MenuFlyoutItem Text="Open company from OSASâ€¦" Click="CompanyOpen_Click" AccessKey="O">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Company projects…" Click="CompanyProjects_Click">
+                <MenuFlyoutItem Text="Company projectsâ€¦" Click="CompanyProjects_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8F1;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -83,7 +83,7 @@
                         <FontIcon Glyph="&#xE710;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Open…" Click="Open_Click">
+                <MenuFlyoutItem Text="Openâ€¦" Click="Open_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8E5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -93,28 +93,28 @@
                         <FontIcon Glyph="&#xE74E;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Save as…" Click="SaveAs_Click">
+                <MenuFlyoutItem Text="Save asâ€¦" Click="SaveAs_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE792;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Save to company file…" Click="CompanySaveHere_Click">
+                <MenuFlyoutItem Text="Save to company fileâ€¦" Click="CompanySaveHere_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8B7;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff">
+                <MenuFlyoutItem Text="Take-off from ShilpiDBâ€¦" Click="NavMenu_Click" Tag="takeoff">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE9F9;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Import from CAD…" Click="ImportCad_Click">
+                <MenuFlyoutItem Text="Import from CADâ€¦" Click="ImportCad_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8B5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Export for CAD…" Click="ExportCad_Click">
+                <MenuFlyoutItem Text="Export for CADâ€¦" Click="ExportCad_Click">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xEDE1;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -132,24 +132,24 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
             <MenuBarItem Title="Edit" AccessKey="E">
-                <MenuFlyoutItem Text="Project settings…" Click="NavMenu_Click" Tag="settings_project">
+                <MenuFlyoutItem Text="Project settingsâ€¦" Click="NavMenu_Click" Tag="settings_project">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE713;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Engineering settings…" Click="NavMenu_Click" Tag="settings_engineering">
+                <MenuFlyoutItem Text="Engineering settingsâ€¦" Click="NavMenu_Click" Tag="settings_engineering">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE90F;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Cost percentages…" Click="NavMenu_Click" Tag="settings_cost">
+                <MenuFlyoutItem Text="Cost percentagesâ€¦" Click="NavMenu_Click" Tag="settings_cost">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE1D0;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                             </MenuBarItem>
             <MenuBarItem Title="Help" AccessKey="H">
-                <MenuFlyoutItem Text="Check for updates…" Click="CheckForUpdates_Click" AccessKey="U">
+                <MenuFlyoutItem Text="Check for updatesâ€¦" Click="CheckForUpdates_Click" AccessKey="U">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE895;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -197,9 +197,9 @@
                     <TextBlock x:Name="RibbonPageLabel" Text="Dashboard" AutomationProperties.HeadingLevel="Level1" FontSize="16" FontWeight="SemiBold"
                                FontFamily="{StaticResource HcwFontFamily}" Foreground="{ThemeResource HcwInkBrush}"
                                VerticalAlignment="Center"/>
-                    <TextBlock x:Name="PersonaPageSep" Text="·" Foreground="{ThemeResource HcwMutedBrush}" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="PersonaPageSep" Text="Â·" Foreground="{ThemeResource HcwMutedBrush}" VerticalAlignment="Center"/>
                     <TextBlock x:Name="PersonaBadgeText" FontSize="12" Foreground="{ThemeResource HcwMutedBrush}"
-                               VerticalAlignment="Center" ToolTipService.ToolTip="Active persona — Edit ? Project settings"/>
+                               VerticalAlignment="Center" ToolTipService.ToolTip="Active persona â€” Edit â€º Project settings"/>
                 </StackPanel>
 
                 <Frame x:Name="ContentFrame" Grid.Row="2" Margin="20,0,20,12">
@@ -222,7 +222,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
-                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
+                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator Â· Ask" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE1D0;" FontSize="{StaticResource SuiteIconSize}" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                         </Button>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -230,16 +230,16 @@
                             <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
                                     Click="CompanyBadge_Click"
                                     AutomationProperties.Name="Company file"
-                                    ToolTipService.ToolTip="The company file shared with O-Studio ? open its projects">
+                                    ToolTipService.ToolTip="The company file shared with O-Studio â€” open its projects">
                                 <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
                                            Foreground="{ThemeResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                           Text="Company · not open"/>
+                                           Text="Company Â· not open"/>
                             </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-            <!-- Soft toast — clears taskbar + clock -->
+            <!-- Soft toast â€” clears taskbar + clock -->
             <Grid x:Name="ToastHost" Grid.Row="1" Margin="24,0,24,8" HorizontalAlignment="Stretch"
                   MaxWidth="400" MinWidth="0"
                   Visibility="Collapsed"
@@ -262,7 +262,7 @@
                 </Border>
             </Grid>
 
-            <!-- Calculator panel — left of clock, above taskbar -->
+            <!-- Calculator panel â€” left of clock, above taskbar -->
             <Grid x:Name="FloatingCalcPanel" Grid.Row="3" Margin="24,0,24,8"
                   MaxWidth="480" Visibility="Collapsed" HorizontalAlignment="Left"
                   AutomationProperties.Name="Floating calculator">
@@ -271,7 +271,7 @@
                 <Border CornerRadius="{StaticResource SuiteCornerControl}" Background="{ThemeResource HcwSoftBrush}" Padding="12">
                     <StackPanel Spacing="{StaticResource SuiteStackGap}">
                         <Grid>
-                            <TextBlock Text="Calculator · Ask"
+                            <TextBlock Text="Calculator Â· Ask"
                                        FontSize="{StaticResource SuiteFontBody}" FontWeight="SemiBold"
                                        FontFamily="{StaticResource HcwFontFamily}"
                                        Foreground="{ThemeResource HcwInkBrush}"
@@ -310,12 +310,12 @@
                                           Width="20" Height="20" HorizontalAlignment="Center"/>
                         </Grid>
                         <TextBlock FontSize="11" Foreground="{ThemeResource HcwMutedBrush}"
-                                   Text="Enter to run · Esc to clear"/>
+                                   Text="Enter to run Â· Esc to clear"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- Hidden FAB peer — code still references CalcFab for focus -->
+            <!-- Hidden FAB peer â€” code still references CalcFab for focus -->
             <Button x:Name="CalcFab" Visibility="Collapsed" Click="CalcFab_Click"/>
             </Grid>
         </Grid>
