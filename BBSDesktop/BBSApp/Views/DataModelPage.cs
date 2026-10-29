@@ -183,17 +183,20 @@ public sealed class DataModelPage : Page
         if (icon is FrameworkElement fe) { fe.Width = 22; fe.Height = 22; }
         var content = new StackPanel { Spacing = 3, HorizontalAlignment = HorizontalAlignment.Center };
         content.Children.Add(new Border { Height = 24, HorizontalAlignment = HorizontalAlignment.Center, Child = glyphOrIcon });
-        content.Children.Add(new TextBlock { Text = label, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 74, HorizontalAlignment = HorizontalAlignment.Center });
+        content.Children.Add(new TextBlock { Text = label, FontSize = 10, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 60, HorizontalAlignment = HorizontalAlignment.Center });
         var b = new Button
         {
             Content = content,
-            Width = 80,
+            Width = 66,
             Padding = new Thickness(4, 6, 4, 6),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderThickness = new Thickness(0),
             CornerRadius = new CornerRadius(4),
         };
         if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
+        b.Height = 58;
+        b.MinHeight = 58;
+        b.VerticalContentAlignment = VerticalAlignment.Center;
         ToolTipService.SetToolTip(b, tip);
         AutomationProperties.SetName(b, label);
         if (click is not null) b.Click += (_, _) => click();
