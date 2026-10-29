@@ -47,16 +47,19 @@
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="180"/>
+                    <ColumnDefinition Width="150"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="100"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <ComboBox x:Name="ItemCombo" Header="Item code" HorizontalAlignment="Stretch"
                           SelectionChanged="ItemCombo_SelectionChanged"/>
-                <TextBox x:Name="EditDescBox" Grid.Column="1" Header="Description"/>
-                <NumberBox x:Name="EditRateBox" Grid.Column="2" Header="Rate"
+                <TextBox x:Name="EditDsrBox" Grid.Column="1" Header="DSR item no." PlaceholderText="as in your schedule"
+                         AutomationProperties.Name="DSR item number"/>
+                <TextBox x:Name="EditDescBox" Grid.Column="2" Header="Description"/>
+                <NumberBox x:Name="EditRateBox" Grid.Column="3" Header="Rate"
                            SpinButtonPlacementMode="Compact" Minimum="0"/>
-                <Button Grid.Column="3" Content="Apply" VerticalAlignment="Bottom"
+                <Button Grid.Column="4" Content="Apply" VerticalAlignment="Bottom"
                         Style="{StaticResource SecondaryButtonStyle}" Click="ApplyRow_Click"
                         Margin="0,0,0,4"/>
             </Grid>

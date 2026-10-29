@@ -703,7 +703,7 @@ public sealed class DataModelPage : Page
         if (version is null) return $"{code}: no rate book is loaded.";
         var index = RateBookStore.Current.IndexByCode(version);
         return index.TryGetValue(code, out var ri)
-            ? $"{code}: {ri.Description} — ₹{ri.Rate.ToString("0.##", CultureInfo.InvariantCulture)} per {ri.Unit} (“{version.Name}”)."
+            ? $"{code}{(string.IsNullOrWhiteSpace(ri.DsrItemNo) ? "" : " (DSR item " + ri.DsrItemNo + ")")}: {ri.Description} — ₹{ri.Rate.ToString("0.##", CultureInfo.InvariantCulture)} per {ri.Unit} (“{version.Name}”)."
             : $"{code}: not in “{version.Name}”. Add it to the rate book, or import the DSR item and give it this code.";
     }
 

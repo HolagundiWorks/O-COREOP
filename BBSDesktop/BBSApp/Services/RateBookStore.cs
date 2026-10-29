@@ -16,6 +16,8 @@ public sealed class RateItem
     public string Description { get; set; } = "";
     public string Unit { get; set; } = "";
     public double Rate { get; set; }
+    /// <summary>The item number in the schedule this rate comes from (a DSR item number such as the user's copy prints it); empty when not set. Printed on the estimate.</summary>
+    public string DsrItemNo { get; set; } = "";
 }
 
 public sealed class RateBookVersion
@@ -97,7 +99,8 @@ public sealed class RateBookStore
                             Category = io["category"]?.GetValue<string>() ?? "",
                             Description = io["description"]?.GetValue<string>() ?? "",
                             Unit = io["unit"]?.GetValue<string>() ?? "",
-                            Rate = io["rate"]?.GetValue<double>() ?? 0
+                            Rate = io["rate"]?.GetValue<double>() ?? 0,
+                            DsrItemNo = io["dsr_item_no"]?.GetValue<string>() ?? ""
                         });
                     }
                 }
@@ -126,7 +129,8 @@ public sealed class RateBookStore
                     ["category"] = it.Category,
                     ["description"] = it.Description,
                     ["unit"] = it.Unit,
-                    ["rate"] = it.Rate
+                    ["rate"] = it.Rate,
+                    ["dsr_item_no"] = it.DsrItemNo
                 });
             }
             arr.Add(new JsonObject
@@ -191,7 +195,8 @@ public sealed class RateBookStore
         Category = i.Category,
         Description = i.Description,
         Unit = i.Unit,
-        Rate = i.Rate
+        Rate = i.Rate,
+        DsrItemNo = i.DsrItemNo
     };
 
     public static RateBookVersion CreateSeedVersion(string id, string name)

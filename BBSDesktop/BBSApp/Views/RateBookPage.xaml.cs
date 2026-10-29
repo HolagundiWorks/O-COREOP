@@ -84,10 +84,10 @@ public sealed partial class RateBookPage : Page
     private void RefreshTable()
     {
         _table.SetTable(
-            new[] { "Code", "Category", "Description", "Unit", "Rate" },
+            new[] { "Code", "DSR item no.", "Category", "Description", "Unit", "Rate" },
             _items.Select(i => (IReadOnlyList<string>)new[]
             {
-                i.Code, i.Category, i.Description, i.Unit,
+                i.Code, string.IsNullOrWhiteSpace(i.DsrItemNo) ? "—" : i.DsrItemNo, i.Category, i.Description, i.Unit,
                 i.Rate.ToString("0.##", CultureInfo.InvariantCulture)
             }).ToList());
     }
@@ -116,11 +116,13 @@ public sealed partial class RateBookPage : Page
         if (_selectedIndex < 0 || _selectedIndex >= _items.Count)
         {
             EditDescBox.Text = "";
+            EditDsrBox.Text = "";
             EditRateBox.Value = 0;
             return;
         }
         var it = _items[_selectedIndex];
         EditDescBox.Text = it.Description;
+        EditDsrBox.Text = it.DsrItemNo;
         EditRateBox.Value = it.Rate;
     }
 
@@ -129,6 +131,7 @@ public sealed partial class RateBookPage : Page
         if (_selectedIndex < 0 || _selectedIndex >= _items.Count) return;
         var it = _items[_selectedIndex];
         it.Description = EditDescBox.Text?.Trim() ?? it.Description;
+        it.DsrItemNo = EditDsrBox.Text?.Trim() ?? "";
         it.Rate = double.IsNaN(EditRateBox.Value) ? 0 : EditRateBox.Value;
         RefreshTable();
         Info.Title = "Updated";
@@ -169,6 +172,7 @@ public sealed partial class RateBookPage : Page
         if (_selectedIndex >= 0 && _selectedIndex < _items.Count)
         {
             _items[_selectedIndex].Description = EditDescBox.Text?.Trim() ?? _items[_selectedIndex].Description;
+            _items[_selectedIndex].DsrItemNo = EditDsrBox.Text?.Trim() ?? "";
             _items[_selectedIndex].Rate = double.IsNaN(EditRateBox.Value) ? 0 : EditRateBox.Value;
         }
 
@@ -199,6 +203,7 @@ public sealed partial class RateBookPage : Page
         Category = i.Category,
         Description = i.Description,
         Unit = i.Unit,
-        Rate = i.Rate
+        Rate = i.Rate,
+        DsrItemNo = i.DsrItemNo
     };
 }

@@ -31,6 +31,7 @@ Habits of DSR wording that matter for estimating: RCC items are for **concrete o
 | Sub-head | `Office.Shared.DsrCatalog.SubHeads` (names only) |
 | Item wording, unit, measurement rule | `DsrCatalog.All` per component |
 | Material and its standard | `DsrCatalog` materials: cement IS 269 / IS 1489 (Part 1), aggregates IS 383, water IS 456, reinforcement IS 1786 (Fe 500D), bricks IS 1077, AAC blocks IS 2185 (Part 3), concrete blocks IS 2185 (Part 1), size stone IS 1597 (Part 1), vitrified tiles IS 15622, ceramic tiles IS 13755, integral waterproofing compound IS 2645; concrete to IS 456 |
+| DSR item number | `RateItem.DsrItemNo`, stored as `dsr_item_no` in `ratebooks.json`; copied when a version is cloned; carried onto each estimate line |
 | Priced item | Rate book (`RateBookStore`), looked up by the code `EstimateCalculator.CodeForElement` gives each trade (`PL-STD`, `MSN-BRICK-M3`, ...). Import the DSR item into the rate book under that code and the estimate prices on it |
 | DSR-form abstract | `DsrEstimateFormat` (Sl. No., description, L, B, H, area, volume, unit, rate, amount) |
 | Measurement | Masonry: m³, or m² for a wall up to 120 mm; openings under 0.1 m² not deducted (rule "IS1200 masonry"). Plaster and paint: area with openings deducted in full and reveals optionally added (rule "IS1200 plaster/paint"). Concrete in m³, formwork in m² of contact surface, steel by weight from the bar bending schedule |
@@ -42,7 +43,7 @@ The standards above are the ones the CPWD specifications are known to name for t
 
 ## What is not done
 
-- Chapter and item numbers are not stored; they come from the user's rate book. A field for the DSR item number on a rate-book entry would let the estimate print it.
+- Chapter numbers are not stored. The DSR **item number** is a field on each rate-book item (Rate book > DSR item no.), left blank until the user types it from their copy of the schedule; the estimate table, PDF abstract and CSV print it beside the item code.
 - No analysis of rates: a rate is a number, not materials + labour + overheads.
 - Mortar, tiles, paint, door and window schedules are not components of their own; their materials appear under the work that uses them.
 - Items the DSR has that the data model does not: roofing, wood and steel work beyond doors and windows, repairs, dismantling, sanitary, water supply, drainage, piles, horticulture.

@@ -10,6 +10,8 @@ namespace BBSApp.Services;
 public sealed class EstimateLine
 {
     public string Code { get; set; } = "";
+    /// <summary>The DSR item number from the rate-book item the line is priced on; empty when it has none.</summary>
+    public string DsrItemNo { get; set; } = "";
     public string Category { get; set; } = "";
     public string Description { get; set; } = "";
     public string Unit { get; set; } = "";
@@ -61,7 +63,7 @@ public static class DsrEstimateFormat
 {
     public static readonly string[] Headers =
     {
-        "Sl. No.", "Item code", "Description of item",
+        "Sl. No.", "Item code", "DSR item no.", "Description of item",
         "L (m)", "B (m)", "H (m)", "Area (m²)", "Volume (m³)",
         "Unit", "Quantity", "Rate (₹)", "Amount (₹)", "Remarks"
     };
@@ -133,6 +135,7 @@ public static class DsrEstimateFormat
             {
                 sl.ToString(CultureInfo.InvariantCulture),
                 string.IsNullOrWhiteSpace(l.Code) ? "—" : l.Code.Trim(),
+                string.IsNullOrWhiteSpace(l.DsrItemNo) ? "—" : l.DsrItemNo.Trim(),
                 ItemDescription(l),
                 Meas(l.LengthM),
                 Meas(l.BreadthM),
@@ -200,6 +203,7 @@ public static class EstimateCalculator
             result.Civil.Add(new EstimateLine
             {
                 Code = code,
+                DsrItemNo = DsrNo(index, code),
                 Category = c.Element,
                 Description = c.Description,
                 Unit = c.Unit,
@@ -234,6 +238,7 @@ public static class EstimateCalculator
             result.Materials.Add(new EstimateLine
             {
                 Code = code,
+                DsrItemNo = DsrNo(index, code),
                 Category = p.Category,
                 Description = p.Item,
                 Unit = p.Unit,
@@ -253,6 +258,7 @@ public static class EstimateCalculator
             result.Steel.Add(new EstimateLine
             {
                 Code = code,
+                DsrItemNo = DsrNo(index, code),
                 Category = "Steel",
                 Description = "Reinforcement steel",
                 Unit = "kg",
@@ -361,6 +367,7 @@ public static class EstimateCalculator
     private static JsonObject LineToJson(EstimateLine l) => new()
     {
         ["code"] = l.Code,
+        ["dsr_item_no"] = l.DsrItemNo,
         ["category"] = l.Category,
         ["description"] = l.Description,
         ["unit"] = l.Unit,
@@ -388,6 +395,7 @@ public static class EstimateCalculator
             dest.Add(new EstimateLine
             {
                 Code = o["code"]?.GetValue<string>() ?? "",
+                DsrItemNo = o["dsr_item_no"]?.GetValue<string>() ?? "",
                 Category = o["category"]?.GetValue<string>() ?? "",
                 Description = o["description"]?.GetValue<string>() ?? "",
                 Unit = o["unit"]?.GetValue<string>() ?? "",
@@ -407,6 +415,9 @@ public static class EstimateCalculator
             });
         }
     }
+
+    private static string DsrNo(IReadOnlyDictionary<string, RateItem> index, string code) =>
+        index.TryGetValue(code, out var item) ? item.DsrItemNo ?? "" : "";
 
     private static (double rate, string notes) Lookup(
         IReadOnlyDictionary<string, RateItem> index, string code, HashSet<string> missing)
