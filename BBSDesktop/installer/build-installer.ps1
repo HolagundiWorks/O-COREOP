@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Publish AQC-Core (self-contained win-x64, unpackaged) and build Setup.exe with Inno Setup 6.
