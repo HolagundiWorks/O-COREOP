@@ -1,6 +1,6 @@
 # The project file (.osp)
 
-An O-CoreOp project is a **project file, `.osp`**: one SQLite file that holds the drawing, the take-off O-Draft recorded, and everything O-CoreOp keeps for the project (estimate and revisions, running bills, tasks, quantities, purchase orders, contracts, stores, rates, settings). O-Draft and O-CoreOp open the same file. The company file stays Studio's and is read-only here (name, address, GSTIN, letterhead). The names, roles and links of the whole suite are in [SUITE.md](SUITE.md); the format and sync plan are in the OSAS repository, `docs/ODP-PROJECT-FILE-AND-SYNC.md`.
+An O-CoreOp project is a **project file, `.osp`**: one SQLite file that holds the drawing, the take-off O-Draft recorded, and everything O-CoreOp keeps for the project (estimate and revisions, running bills, tasks, quantities, purchase orders, contracts, stores, rates, settings). O-Draft and O-CoreOp open the same file. The company file stays Studio's and is read-only here (name, address, GSTIN, letterhead). The names, roles and links of the whole suite are in [SUITE.md](SUITE.md); the format and sync plan are in the O-Studio repository, `docs/ODP-PROJECT-FILE-AND-SYNC.md`.
 
 ## What O-CoreOp does with it
 
