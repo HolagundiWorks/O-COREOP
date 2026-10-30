@@ -10,7 +10,7 @@ using System.Text.Json.Nodes;
 
 namespace Aqc.CadImport;
 
-/// <summary>One ShilpiDB record as the HTTP gateway returns it: id, bounding box (millimetres), the payload as text (null when it is not UTF-8) and as hex.</summary>
+/// <summary>One take-off record as the importer reads it: id, bounding box (millimetres), the payload as text (null when it is not UTF-8) and as hex.</summary>
 public sealed record ShilpiRecord(ulong Id, double MinX, double MinY, double MaxX, double MaxY, string? PayloadText, string? PayloadHex = null);
 
 /// <summary>One drawing's take-off found in a ShilpiDB: what its header says, without reading its rows.</summary>
@@ -277,108 +277,4 @@ public static class ShilpiTakeoff
     static long Num(JsonObject o, string key) => o[key] is JsonValue v && long.TryParse(v.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0;
     static double Dbl(JsonObject o, string key) => o[key] is JsonValue v && double.TryParse(v.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0;
     static string? NullIfEmpty(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
-}
-
-/// <summary>Reads records of a ShilpiDB through the shilpi-http gateway (GET /records, then GET /records/{id}).</summary>
-public sealed class ShilpiGatewayClient : IDisposable
-{
-    readonly HttpClient _http;
-
-    public ShilpiGatewayClient(Uri baseUri, HttpMessageHandler? handler = null)
-    {
-        _http = handler is null ? new HttpClient() : new HttpClient(handler, disposeHandler: false);
-        _http.BaseAddress = baseUri;
-        _http.Timeout = TimeSpan.FromSeconds(60);
-    }
-
-    public async Task<bool> IsUpAsync(CancellationToken ct = default)
-    {
-        try { using var r = await _http.GetAsync("health", ct).ConfigureAwait(false); return r.IsSuccessStatusCode; }
-        catch (HttpRequestException) { return false; }
-        catch (TaskCanceledException) { return false; }
-    }
-
-    /// <summary>The ids in the database (no payloads).</summary>
-    public async Task<List<ulong>> ListIdsAsync(CancellationToken ct = default)
-    {
-        var ids = new List<ulong>();
-        using var res = await _http.GetAsync("records", ct).ConfigureAwait(false);
-        await EnsureOk(res).ConfigureAwait(false);
-        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-        foreach (var e in doc.RootElement.GetProperty("records").EnumerateArray()) ids.Add(e.GetProperty("id").GetUInt64());
-        return ids;
-    }
-
-    /// <summary>Reads the records whose id passes <paramref name="include"/> (all when null).</summary>
-    /// <param name="progress">Called with (done, total) as records arrive.</param>
-    public async Task<List<ShilpiRecord>> ReadAllAsync(IProgress<(int Done, int Total)>? progress = null, CancellationToken ct = default, Func<ulong, bool>? include = null)
-    {
-        var ids = (await ListIdsAsync(ct).ConfigureAwait(false)).Where(i => include?.Invoke(i) ?? true).ToList();
-        var results = new ShilpiRecord?[ids.Count];
-        int done = 0;
-        using var gate = new SemaphoreSlim(8);
-        await Task.WhenAll(ids.Select(async (id, i) =>
-        {
-            await gate.WaitAsync(ct).ConfigureAwait(false);
-            try
-            {
-                using var res = await _http.GetAsync($"records/{id.ToString(CultureInfo.InvariantCulture)}", ct).ConfigureAwait(false);
-                if (res.StatusCode == HttpStatusCode.NotFound) return;   // deleted between the list and the read
-                await EnsureOk(res).ConfigureAwait(false);
-                using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-                var root = doc.RootElement;
-                var bb = root.GetProperty("bbox");
-                results[i] = new ShilpiRecord(id,
-                    bb.GetProperty("minX").GetDouble(), bb.GetProperty("minY").GetDouble(),
-                    bb.GetProperty("maxX").GetDouble(), bb.GetProperty("maxY").GetDouble(),
-                    root.TryGetProperty("payloadText", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null,
-                    root.TryGetProperty("payloadHex", out var x) && x.ValueKind == JsonValueKind.String ? x.GetString() : null);
-            }
-            finally
-            {
-                gate.Release();
-                progress?.Report((Interlocked.Increment(ref done), ids.Count));
-            }
-        })).ConfigureAwait(false);
-        return results.Where(r => r is not null).Select(r => r!).ToList();
-    }
-
-    /// <summary>How many records the database holds (a cheap way to notice that something was recorded).</summary>
-    public async Task<long> CountAsync(CancellationToken ct = default)
-    {
-        using var res = await _http.GetAsync("stats", ct).ConfigureAwait(false);
-        await EnsureOk(res).ConfigureAwait(false);
-        using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false));
-        return doc.RootElement.GetProperty("count").GetInt64();
-    }
-
-    /// <summary>Insert or replace a record (zero-size box).</summary>
-    public async Task PutAsync(ulong id, byte[] payload, CancellationToken ct = default)
-    {
-        using var content = new ByteArrayContent(payload);
-        using var res = await _http.PutAsync($"records/{id.ToString(CultureInfo.InvariantCulture)}?minX=0&minY=0&maxX=0&maxY=0", content, ct).ConfigureAwait(false);
-        await EnsureOk(res).ConfigureAwait(false);
-    }
-
-    public async Task DeleteAsync(ulong id, CancellationToken ct = default)
-    {
-        using var res = await _http.DeleteAsync($"records/{id.ToString(CultureInfo.InvariantCulture)}", ct).ConfigureAwait(false);
-        if (res.StatusCode != HttpStatusCode.NotFound) await EnsureOk(res).ConfigureAwait(false);
-    }
-
-    /// <summary>Flush the server to its file.</summary>
-    public async Task SaveAsync(CancellationToken ct = default)
-    {
-        using var res = await _http.PostAsync("save", new StringContent(""), ct).ConfigureAwait(false);
-        await EnsureOk(res).ConfigureAwait(false);
-    }
-
-    static async Task EnsureOk(HttpResponseMessage res)
-    {
-        if (res.IsSuccessStatusCode) return;
-        var body = await res.Content.ReadAsStringAsync().ConfigureAwait(false);
-        throw new HttpRequestException($"ShilpiDB gateway answered {(int)res.StatusCode}: {body}");
-    }
-
-    public void Dispose() => _http.Dispose();
 }

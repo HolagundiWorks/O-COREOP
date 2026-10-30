@@ -135,52 +135,6 @@ if (-not (Test-Path -LiteralPath (Join-Path $PublishDir "office.dll"))) {
 
 Write-Host "Publish : O-CoreOp.exe + bbs_engine.dll + office.dll ready"
 
-# --- ShilpiDB engine (bundled sibling process; not a separate product) ---
-# Suite pin: v0.2.1 — download shilpidb-v0.2.1-x86_64-pc-windows-msvc.zip from
-# https://github.com/HolagundiWorks/shilpidb/releases/tag/v0.2.1 and point SHILPIDB_BIN
-# at the unzipped folder (or build a sibling ..\shilpidb at that tag).
-function Find-ShilpiEngineBins {
-    $names = @('shilpid.exe', 'shilpi-http.exe')
-    $candidates = [System.Collections.Generic.List[string]]::new()
-    if ($env:SHILPIDB_BIN) { [void]$candidates.Add($env:SHILPIDB_BIN) }
-    $repoRoot = Split-Path $DesktopDir -Parent
-    $shilpi = Join-Path $repoRoot '..\shilpidb'
-    if (Test-Path $shilpi) {
-        $shilpi = (Resolve-Path $shilpi).Path
-        [void]$candidates.Add((Join-Path $shilpi 'target\release'))
-        [void]$candidates.Add((Join-Path $shilpi 'target\x86_64-pc-windows-msvc\release'))
-    }
-    foreach ($suite in @(
-            (Join-Path $repoRoot '..\OSAS-Open_Source_Architecture_Suit\installer\suite-tools'),
-            (Join-Path $env:LOCALAPPDATA 'Programs\OSAS\shilpidb')
-        )) {
-        if (Test-Path $suite) { [void]$candidates.Add((Resolve-Path $suite).Path) }
-    }
-    foreach ($dir in $candidates) {
-        if (($names | ForEach-Object { Test-Path (Join-Path $dir $_) }) -notcontains $false) { return $dir }
-    }
-    if (Test-Path (Join-Path $repoRoot '..\shilpidb\Cargo.toml')) {
-        $repo = (Resolve-Path (Join-Path $repoRoot '..\shilpidb')).Path
-        Write-Host "Building shilpid + shilpi-http from $repo ..." -ForegroundColor Yellow
-        Push-Location $repo
-        try {
-            cargo build --release -p shilpid -p shilpi-http
-            if ($LASTEXITCODE -ne 0) { throw "shilpidb engine build failed ($LASTEXITCODE)" }
-        } finally { Pop-Location }
-        $built = Join-Path $repo 'target\release'
-        if (($names | ForEach-Object { Test-Path (Join-Path $built $_) }) -notcontains $false) { return $built }
-    }
-    return $null
-}
-$shilpiSrc = Find-ShilpiEngineBins
-if ($shilpiSrc) {
-    Copy-Item (Join-Path $shilpiSrc 'shilpid.exe') $PublishDir -Force
-    Copy-Item (Join-Path $shilpiSrc 'shilpi-http.exe') $PublishDir -Force
-    Write-Host "ShilpiDB engine : bundled from $shilpiSrc"
-} else {
-    Write-Warning "shilpid.exe / shilpi-http.exe not found — installer will not include the ShilpiDB engine. Set SHILPIDB_BIN or build ..\shilpidb."
-}
-
 # --- llama.cpp runtime for the local assistant model (llama-server, Vulkan build, MIT) ---
 # Pinned release and SHA-256 as in Office.Ai\LocalModel.cs. LLAMA_RUNTIME_ZIP may name an already downloaded copy.
 $LlamaRelease = 'b11976'

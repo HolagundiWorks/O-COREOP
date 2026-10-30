@@ -6,7 +6,7 @@
 
 O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
-RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (via ShilpiDB), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, contracts, running-account billing, stores and HR.
+RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (through the shared project file, `.osp`), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, contracts, running-account billing, stores and HR.
 
 One project can be operated as either a **Project Manager / PMC** or a **Contractor**: each persona has its own letterhead and numbering series, and every letter, bill and order is branded and numbered accordingly.
 
@@ -87,7 +87,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | RCC | Columns (incl. pedestal), beams, slabs, footings, walls, stairs — BBS + section sketches |
 | Civil BOQ | Masonry, plaster, PCC, earthwork, SSM, shuttering, flooring, paint, doors/windows, etc. |
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
-| Take-off | Measured in O-Draft and recorded in ShilpiDB; read here, previewed, then imported. **Project > Take-off (O-Draft)** lists the drawings on the shared ShilpiDB server (refreshes every 5 s), reads one into the import preview, and fetches and stores the annotated drawing PDF O-Draft generated; several drawings per project, with a warning when two measure the same floor |
+| Take-off | Measured in O-Draft and recorded in the project file (`.osp`); read here, previewed, then imported. **Project > Take-off (O-Draft)** lists the drawings recorded in the open project (refreshes every 2 s), reads one into the import preview, and fetches and stores the annotated drawing PDF O-Draft generated; several drawings per project, with a warning when two measure the same floor |
 | CAD import / export | **File > Import from CAD** reads an `hcw-aqc-bridge` file (the offline path); **Export for CAD** writes levels, project details and beam depths back. Idempotent (`source = hcwcad:<drawing id>`), preview first, one undo step, `Lvl0` never touched. Contracts: `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
 | Rate book | App-level versioned rates (`%LocalAppData%\O-CoreOp\`) |
@@ -110,7 +110,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | AI assistant API key | `%LocalAppData%\O-CoreOp\` — encrypted with Windows DPAPI (per-user); or the `ANTHROPIC_API_KEY` env var |
 | Project | User-chosen `.bbsproj` (also holds the take-off file path and the stored annotated drawings) |
 | Annotated drawings | `<project name>.assets\annotated\` beside the saved project, or `%LocalAppData%\O-CoreOp\annotated\` until it is saved |
-| Shared take-off server data | `%LocalAppData%\OSAS\takeoff\takeoff.vdb` (ShilpiDB; O-Draft and O-CoreOp both use it) |
+| Project file | `<project>.osp` (one SQLite file: drawing, take-off and project; O-Draft and O-CoreOp both open it). See [docs/PROJECT-FILE.md](docs/PROJECT-FILE.md) |
 
 ## Branding
 

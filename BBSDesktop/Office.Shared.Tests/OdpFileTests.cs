@@ -136,29 +136,6 @@ public class OdpFileTests : IDisposable
     }
 
     [Fact]
-    public void A_shilpidb_file_is_imported_with_take_off_pdf_and_project()
-    {
-        ulong Id(int kind, ulong slot, ulong n) => ((ulong)kind << 56) | (slot << 32) | n;
-        VdbRecord Rec(ulong id, string text) => new(id, 0, 0, 0, 0, System.Text.Encoding.UTF8.GetBytes(text));
-        var vdb = new VdbContents();
-        vdb.Records.Add(Rec(Id(1, 5, 0), "{\"format\":\"hcw-takeoff-shilpi\",\"state\":\"complete\"}"));
-        vdb.Records.Add(Rec(Id(3, 5, 1), "{\"ref\":\"W1\"}"));
-        vdb.Records.Add(Rec(Id(4, 5, 1), "{\"ref\":\"2A1\"}"));
-        vdb.Records.Add(Rec(Id(9, 5, 1), "BBB"));
-        vdb.Records.Add(Rec(Id(9, 5, 0), "AAA"));
-        ShilpiProjectFile.SetProject(vdb, "{\"project\":{\"name\":\"Old\"}}");
-        var vdbPath = Path.Combine(_dir, "old.vdb");
-        File.WriteAllBytes(vdbPath, ShilpiProjectFile.Serialize(vdb));
-
-        using var odp = OdpFile.Create(Path.Combine(_dir, "new.osp"), "New");
-        Assert.Equal(1, odp.ImportVdb(vdbPath));
-        Assert.Equal("complete", Assert.Single(odp.TakeoffHeaders()).State);
-        Assert.Equal(2, odp.TakeoffRows(5).Count);
-        Assert.Equal("AAABBB", System.Text.Encoding.ASCII.GetString(odp.Asset("annotated-5.pdf")!.Value.Bytes));
-        Assert.Contains("Old", odp.ProjectDoc());
-    }
-
-    [Fact]
     public void Four_handles_writing_at_once_lose_nothing_and_make_one_revision_per_commit()
     {
         var path = Path.Combine(_dir, "busy.osp");

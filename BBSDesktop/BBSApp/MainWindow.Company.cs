@@ -69,9 +69,7 @@ public sealed partial class MainWindow
         {
             var path = ProjectStore.Current.FilePath;
             if (!ProjectFiles.IsShilpi(path) || !File.Exists(path)) return;
-            Services.Shilpi.TakeoffSource source = Services.Shilpi.ServedProject.GatewayFor(path) is { } url
-                ? new Services.Shilpi.TakeoffSource.Gateway(url)
-                : new Services.Shilpi.TakeoffSource.VdbFile(path!);
+            Services.Shilpi.TakeoffSource source = new Services.Shilpi.TakeoffSource.Project(path!);
             (string? Company, long? ProjectId) head;
             try { head = await Services.Shilpi.ShilpiTakeoffService.FirstProjectRefAsync(source); }
             catch (Exception) { return; }
