@@ -13,7 +13,7 @@ public sealed record OdpTakeoffHeader(uint Slot, string State, string Json);
 public sealed record OdpTakeoffRow(uint Slot, int Kind, uint N, string Json);
 
 /// <summary>
-/// A project file, <c>.odp</c> (format <c>osas-project</c>, version 1): one SQLite file with the drawing, the take-off O-Draft recorded, the O-CoreOp project,
+/// A project file, <c>.osp</c> (format <c>osas-project</c>, version 1): one SQLite file with the drawing, the take-off O-Draft recorded, the O-CoreOp project,
 /// attachments and markups. This is the .NET side of <c>aad-odp</c> (O-Draft's Rust crate); both read and write the same file. Every committed change raises
 /// <c>meta.revision</c> by one and leaves <c>change</c> rows (what sync sends). The file is in WAL mode: another program may have it open, one writes while
 /// the other reads, and a second writer waits up to five seconds.
@@ -23,7 +23,7 @@ public sealed class OdpFile : IDisposable
 {
     public const string Format = "osas-project";
     public const int Version = 1;
-    public const string Extension = ".odp";
+    public const string Extension = ".osp";
 
     // The same tables as aad-odp's SCHEMA; a test opens a file the Rust side wrote and checks they match.
     const string Schema = @"
@@ -235,6 +235,15 @@ CREATE INDEX IF NOT EXISTS change_revision ON change (revision);";
             Log(rev, "project_doc", "1", "put");
         });
     }
+
+    /// <summary>Write one take-off row (the bridge file's row JSON); returns the new revision.</summary>
+    public long SetTakeoffRow(uint slot, int kind, uint n, string json) => Write(rev =>
+    {
+        _ = JsonNode.Parse(json) ?? throw new InvalidDataException("The row is not valid JSON.");
+        Exec("INSERT INTO takeoff_row (slot, kind, n, json) VALUES ($s, $k, $n, $j) ON CONFLICT(slot, kind, n) DO UPDATE SET json = $j",
+            ("$s", (long)slot), ("$k", (long)kind), ("$n", (long)n), ("$j", json));
+        Log(rev, "takeoff_row", $"{slot}/{kind}/{n}", "put");
+    });
 
     /// <summary>Store (or replace) a drawing's bytes as it is.</summary>
     public long SetDrawing(string name, string ext, byte[] bytes) => Write(rev =>

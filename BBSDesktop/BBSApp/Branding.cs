@@ -41,7 +41,7 @@ public static class Branding
     public const string LegacyAppDataFolder = "BOQCore";
 
     public const string ProjectFileFilter = "O-Suite project";
-    public const string ProjectExtension = ".odp";
+    public const string ProjectExtension = ".osp";
 
     public static string WindowTitle(string? projectName = null, bool dirty = false)
     {

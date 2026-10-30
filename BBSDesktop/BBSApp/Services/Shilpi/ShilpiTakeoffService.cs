@@ -142,7 +142,7 @@ public static class ShilpiTakeoffService
     static Task<List<ShilpiRecord>> ReadFileAsync(TakeoffSource.VdbFile f, CancellationToken ct) =>
         Task.Run(() =>
         {
-            try { return f.Path.EndsWith(".odp", StringComparison.OrdinalIgnoreCase) ? OdpTakeoffAdapter.Records(f.Path) : Aqc.CadImport.VdbFile.Read(f.Path); }
+            try { return f.Path.EndsWith(".osp", StringComparison.OrdinalIgnoreCase) ? OdpTakeoffAdapter.Records(f.Path) : Aqc.CadImport.VdbFile.Read(f.Path); }
             catch (InvalidDataException e) { throw new InvalidOperationException($"{Path.GetFileName(f.Path)}: {e.Message}", e); }
         }, ct);
 

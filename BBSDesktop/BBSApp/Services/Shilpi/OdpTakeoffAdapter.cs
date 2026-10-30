@@ -8,7 +8,7 @@ using Office.Shared;
 namespace BBSApp.Services.Shilpi;
 
 /// <summary>
-/// The take-off in a project file (<c>.odp</c>) in the record form the importer reads: headers and rows with the id <c>kind &lt;&lt; 56 | slot &lt;&lt; 32 | n</c>
+/// The take-off in a project file (<c>.osp</c>) in the record form the importer reads: headers and rows with the id <c>kind &lt;&lt; 56 | slot &lt;&lt; 32 | n</c>
 /// and the annotated PDF of a drawing cut into chunk records. The importer, the preview and the annotated-PDF fetch are the ones used for a ShilpiDB file,
 /// unchanged; only where the records come from differs.
 /// </summary>

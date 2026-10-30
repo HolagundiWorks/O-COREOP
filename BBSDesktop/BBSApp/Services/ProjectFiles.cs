@@ -16,7 +16,7 @@ namespace BBSApp.Services;
 public static class ProjectFiles
 {
     /// <summary>The project file: one SQLite file with the drawing, the take-off and the project (<see cref="OdpFile"/>).</summary>
-    public const string Extension = ".odp";
+    public const string Extension = ".osp";
     /// <summary>A ShilpiDB take-off file as used before the project file; it still opens and saves.</summary>
     public const string LegacyExtension = ".vdb";
 

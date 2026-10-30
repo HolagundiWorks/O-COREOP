@@ -8,7 +8,7 @@ using Xunit;
 namespace Office.Shared.Tests;
 
 /// <summary>
-/// <c>Fixtures/small.odp</c> was written by the Rust crate (<c>aad-odp</c>, example <c>pack</c>) from a 22 KB DXF and a take-off .vdb that held O-CoreOp's project
+/// <c>Fixtures/small.osp</c> was written by the Rust crate (<c>aad-odp</c>, example <c>pack</c>) from a 22 KB DXF and a take-off .vdb that held O-CoreOp's project
 /// record, so these tests also prove that the two sides read the same file.
 /// </summary>
 public class OdpFileTests : IDisposable
@@ -25,8 +25,8 @@ public class OdpFileTests : IDisposable
 
     string Copy()
     {
-        var path = Path.Combine(_dir, "small.odp");
-        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "small.odp"), path);
+        var path = Path.Combine(_dir, "small.osp");
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Fixtures", "small.osp"), path);
         return path;
     }
 
@@ -80,7 +80,7 @@ public class OdpFileTests : IDisposable
     [Fact]
     public void A_new_file_is_created_with_the_same_tables_and_a_drawing_round_trips()
     {
-        var path = Path.Combine(_dir, "new.odp");
+        var path = Path.Combine(_dir, "new.osp");
         var bytes = Enumerable.Range(0, 100_000).Select(i => (byte)(i % 251)).ToArray();
         using (var odp = OdpFile.Create(path, "New"))
         {
@@ -98,11 +98,11 @@ public class OdpFileTests : IDisposable
     [Fact]
     public void Files_that_are_not_projects_are_refused()
     {
-        var text = Path.Combine(_dir, "t.odp");
+        var text = Path.Combine(_dir, "t.osp");
         File.WriteAllText(text, "this is not sqlite");
         Assert.False(OdpFile.LooksLikeOdp(text));
         Assert.Throws<InvalidDataException>(() => OdpFile.Open(text));
-        Assert.Throws<FileNotFoundException>(() => OdpFile.Open(Path.Combine(_dir, "missing.odp")));
+        Assert.Throws<FileNotFoundException>(() => OdpFile.Open(Path.Combine(_dir, "missing.osp")));
 
         var other = Path.Combine(_dir, "o.db");
         using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={other};Pooling=False"))
@@ -150,11 +150,39 @@ public class OdpFileTests : IDisposable
         var vdbPath = Path.Combine(_dir, "old.vdb");
         File.WriteAllBytes(vdbPath, ShilpiProjectFile.Serialize(vdb));
 
-        using var odp = OdpFile.Create(Path.Combine(_dir, "new.odp"), "New");
+        using var odp = OdpFile.Create(Path.Combine(_dir, "new.osp"), "New");
         Assert.Equal(1, odp.ImportVdb(vdbPath));
         Assert.Equal("complete", Assert.Single(odp.TakeoffHeaders()).State);
         Assert.Equal(2, odp.TakeoffRows(5).Count);
         Assert.Equal("AAABBB", System.Text.Encoding.ASCII.GetString(odp.Asset("annotated-5.pdf")!.Value.Bytes));
         Assert.Contains("Old", odp.ProjectDoc());
+    }
+
+    [Fact]
+    public void Four_handles_writing_at_once_lose_nothing_and_make_one_revision_per_commit()
+    {
+        var path = Path.Combine(_dir, "busy.osp");
+        OdpFile.Create(path, "Busy").Dispose();
+        const int Writers = 4, Each = 40;
+        var tasks = Enumerable.Range(0, Writers).Select(w => Task.Run(() =>
+        {
+            using var odp = OdpFile.Open(path);
+            for (var n = 0; n < Each; n++) odp.SetTakeoffRow((uint)(w + 1), 3, (uint)n, $"{{\"writer\":{w},\"n\":{n}}}");
+        })).ToArray();
+        Task.WaitAll(tasks);
+        using var check = OdpFile.Open(path);
+        Assert.Equal(Writers * Each, check.Revision());
+        for (var w = 0; w < Writers; w++) Assert.Equal(Each, check.TakeoffRows((uint)(w + 1)).Count);
+        Assert.Equal(Enumerable.Range(1, Writers * Each).Select(i => (long)i), check.ChangesSince(0).Select(c => c.Revision));
+    }
+
+    /// <summary>Not a check: with ODP_STRESS_FILE=path it writes 200 revisions, to run beside the Rust example <c>stress</c> on the same file.</summary>
+    [Fact]
+    public void Stress_writes_when_asked()
+    {
+        var target = Environment.GetEnvironmentVariable("ODP_STRESS_FILE");
+        if (string.IsNullOrEmpty(target)) return;
+        using var odp = File.Exists(target) ? OdpFile.Open(target) : OdpFile.Create(target, "Stress");
+        for (var n = 0; n < 200; n++) odp.SetTakeoffRow(2, 3, (uint)n, $"{{\"from\":\"dotnet\",\"n\":{n}}}");
     }
 }

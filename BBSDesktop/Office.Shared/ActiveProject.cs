@@ -33,7 +33,7 @@ public static class ActiveProject
             if (!r.TryGetProperty("format", out var f) || f.GetString() != Format) return null;
             if (!r.TryGetProperty("version", out var v) || !v.TryGetInt32(out var ver) || ver < 1) return null;
             string? db = r.TryGetProperty("shilpidb", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString() : null;
-            if (string.IsNullOrWhiteSpace(db) || !Path.IsPathRooted(db) || !(db.EndsWith(".vdb", StringComparison.OrdinalIgnoreCase) || db.EndsWith(".odp", StringComparison.OrdinalIgnoreCase))) return null;
+            if (string.IsNullOrWhiteSpace(db) || !Path.IsPathRooted(db) || !(db.EndsWith(".vdb", StringComparison.OrdinalIgnoreCase) || db.EndsWith(".osp", StringComparison.OrdinalIgnoreCase))) return null;
             string drawing = r.TryGetProperty("drawing", out var dr) && dr.ValueKind == JsonValueKind.String ? dr.GetString() ?? "" : "";
             string app = r.TryGetProperty("app", out var a) && a.ValueKind == JsonValueKind.String ? a.GetString() ?? "O-Draft" : "O-Draft";
             DateTime when = r.TryGetProperty("updated_utc", out var u) && u.ValueKind == JsonValueKind.String
