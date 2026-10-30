@@ -28,9 +28,9 @@ public sealed class ProjectInfo
     public string Pan { get; set; } = "";
     /// <summary>Absolute or relative path to project logo image (png/jpg).</summary>
     public string LogoPath { get; set; } = "";
-/// <summary>The take-off database (.vdb) O-Draft recorded this project's take-off in. Read from the Take-off page.</summary>
-    public string TakeoffVdbPath { get; set; } = "";
-    /// <summary>Annotated drawing PDFs fetched from ShilpiDB, one per drawing.</summary>
+    /// <summary>The project file (<c>.osp</c>) this project opens; take-off is read from it on the Take-off page.</summary>
+    public string OspPath { get; set; } = "";
+    /// <summary>Annotated drawing PDFs fetched from the project file, one per drawing.</summary>
     public List<StoredAnnotatedDrawing> AnnotatedDrawings { get; } = new();
 
     public static readonly string[] PreparedByRoles = { "Engineer", "Architect", "PMC" };
@@ -51,7 +51,7 @@ public sealed class ProjectInfo
         ["cin"] = Cin,
         ["pan"] = Pan,
         ["logo_path"] = LogoPath,
-        ["takeoff_vdb_path"] = TakeoffVdbPath,
+        ["osp_path"] = OspPath,
         ["annotated_drawings"] = new JsonArray(AnnotatedDrawings.Select(a => (JsonNode)a.ToJson()).ToArray())
     };
 
@@ -72,7 +72,7 @@ public sealed class ProjectInfo
         Cin = o["cin"]?.GetValue<string>() ?? "";
         Pan = o["pan"]?.GetValue<string>() ?? "";
         LogoPath = o["logo_path"]?.GetValue<string>() ?? "";
-        TakeoffVdbPath = o["takeoff_vdb_path"]?.GetValue<string>() ?? "";
+        OspPath = o["osp_path"]?.GetValue<string>() ?? o["takeoff_vdb_path"]?.GetValue<string>() ?? "";
         AnnotatedDrawings.Clear();
         if (o["annotated_drawings"] is JsonArray ad)
             foreach (var e in ad.OfType<JsonObject>()) AnnotatedDrawings.Add(StoredAnnotatedDrawing.FromJson(e));
@@ -94,7 +94,7 @@ public sealed class ProjectInfo
         Cin = "";
         Pan = "";
         LogoPath = "";
-        TakeoffVdbPath = "";
+        OspPath = "";
         AnnotatedDrawings.Clear();
         FromCompanyFile = false;
     }

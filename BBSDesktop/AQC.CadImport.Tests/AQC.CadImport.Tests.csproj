@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
+    <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fixtures\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" />

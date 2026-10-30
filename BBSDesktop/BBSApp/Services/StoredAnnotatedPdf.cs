@@ -13,7 +13,7 @@ namespace BBSApp.Services;
 /// <summary>One page of an annotated drawing PDF, rendered to an image for the report.</summary>
 public sealed record RenderedPage(byte[] PngBytes, float WidthPx, float HeightPx);
 
-/// <summary>An annotated drawing fetched from ShilpiDB, with its pages rendered for the reports.</summary>
+/// <summary>An annotated drawing fetched from the project file, with its pages rendered for the reports.</summary>
 public sealed record RenderedAnnotatedPdf(StoredAnnotatedDrawing Entry, IReadOnlyList<RenderedPage> Pages, int TotalPages);
 
 /// <summary>

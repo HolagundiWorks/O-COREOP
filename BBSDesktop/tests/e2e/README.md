@@ -1,15 +1,21 @@
-# End-to-end checks that drive the real app
+# Manual UI checks (desktop session, built app)
 
-These are **manual** checks (they need a desktop session, the built app and, for the take-off ones, the ShilpiDB programs); they are not run by CI.
-They drive O-CoreOp through Windows UI Automation, so no screenshots are involved, and they found real bugs that the unit tests could not
-(see "Debug pass 2026-10-19" in `docs/HANDOFF-O-COREOP.md`).
+These are **not** run in CI. They exercise File menu flows after a local build.
 
-| Script | What it does |
-|---|---|
-| `uia-smoke.ps1` | Starts the app, lists the File menu, opens Take-off / Import CAD / Export CAD dialogs, checks the app is still alive |
-| `uia-takeoff.ps1` | Starts a shared take-off server holding the records in `AQC.CadImport.Tests/fixtures/odraft-takeoff-records.json` (what O-Draft really wrote), opens the Take-off page, reads a drawing, fetches an annotated PDF if `annotated-sample.pdf` sits beside the fixture |
-| `uia-vdbfile.ps1` | Opens the Take-off page, switches to "A take-off file (.vdb)", types a file path into the Windows file dialog, reads the drawing and checks the import preview. Used with the file O-Draft's own engine wrote (`AQC.CadImport.Tests/fixtures/odraft-parametric.takeoff.vdb`, format version 2); 9 checks |
+```powershell
+powershell -File BBSDesktop\tests\e2e\run-e2e.ps1
+# Fixture .osp (take-off already in file):
+powershell -File BBSDesktop\tests\e2e\uia-osp-takeoff.ps1 -Exe $exe -Osp (Resolve-Path BBSDesktop\Office.Shared.Tests\Fixtures\small.osp)
 
-**ShilpiDB pin:** use release [`v0.2.1`](https://github.com/HolagundiWorks/shilpidb/releases/tag/v0.2.1). Put `shilpid.exe` and `shilpi-http.exe` in `%LocalAppData%\ShilpiDB\bin` (or set `SHILPIDB_BIN`) from [`shilpidb-v0.2.1-x86_64-pc-windows-msvc.zip`](https://github.com/HolagundiWorks/shilpidb/releases/download/v0.2.1/shilpidb-v0.2.1-x86_64-pc-windows-msvc.zip), or `$env:SHILPIDB_VERSION = "v0.2.1"; irm https://raw.githubusercontent.com/HolagundiWorks/shilpidb/main/scripts/install.ps1 | iex` (copy `shilpi-http.exe` from the zip if the install script only places `shilpid`/`shilpi`).
+# Fresh .osp: O-Draft engine takeoff.record → O-CoreOp import (needs O-DRAFT-main beside repo):
+powershell -File BBSDesktop\tests\e2e\e2e-draft-coreop-takeoff.ps1
+# Engine only (skip O-Draft WinUI launch): -SkipDraftWinUi
+```
 
-AORMS Connect sync e2e (`uia-sync-e2e.ps1` / FakeAorms) was removed with the Connect/Bridge connectors.
+**Take-off:** pass the `.osp` on the command line (as the script does) or **File › Open project…**, then **File › Take-off (O-Draft)…**.
+
+**Draft → CoreOp:** `seed-fresh-osp.ps1` runs `scripts/e2e-house-takeoff.scr` plus `takeoff.record` via `aad-cli` (same command as WinUI **Architecture › Take-off › Record**). `e2e-draft-coreop-takeoff.ps1` builds `aad_host.dll` if needed, opens the same `.osp` in **O-Draft WinUI**, then runs the CoreOp UIA script with `-MinToAdd 1`.
+
+**`bbs_engine.dll`:** Visual Studio 2022 Build Tools with C++ workload; from `BBSDesktop`: `vcvars64.bat` then `cmake -B build -G Ninja` and `cmake --build build`. Copy `build\bbs_engine.dll` next to `O-CoreOp.exe` ( `run-e2e.ps1` does this when the DLL exists).
+
+**CAD:** **Import from CAD** / **Export for CAD** with a real `hcw-aqc-bridge` export (see `docs/bridge/`).

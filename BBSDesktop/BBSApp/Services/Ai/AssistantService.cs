@@ -23,16 +23,16 @@ public sealed class AssistantService
     private const int MaxToolIterations = 6;
 
     private readonly AnthropicClient? _client;
-    private readonly LocalLlm? _local;
+    private readonly Func<string, int, IProgress<string>?, CancellationToken, Task<string>>? _complete;
     private readonly AssistantTools _tools;
     private readonly DispatcherQueue _ui;
     private readonly List<MessageParam> _history = new();
     private readonly List<ChatMessage> _chat = new();
 
-    private AssistantService(AnthropicClient? client, LocalLlm? local, AssistantTools tools, DispatcherQueue ui)
+    private AssistantService(AnthropicClient? client, Func<string, int, IProgress<string>?, CancellationToken, Task<string>>? complete, AssistantTools tools, DispatcherQueue ui)
     {
         _client = client;
-        _local = local;
+        _complete = complete;
         _tools = tools;
         _ui = ui;
     }
@@ -41,21 +41,22 @@ public sealed class AssistantService
     public static string? LastProblem { get; private set; }
 
     /// <summary>
-    /// Create the assistant. The local model (Olmo 3 7B, shared with O-Draft) is used when its file and the llama.cpp server are
-    /// installed; only without them does a stored Anthropic key serve as a fallback. Null when neither is available.
+    /// Create the assistant. Olmo 3 7B is used through O-Studio's AI Core when it is running, or in-process when this app hosts solo.
+    /// Without the model, a stored Anthropic key is the fallback.
     /// </summary>
     public static async Task<AssistantService?> TryCreateAsync(IAppCommandBus bus, IAssistantConfirm confirm, DispatcherQueue ui)
     {
         LastProblem = null;
-        if (LocalLlmHost.Installed)
+        var (local, remote, problem) = await Task.Run(() => SuiteAiCoordinator.ResolveLlmAsync()).ConfigureAwait(false);
+        if (problem is null && (local is not null || remote is not null))
         {
-            try
-            {
-                var llm = await Task.Run(() => LocalLlmHost.GetAsync());
-                return new AssistantService(null, llm, new AssistantTools(bus, confirm, null), ui);
-            }
-            catch (Exception ex) { LastProblem = ex.Message; return null; }
+            Func<string, int, IProgress<string>?, CancellationToken, Task<string>> complete = local is not null
+                ? (p, n, prog, ct) => local.CompleteAsync(p, n, prog, ct)
+                : (p, n, prog, ct) => remote!.CompleteAsync(p, n, prog, ct);
+            return new AssistantService(null, complete, new AssistantTools(bus, confirm, null), ui);
         }
+        if (problem is not null)
+            LastProblem = problem;
 
         var key = AssistantSettings.ApiKey;
         if (string.IsNullOrWhiteSpace(key))
@@ -73,7 +74,7 @@ public sealed class AssistantService
     }
 
     public Task<string> AskAsync(string userText, IProgress<string>? partial = null) =>
-        _local is not null ? AskLocalAsync(userText, partial) : AskCloudAsync(userText);
+        _complete is not null ? AskLocalAsync(userText, partial) : AskCloudAsync(userText);
 
     private const int MaxLocalCalls = 3;
 
@@ -91,7 +92,7 @@ public sealed class AssistantService
             while ((prompt = OlmoChat.Build(instructions, toolsJson, _chat)).Length / 3 + LocalLlm.ReserveTokens > LocalLlm.ContextTokens && _chat.Count > 1)
                 _chat.RemoveRange(0, Math.Min(2, _chat.Count - 1));        // drop the oldest turns first
 
-            string answer = await _local!.CompleteAsync(prompt, 700, partial);
+            string answer = await _complete!(prompt, 700, partial, CancellationToken.None);
             var calls = OlmoChat.ParseCalls(answer, out string prose);
             _chat.Add(new ChatMessage(ChatRole.Assistant, answer));
             if (prose.Length > 0) last = prose;
@@ -244,8 +245,8 @@ public sealed class AssistantService
       + "- You can also edit_row and delete_row (RCC or civil), addressing a row by its kind and mark "
       + "(marks are unique within a sheet); both are confirmed and fail if the mark is missing or "
       + "ambiguous. Use get_project_summary / navigate to find the mark first if unsure.\n"
-      + "- Drawing take-off is done in O-Draft and recorded in ShilpiDB; the user reads it in with the "
-      + "Take-off page (File > Take-off from ShilpiDB). You cannot measure drawings or read PDFs.\n"
+      + "- Drawing take-off is done in O-Draft and recorded in the project file (.osp); the user reads it in with the "
+      + "Take-off page (Project › Take-off (O-Draft)). You cannot measure drawings or read PDFs.\n"
       + "- For linked estimation: link rules derive one trade's quantity from another (plaster from "
       + "masonry face area, painting from plaster, skirting from flooring perimeter). Use "
       + "list_link_rules to see the rules and what they currently derive, add_link_rule to create a "

@@ -3,7 +3,7 @@
 
 using Office.Shared;
 
-namespace BBSApp.Services.Shilpi;
+namespace BBSApp.Services.Odp;
 
 /// <summary>
 /// Watches the open project file for writes by another program. O-Draft (or the viewer) writes take-off into the same file; the revision inside it

@@ -1,6 +1,6 @@
 # The local assistant model (Olmo 3 7B Instruct)
 
-The Ask bar runs on a language model that lives on this computer. Nothing about a project is sent anywhere. O-CoreOp carries the model and O-Draft uses the same one.
+The Ask bar runs on a language model that lives on this computer. Nothing about a project is sent anywhere. **O-Studio** hosts Olmo and serves it to O-CoreOp and O-Draft on loopback.
 
 ## What is installed, and where
 
@@ -13,7 +13,11 @@ Overrides: `OSAS_MODEL` names a model file, `OSAS_LLAMA_SERVER` names `llama-ser
 
 ## How it runs
 
-`Office.Ai` (`BBSDesktop/Office.Ai`) starts `llama-server` as a hidden child process the first time anyone asks, on a free port of 127.0.0.1, behind a random key, 16384 tokens of context, one slot. A Windows job object ends it with the app, even if the app crashes. The GPU is used as far as its memory allows (the server fits layers on its own); the rest runs on the CPU. On this machine's RTX 4060 laptop GPU it answers at about 15 tokens a second and loads in about 7 seconds.
+**Host:** When you sign in to O-Studio, it starts `AiCoreListener` on `127.0.0.1:8742` and loads the model on the first question (`SuiteAiCoordinator` in `Office.Ai`). Closing the workspace or O-Studio stops the listener and unloads the model.
+
+**Clients:** O-CoreOp and O-Draft set `OSAS_AI_ROLE=client` when launched from Studio. They call the host over HTTP (`RemoteLlm`, `POST /v1/completion` for CoreOp's tool loop, `POST /v1/chat` for Draft and Studio's assistant). O-CoreOp opened alone still hosts on `:8742` when the port is free (solo use).
+
+`Office.Ai` starts `llama-server` as a hidden child process the first time the host answers, on a free port of 127.0.0.1, behind a random key, 16384 tokens of context, one slot. A Windows job object ends it with the host app. The GPU is used as far as its memory allows; the rest runs on the CPU.
 
 The in-process .NET binding (LLamaSharp 0.27/0.30) was tried first and dropped: 0.30 does not find its native library on .NET 8, and 0.27's bundled llama.cpp crashes creating the context for this model. Running the official server avoids both and moves with llama.cpp releases.
 
@@ -21,19 +25,20 @@ The in-process .NET binding (LLamaSharp 0.27/0.30) was tried first and dropped: 
 
 `Office.Shared.OlmoChat` builds the Olmo 3 prompt exactly as the model's own template does: tool signatures in `<functions>` in the system turn, tool results in `environment` turns, and the model's calls read back from `<function_calls>name(arg=json, …)</function_calls>`. Text that came from a project or a tool result has its `<|im_` tokens broken up so it cannot forge a turn. A block that cannot be read gives no call. The tool set and its confirmation dialogs are unchanged: the model only proposes, the app asks the user before any change.
 
-## How O-Draft uses it
+## How O-Draft and O-CoreOp use it
 
-While O-CoreOp is open it answers the suite's existing local contract on `127.0.0.1:8742` (`AiCoreListener`), the one O-Draft's `osas_ai` client already speaks:
+While **O-Studio** is signed in (or O-CoreOp runs alone with the port free), the suite AI Core on `127.0.0.1:8742` (`AiCoreListener`) answers:
 
-- `GET /v1/health` gives `{"status":"ready","model_ready":true}` when the model and runtime are installed.
-- `POST /v1/chat` takes `{messages:[{role,content}], max_tokens}` and returns `{"status":"ok","message":{"content":…}}`. The model loads on the first chat.
-- Every call needs `Authorization: Bearer <token>`, the token in `%LOCALAPPDATA%\OSAS\ai\auth.token` (made if missing, or `OSAS_AI_TOKEN`).
+- `GET /v1/health` — `ready` when the model and runtime are installed.
+- `POST /v1/chat` — `{messages:[{role,content}], max_tokens}` for O-Draft and O-Studio's assistant.
+- `POST /v1/completion` — `{prompt, max_tokens}` for O-CoreOp's Olmo tool loop.
+- `Authorization: Bearer <token>` — token in `%LOCALAPPDATA%\OSAS\ai\auth.token` (or `OSAS_AI_TOKEN`).
 
-O-Draft's own in-process llama.cpp (`aad-llm`, crate `llama-cpp-2` 0.1.159) cannot load this model: its vendored llama.cpp has no `olmo3` architecture. So O-Draft reaches the model through this contract, and its Ask bar works while O-CoreOp is running. Loading the file in O-Draft itself would need a newer `llama-cpp-2`.
+Apps launched from Studio get `OSAS_AI_ROLE=client` so they never load weights in-process.
 
 ## Installer
 
-`BBSDesktop/installer/build-installer.ps1` downloads the pinned llama.cpp release (SHA-256 checked, cached under `artifacts\cache`, or `LLAMA_RUNTIME_ZIP`) and bundles it in `runtime\` beside the app. The model is not in Setup (4.5 GB): the wizard has a task "Download the assistant model", on by default, that fetches it from the pinned Hugging Face revision with its SHA-256 checked and puts it in `%LOCALAPPDATA%\HumanCentricWorks\models`, where O-Draft also looks. An existing file is kept, a failed download does not stop the install (the Ask bar says where the file goes), and uninstalling leaves the model for O-Draft. Run for real on 2026-10-29: `build-installer.ps1` (inside the MSVC environment, with `-OfficeDllDir`) built a 73 MB Setup; a silent install with the model moved aside downloaded the 4 471 602 048 bytes, the hash matched, the app, `shilpid`, `shilpi-http` and the 53 runtime files were installed, and the installed O-CoreOp answered through the AI Core service. The installed app used the runtime in the shared folder, not the copy beside it (the beside-the-app copy was not exercised). Note: Windows PowerShell 5.1 read the build script wrongly without a BOM (an em dash became a quote), so it is saved with one.
+`BBSDesktop/installer/build-installer.ps1` downloads the pinned llama.cpp release (SHA-256 checked, cached under `artifacts\cache`, or `LLAMA_RUNTIME_ZIP`) and bundles it in `runtime\` beside the app. The model is not in Setup (4.5 GB): the wizard has a task "Download the assistant model", on by default, that fetches it from the pinned Hugging Face revision with its SHA-256 checked and puts it in `%LOCALAPPDATA%\HumanCentricWorks\models`, where O-Draft also looks. An existing file is kept, a failed download does not stop the install (the Ask bar says where the file goes), and uninstalling leaves the model for O-Draft. Run for real on 2026-10-29: `build-installer.ps1` (inside the MSVC environment, with `-OfficeDllDir`) built a 73 MB Setup; a silent install with the model moved aside downloaded the 4 471 602 048 bytes, the hash matched, the app and the 53 runtime files were installed, and the installed O-CoreOp answered through the AI Core service. The installed app used the runtime in the shared folder, not the copy beside it (the beside-the-app copy was not exercised). Note: Windows PowerShell 5.1 read the build script wrongly without a BOM (an em dash became a quote), so it is saved with one.
 
 ## O-Draft's assistant
 
@@ -42,4 +47,4 @@ O-Draft's agent reads Olmo's `<tool_call>` JSON form (what its prompt asks for) 
 ## Not done
 
 - The CUDA build of llama.cpp (faster on NVIDIA cards, 280 MB) is not used.
-- O-Draft needs this app open to use the model (its own llama.cpp cannot load Olmo 3).
+- O-Draft needs the host running (O-Studio signed in, or O-CoreOp solo). Its in-process llama.cpp cannot load Olmo 3.

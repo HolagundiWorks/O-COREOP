@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
 using System.Text.Json.Nodes;
-using BBSApp.Services.Shilpi;
+using BBSApp.Services.Odp;
 using Office.Shared;
 
 namespace BBSApp.Services;
@@ -19,9 +19,6 @@ public static class ProjectFiles
     public static bool IsOdp(string? path) =>
         !string.IsNullOrEmpty(path) && path.EndsWith(Extension, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>True for a project file.</summary>
-    public static bool IsShilpi(string? path) => IsOdp(path);
-
     public sealed record Opened(JsonObject? Project, bool FromDrawingOnly);
 
     /// <summary>
@@ -31,7 +28,7 @@ public static class ProjectFiles
     public static Opened? Open(string path, out string? error)
     {
         error = null;
-        if (!IsShilpi(path))
+        if (!IsOdp(path))
         {
             var legacy = EngineClient.LoadProject(path, out error);
             return legacy is null ? null : new Opened(legacy, false);
@@ -86,7 +83,7 @@ public static class ProjectFiles
         }
         store.FilePath = path;
         store.Shared = null;
-        if (IsShilpi(path)) store.Info.TakeoffVdbPath = path;
+        if (IsOdp(path)) store.Info.OspPath = path;
         return true;
     }
 }

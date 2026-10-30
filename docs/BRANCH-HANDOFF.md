@@ -1,6 +1,6 @@
 # Branch handoff (2026-10-11)
 
-> Update 2026-10-28: AORMS Connect / Bridge connectors and related branches are historical only — the libraries (`Aorms.Connect`, `Aorms.Bridge`), stub hosts, and sync UI were removed from `main`. See `HANDOFF-O-COREOP.md` for what is current (company file, CAD import, ShilpiDB take-off).
+> Update 2026-10-28: AORMS Connect / Bridge connectors and related branches are historical only — the libraries (`Aorms.Connect`, `Aorms.Bridge`), stub hosts, and sync UI were removed from `main`. See `HANDOFF-O-COREOP.md` for what is current (company file, CAD import, `.osp` take-off).
 
 All remote branches listed below were reviewed and merged into `main` at the time. Nothing was deleted then; the branches stay as history.
 
@@ -12,5 +12,5 @@ All remote branches listed below were reviewed and merged into `main` at the tim
 | `claude/roadmap-continuation-l8vv8e` | Already in `main` | Roadmap phases up to row edit/delete via the assistant. |
 
 ## Current next steps
-1. Company-file / OSAS ticket flow and local CAD / ShilpiDB take-off (keep).
+1. Company-file / OSAS ticket flow and local CAD / `.osp` take-off (keep).
 2. Click through Import/Export CAD and Take-off with a real O-Draft export.

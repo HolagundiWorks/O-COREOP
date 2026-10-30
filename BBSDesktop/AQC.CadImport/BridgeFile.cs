@@ -12,7 +12,7 @@ public sealed class BridgeFile
 {
     public string DrawingId { get; init; } = "";
     public string Drawing { get; init; } = "";
-    /// <summary>Company uuid from <c>source.project_ref</c> when O-Draft linked the drawing to a company-file project (same as ShilpiDB headers).</summary>
+    /// <summary>Company uuid from <c>source.project_ref</c> when O-Draft linked the drawing to a company-file project (same as take-off headers).</summary>
     public string? ProjectRefCompany { get; init; }
     /// <summary>Project id from <c>source.project_ref</c> when present and numeric.</summary>
     public long? ProjectRefId { get; init; }
@@ -85,7 +85,7 @@ public sealed class BridgeFile
 
     /// <summary>
     /// One-line caption for Import-from-CAD preview: whether this bridge file's <c>source.project_ref</c>
-    /// matches the open company-file project (same rules as the ShilpiDB Take-off list Mine/Other).
+    /// matches the open company-file project (same rules as the Take-off page Mine/Other).
     /// </summary>
     public string ProjectRefCaption(string? openCompanyUuid, long? openProjectId)
     {

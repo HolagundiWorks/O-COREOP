@@ -8,8 +8,8 @@ using Xunit;
 namespace Office.Shared.Tests;
 
 /// <summary>
-/// <c>Fixtures/small.osp</c> was written by the Rust crate (<c>aad-odp</c>, example <c>pack</c>) from a 22 KB DXF and a take-off .vdb that held O-CoreOp's project
-/// record, so these tests also prove that the two sides read the same file.
+/// <c>Fixtures/small.osp</c> was written by the Rust crate (<c>aad-odp</c>, example <c>pack</c>) from a 22 KB DXF and embedded take-off/project data,
+/// so these tests also prove that the two sides read the same file.
 /// </summary>
 public class OdpFileTests : IDisposable
 {

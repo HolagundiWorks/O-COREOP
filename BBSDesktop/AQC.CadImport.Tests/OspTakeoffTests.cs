@@ -7,34 +7,34 @@ using Xunit;
 
 namespace AQC.CadImport.Tests;
 
-public class ShilpiTakeoffTests
+public class OspTakeoffTests
 {
     static string Fixture(string n) => File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", n));
 
     /// <summary>What O-Draft is asked to write: a sample bridge file split into one record per row plus a header, in the given drawing slot.</summary>
-    internal static List<ShilpiRecord> RecordsFromFixture(string name = "small-house.json", uint? slot = null, string? state = null,
+    internal static List<TakeoffRecord> RecordsFromFixture(string name = "small-house.json", uint? slot = null, string? state = null,
         string? projectOfficeId = null, JsonObject? extraHeader = null, JsonObject? projectRef = null)
     {
         var root = (JsonObject)JsonNode.Parse(Fixture(name))!;
         var source = (JsonObject)root["source"]!.DeepClone();
         if (projectOfficeId is not null) source["project_office_id"] = projectOfficeId;
         if (projectRef is not null) source["project_ref"] = projectRef.DeepClone();
-        var s = slot ?? ShilpiTakeoff.SlotFor((string)source["drawing_id"]!);
-        var header = new JsonObject { ["format"] = ShilpiTakeoff.HeaderFormat, ["version"] = 1, ["units"] = "mm", ["state"] = state ?? "complete", ["source"] = source };
+        var s = slot ?? OspTakeoff.SlotFor((string)source["drawing_id"]!);
+        var header = new JsonObject { ["format"] = OspTakeoff.HeaderFormatWire, ["version"] = 1, ["units"] = "mm", ["state"] = state ?? "complete", ["source"] = source };
         foreach (var k in new[] { "project", "levels", "beam_depths_mm", "opening_schedule" })
             if (root[k] is { } n) header[k] = n.DeepClone();
         if (extraHeader is not null) foreach (var kv in extraHeader) header[kv.Key] = kv.Value?.DeepClone();
-        var list = new List<ShilpiRecord> { new(ShilpiTakeoff.HeaderId(s), 0, 0, 0, 0, header.ToJsonString()) };
+        var list = new List<TakeoffRecord> { new(OspTakeoff.HeaderId(s), 0, 0, 0, 0, header.ToJsonString()) };
         var kinds = new Dictionary<string, byte>
         {
-            ["walls"] = ShilpiTakeoff.KindWall, ["openings"] = ShilpiTakeoff.KindOpening, ["columns"] = ShilpiTakeoff.KindColumn,
-            ["lintels"] = ShilpiTakeoff.KindLintel, ["rooms"] = ShilpiTakeoff.KindRoom, ["slabs"] = ShilpiTakeoff.KindSlab,
+            ["walls"] = OspTakeoff.KindWall, ["openings"] = OspTakeoff.KindOpening, ["columns"] = OspTakeoff.KindColumn,
+            ["lintels"] = OspTakeoff.KindLintel, ["rooms"] = OspTakeoff.KindRoom, ["slabs"] = OspTakeoff.KindSlab,
         };
         uint n2 = 1;
         foreach (var (section, kind) in kinds)
             if (root[section] is JsonArray arr)
                 foreach (var row in arr)
-                    list.Add(new ShilpiRecord(ShilpiTakeoff.MakeId(kind, s, n2++), 0, 0, 1000, 1000, row!.ToJsonString()));
+                    list.Add(new TakeoffRecord(OspTakeoff.MakeId(kind, s, n2++), 0, 0, 1000, 1000, row!.ToJsonString()));
         return list;
     }
 
@@ -47,7 +47,7 @@ public class ShilpiTakeoffTests
     }
 
     /// <summary>Annotated PDF as chunk records plus the header descriptor O-Draft must write.</summary>
-    internal static (List<ShilpiRecord> records, byte[] pdf) WithPdf(uint slot, int chunkBytes = 1024, int size = 5000, string? sha = null)
+    internal static (List<TakeoffRecord> records, byte[] pdf) WithPdf(uint slot, int chunkBytes = 1024, int size = 5000, string? sha = null)
     {
         var pdf = FakePdf(size);
         var chunks = (pdf.Length + chunkBytes - 1) / chunkBytes;
@@ -63,7 +63,7 @@ public class ShilpiTakeoffTests
         for (int i = 0; i < chunks; i++)
         {
             var part = pdf.Skip(i * chunkBytes).Take(chunkBytes).ToArray();
-            recs.Add(new ShilpiRecord(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindAnnotatedChunk, slot, (uint)i), 0, 0, 0, 0, null, Convert.ToHexString(part)));
+            recs.Add(new TakeoffRecord(OspTakeoff.MakeId(OspTakeoff.KindAnnotatedChunk, slot, (uint)i), 0, 0, 0, 0, null, Convert.ToHexString(part)));
         }
         return (recs, pdf);
     }
@@ -81,13 +81,13 @@ public class ShilpiTakeoffTests
     [Fact]
     public void Id_carries_kind_slot_and_n()
     {
-        var id = ShilpiTakeoff.MakeId(ShilpiTakeoff.KindWall, 0xABCDEF, 0x2A1);
-        Assert.Equal(ShilpiTakeoff.KindWall, ShilpiTakeoff.KindOf(id));
-        Assert.Equal(0xABCDEFu, ShilpiTakeoff.SlotOf(id));
-        Assert.Equal(0x2A1u, ShilpiTakeoff.NOf(id));
-        Assert.Equal(ShilpiTakeoff.KindHeader, ShilpiTakeoff.KindOf(ShilpiTakeoff.HeaderId(5)));
-        Assert.Equal(0u, ShilpiTakeoff.NOf(ShilpiTakeoff.HeaderId(5)));
-        Assert.Equal(ulong.MaxValue, ShilpiTakeoff.MakeId(255, 0xFFFFFF, uint.MaxValue));
+        var id = OspTakeoff.MakeId(OspTakeoff.KindWall, 0xABCDEF, 0x2A1);
+        Assert.Equal(OspTakeoff.KindWall, OspTakeoff.KindOf(id));
+        Assert.Equal(0xABCDEFu, OspTakeoff.SlotOf(id));
+        Assert.Equal(0x2A1u, OspTakeoff.NOf(id));
+        Assert.Equal(OspTakeoff.KindHeader, OspTakeoff.KindOf(OspTakeoff.HeaderId(5)));
+        Assert.Equal(0u, OspTakeoff.NOf(OspTakeoff.HeaderId(5)));
+        Assert.Equal(ulong.MaxValue, OspTakeoff.MakeId(255, 0xFFFFFF, uint.MaxValue));
     }
 
     [Theory]   // published test vectors: O-Draft's SlotFor must give these
@@ -99,8 +99,8 @@ public class ShilpiTakeoffTests
         uint h = 2166136261;
         foreach (var b in Encoding.UTF8.GetBytes(drawingId)) { h ^= b; h *= 16777619; }
         var expected = (h ^ (h >> 24)) & 0xFFFFFF;
-        Assert.Equal(expected == 0 ? 1u : expected, ShilpiTakeoff.SlotFor(drawingId));
-        Assert.InRange(ShilpiTakeoff.SlotFor(drawingId), 1u, 0xFFFFFFu);
+        Assert.Equal(expected == 0 ? 1u : expected, OspTakeoff.SlotFor(drawingId));
+        Assert.InRange(OspTakeoff.SlotFor(drawingId), 1u, 0xFFFFFFu);
     }
 
     [Fact]
@@ -115,14 +115,14 @@ public class ShilpiTakeoffTests
             return f == 0 ? 1u : f;
         }
         foreach (var id in new[] { "a", "", "0b7d9c34-1e6f-4f0b-8a13-9b2c7d5e41aa", "6f1c1b0e-7a52-4d0a-9c1e-2d8a3f4b5c60", "drawing é ü 1" })
-            Assert.Equal(Reference(id), ShilpiTakeoff.SlotFor(id));
-        // published vectors (docs/TAKEOFF-SHILPIDB.md): a writer in another language must produce these
-        Assert.Equal(6389047u, ShilpiTakeoff.SlotFor("0b7d9c34-1e6f-4f0b-8a13-9b2c7d5e41aa"));
-        Assert.Equal(15751439u, ShilpiTakeoff.SlotFor("6f1c1b0e-7a52-4d0a-9c1e-2d8a3f4b5c60"));
+            Assert.Equal(Reference(id), OspTakeoff.SlotFor(id));
+        // published vectors (OspTakeoff slot algorithm): a writer in another language must produce these
+        Assert.Equal(6389047u, OspTakeoff.SlotFor("0b7d9c34-1e6f-4f0b-8a13-9b2c7d5e41aa"));
+        Assert.Equal(15751439u, OspTakeoff.SlotFor("6f1c1b0e-7a52-4d0a-9c1e-2d8a3f4b5c60"));
     }
 
     [Fact]
-    public void Next_slot_wraps_and_skips_zero() => Assert.Equal(1u, ShilpiTakeoff.NextSlot(0xFFFFFF));
+    public void Next_slot_wraps_and_skips_zero() => Assert.Equal(1u, OspTakeoff.NextSlot(0xFFFFFF));
 
     // ---- one drawing ----
 
@@ -133,7 +133,7 @@ public class ShilpiTakeoffTests
         CadImporter.Apply(CadImporter.Plan(BridgeFile.Parse(Fixture("small-house.json")), fromFile), fromFile);
 
         var fromDb = EmptyModel();
-        var result = ShilpiTakeoff.Read(RecordsFromFixture());
+        var result = OspTakeoff.Read(RecordsFromFixture());
         CadImporter.Apply(CadImporter.Plan(result.File, fromDb), fromDb);
 
         Assert.Empty(result.Skipped);
@@ -145,11 +145,11 @@ public class ShilpiTakeoffTests
     }
 
     [Fact]
-    public void A_file_import_then_a_shilpidb_import_of_the_same_drawing_changes_nothing()
+    public void A_file_import_then_a_project_takeoff_import_of_the_same_drawing_changes_nothing()
     {
         var m = EmptyModel();
         CadImporter.Apply(CadImporter.Plan(BridgeFile.Parse(Fixture("small-house.json")), m), m);
-        var plan = CadImporter.Plan(ShilpiTakeoff.Read(RecordsFromFixture()).File, m);
+        var plan = CadImporter.Plan(OspTakeoff.Read(RecordsFromFixture()).File, m);
         Assert.Equal(0, plan.Count(PlanAction.Add));
         Assert.Equal(0, plan.Count(PlanAction.Update));
     }
@@ -159,14 +159,14 @@ public class ShilpiTakeoffTests
     {
         var recs = RecordsFromFixture();
         recs.Reverse();
-        Assert.Equal(3, ShilpiTakeoff.Read(recs).File.Walls.Count);
+        Assert.Equal(3, OspTakeoff.Read(recs).File.Walls.Count);
     }
 
     [Fact]
     public void Missing_header_is_refused()
     {
-        var recs = RecordsFromFixture().Where(r => ShilpiTakeoff.KindOf(r.Id) != ShilpiTakeoff.KindHeader).ToList();
-        Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.Read(recs));
+        var recs = RecordsFromFixture().Where(r => OspTakeoff.KindOf(r.Id) != OspTakeoff.KindHeader).ToList();
+        Assert.Throws<BridgeFormatException>(() => OspTakeoff.Read(recs));
     }
 
     [Theory]
@@ -177,8 +177,8 @@ public class ShilpiTakeoffTests
     {
         var recs = RecordsFromFixture();
         recs[0] = recs[0] with { PayloadText = recs[0].PayloadText!.Replace(from, to) };
-        Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.Read(recs));
-        var listed = Assert.Single(ShilpiTakeoff.ListDrawings(recs));
+        Assert.Throws<BridgeFormatException>(() => OspTakeoff.Read(recs));
+        var listed = Assert.Single(OspTakeoff.ListDrawings(recs));
         Assert.NotNull(listed.Problem);
     }
 
@@ -186,11 +186,11 @@ public class ShilpiTakeoffTests
     public void Unknown_kinds_and_bad_payloads_are_reported_not_fatal()
     {
         var recs = RecordsFromFixture();
-        var slot = ShilpiTakeoff.SlotOf(recs[0].Id);
-        recs.Add(new ShilpiRecord(ShilpiTakeoff.MakeId(99, slot, 1), 0, 0, 1, 1, "{}"));
-        recs.Add(new ShilpiRecord(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindWall, slot, 900), 0, 0, 1, 1, "not json"));
-        recs.Add(new ShilpiRecord(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindWall, slot, 901), 0, 0, 1, 1, null));
-        var r = ShilpiTakeoff.Read(recs);
+        var slot = OspTakeoff.SlotOf(recs[0].Id);
+        recs.Add(new TakeoffRecord(OspTakeoff.MakeId(99, slot, 1), 0, 0, 1, 1, "{}"));
+        recs.Add(new TakeoffRecord(OspTakeoff.MakeId(OspTakeoff.KindWall, slot, 900), 0, 0, 1, 1, "not json"));
+        recs.Add(new TakeoffRecord(OspTakeoff.MakeId(OspTakeoff.KindWall, slot, 901), 0, 0, 1, 1, null));
+        var r = OspTakeoff.Read(recs);
         Assert.Equal(3, r.Skipped.Count);
         Assert.Equal(3, r.File.Walls.Count);
     }
@@ -199,32 +199,32 @@ public class ShilpiTakeoffTests
     public void A_take_off_still_being_recorded_is_refused_until_complete()
     {
         var recs = RecordsFromFixture(state: "recording");
-        var d = Assert.Single(ShilpiTakeoff.ListDrawings(recs));
+        var d = Assert.Single(OspTakeoff.ListDrawings(recs));
         Assert.False(d.IsComplete);
-        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.Read(recs));
+        var ex = Assert.Throws<BridgeFormatException>(() => OspTakeoff.Read(recs));
         Assert.Contains("still being recorded", ex.Message);
     }
 
     [Fact]
     public void A_header_without_a_state_counts_as_complete() =>
-        Assert.True(Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(extraHeader: new JsonObject { ["state"] = null }))).IsComplete);
+        Assert.True(Assert.Single(OspTakeoff.ListDrawings(RecordsFromFixture(extraHeader: new JsonObject { ["state"] = null }))).IsComplete);
 
     [Fact]
     public void A_drawing_linked_to_a_project_in_the_company_file_names_it()
     {
-        var linked = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["v"] = 1, ["company_uuid"] = "u-1", ["project_id"] = 7 })));
+        var linked = Assert.Single(OspTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["v"] = 1, ["company_uuid"] = "u-1", ["project_id"] = 7 })));
         Assert.Equal(("u-1", 7L), (linked.ProjectRefCompany, linked.ProjectRefId));
 
-        var unlinked = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture()));
+        var unlinked = Assert.Single(OspTakeoff.ListDrawings(RecordsFromFixture()));
         Assert.Equal((null, null), (unlinked.ProjectRefCompany, unlinked.ProjectRefId));
 
-        var odd = Assert.Single(ShilpiTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["company_uuid"] = "u-2", ["project_id"] = "not a number" })));
+        var odd = Assert.Single(OspTakeoff.ListDrawings(RecordsFromFixture(projectRef: new JsonObject { ["company_uuid"] = "u-2", ["project_id"] = "not a number" })));
         Assert.Equal(("u-2", null), (odd.ProjectRefCompany, odd.ProjectRefId));
     }
 
     // ---- several drawings, one database ----
 
-    static List<ShilpiRecord> TwoDrawings(string? projectA = "proj-A", string? projectB = "proj-B")
+    static List<TakeoffRecord> TwoDrawings(string? projectA = "proj-A", string? projectB = "proj-B")
     {
         var a = RecordsFromFixture("small-house.json", projectOfficeId: projectA);
         var b = RecordsFromFixture("levels-only.json", projectOfficeId: projectB);
@@ -237,7 +237,7 @@ public class ShilpiTakeoffTests
         const uint slot = 42;
         var header = new JsonObject
         {
-            ["format"] = ShilpiTakeoff.HeaderFormat, ["version"] = 1, ["units"] = "mm", ["state"] = "complete",
+            ["format"] = OspTakeoff.HeaderFormatWire, ["version"] = 1, ["units"] = "mm", ["state"] = "complete",
             ["source"] = new JsonObject { ["drawing_id"] = "elec-demo", ["drawing"] = "elec.dwg" },
             ["levels"] = new JsonArray { new JsonObject { ["name"] = "Ground", ["height_mm"] = 3150 } },
         };
@@ -253,13 +253,13 @@ public class ShilpiTakeoffTests
             ["height"] = null, ["5amp_socket"] = 0, ["15amp_socket"] = 0, ["connected_fixture"] = 1,
             ["two_way_switches"] = 0, ["one_way_switches"] = 0,
         };
-        var recs = new List<ShilpiRecord>
+        var recs = new List<TakeoffRecord>
         {
-            new(ShilpiTakeoff.HeaderId(slot), 0, 0, 0, 0, header.ToJsonString()),
-            new(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindElectricalBoard, slot, 1), 0, 0, 0, 0, board.ToJsonString()),
-            new(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindElectricalCircuit, slot, 2), 0, 0, 0, 0, circuit.ToJsonString()),
+            new(OspTakeoff.HeaderId(slot), 0, 0, 0, 0, header.ToJsonString()),
+            new(OspTakeoff.MakeId(OspTakeoff.KindElectricalBoard, slot, 1), 0, 0, 0, 0, board.ToJsonString()),
+            new(OspTakeoff.MakeId(OspTakeoff.KindElectricalCircuit, slot, 2), 0, 0, 0, 0, circuit.ToJsonString()),
         };
-        var read = ShilpiTakeoff.Read(recs, slot);
+        var read = OspTakeoff.Read(recs, slot);
         Assert.Single(read.File.Electrical);
         Assert.Single(read.File.ElectricalCircuits);
         Assert.Equal(2, read.File.Electrical[0]!["5amp_socket"]!.GetValue<int>());
@@ -282,7 +282,7 @@ public class ShilpiTakeoffTests
     [Fact]
     public void Openings_that_already_name_their_wall_are_not_reassigned_by_position()
     {
-        var read = ShilpiTakeoff.Read(RecordsFromFixture());
+        var read = OspTakeoff.Read(RecordsFromFixture());
         Assert.Equal(5, read.File.Openings.Count);
         Assert.All(read.File.Openings, o => Assert.False(string.IsNullOrEmpty((string?)o["wall_ref"])));
         Assert.DoesNotContain(read.Notes ?? [], n => n.Contains("placed in wall", StringComparison.OrdinalIgnoreCase));
@@ -299,12 +299,12 @@ public class ShilpiTakeoffTests
     [Fact]
     public void Drawings_in_one_database_are_listed_separately_with_their_counts()
     {
-        var list = ShilpiTakeoff.ListDrawings(TwoDrawings());
+        var list = OspTakeoff.ListDrawings(TwoDrawings());
         Assert.Equal(2, list.Count);
         var house = list.Single(d => d.Drawing == "small house.dwg");
         Assert.Equal("proj-A", house.ProjectOfficeId);
-        Assert.Equal(3, house.Counts[ShilpiTakeoff.KindWall]);
-        Assert.Equal(5, house.Counts[ShilpiTakeoff.KindOpening]);
+        Assert.Equal(3, house.Counts[OspTakeoff.KindWall]);
+        Assert.Equal(5, house.Counts[OspTakeoff.KindOpening]);
         Assert.Equal(14, house.Rows);
         Assert.Equal("proj-B", list.Single(d => d.Drawing == "building permission.dwg").ProjectOfficeId);
     }
@@ -313,8 +313,8 @@ public class ShilpiTakeoffTests
     public void Reading_one_drawing_never_mixes_in_the_other()
     {
         var recs = TwoDrawings();
-        var house = ShilpiTakeoff.ListDrawings(recs).Single(d => d.Drawing == "small house.dwg");
-        var r = ShilpiTakeoff.Read(recs, house.Slot);
+        var house = OspTakeoff.ListDrawings(recs).Single(d => d.Drawing == "small house.dwg");
+        var r = OspTakeoff.Read(recs, house.Slot);
         Assert.Equal(3, r.File.Walls.Count);
         Assert.Equal("small house.dwg", r.File.Drawing);
         Assert.DoesNotContain(r.File.Levels, l => l.Name == "First");   // levels-only.json's floors belong to the other drawing
@@ -323,7 +323,7 @@ public class ShilpiTakeoffTests
     [Fact]
     public void Reading_without_a_slot_when_there_are_several_drawings_asks_to_choose()
     {
-        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.Read(TwoDrawings()));
+        var ex = Assert.Throws<BridgeFormatException>(() => OspTakeoff.Read(TwoDrawings()));
         Assert.Contains("choose one", ex.Message);
     }
 
@@ -332,13 +332,13 @@ public class ShilpiTakeoffTests
     {
         var recs = TwoDrawings();
         var m = EmptyModel();
-        foreach (var d in ShilpiTakeoff.ListDrawings(recs))
-            CadImporter.Apply(CadImporter.Plan(ShilpiTakeoff.Read(recs, d.Slot).File, m), m);
+        foreach (var d in OspTakeoff.ListDrawings(recs))
+            CadImporter.Apply(CadImporter.Plan(OspTakeoff.Read(recs, d.Slot).File, m), m);
         var tags = m.Sheet("masonry").Select(r => r["source"]).Distinct().ToList();
         Assert.Single(tags);   // only the small house has walls
         Assert.Equal(3, m.Sheet("masonry").Count);
 
-        var again = CadImporter.Plan(ShilpiTakeoff.Read(recs, ShilpiTakeoff.ListDrawings(recs).First(d => d.Drawing == "small house.dwg").Slot).File, m);
+        var again = CadImporter.Plan(OspTakeoff.Read(recs, OspTakeoff.ListDrawings(recs).First(d => d.Drawing == "small house.dwg").Slot).File, m);
         Assert.Equal(0, again.Count(PlanAction.Add));
     }
 
@@ -348,10 +348,10 @@ public class ShilpiTakeoffTests
     public void Annotated_pdf_is_reassembled_and_verified()
     {
         var (recs, pdf) = WithPdf(slot: 42);
-        var d = Assert.Single(ShilpiTakeoff.ListDrawings(recs));
+        var d = Assert.Single(OspTakeoff.ListDrawings(recs));
         Assert.Equal(pdf.Length, d.Annotated!.Bytes);
         Assert.Equal(5, d.Annotated.Chunks);
-        Assert.Equal(pdf, ShilpiTakeoff.ReadAnnotatedPdf(recs, 42));
+        Assert.Equal(pdf, OspTakeoff.ReadAnnotatedPdf(recs, 42));
         Assert.Equal(14, d.Rows);   // chunks are not counted as take-off rows
     }
 
@@ -359,8 +359,8 @@ public class ShilpiTakeoffTests
     public void Chunks_are_not_part_of_the_take_off_and_can_be_skipped_when_reading()
     {
         var (recs, _) = WithPdf(slot: 42);
-        Assert.False(ShilpiTakeoff.IsTakeoffRecord(recs.Last().Id));
-        var result = ShilpiTakeoff.Read(recs.Where(r => ShilpiTakeoff.IsTakeoffRecord(r.Id)));
+        Assert.False(OspTakeoff.IsTakeoffRecord(recs.Last().Id));
+        var result = OspTakeoff.Read(recs.Where(r => OspTakeoff.IsTakeoffRecord(r.Id)));
         Assert.Equal(3, result.File.Walls.Count);
     }
 
@@ -368,21 +368,21 @@ public class ShilpiTakeoffTests
     public void A_missing_or_changed_chunk_or_wrong_checksum_is_refused()
     {
         var (recs, _) = WithPdf(slot: 42);
-        Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(recs.Where(r => !(ShilpiTakeoff.KindOf(r.Id) == ShilpiTakeoff.KindAnnotatedChunk && ShilpiTakeoff.NOf(r.Id) == 2)), 42));
+        Assert.Throws<BridgeFormatException>(() => OspTakeoff.ReadAnnotatedPdf(recs.Where(r => !(OspTakeoff.KindOf(r.Id) == OspTakeoff.KindAnnotatedChunk && OspTakeoff.NOf(r.Id) == 2)), 42));
 
-        var tampered = recs.Select(r => ShilpiTakeoff.KindOf(r.Id) == ShilpiTakeoff.KindAnnotatedChunk && ShilpiTakeoff.NOf(r.Id) == 1
+        var tampered = recs.Select(r => OspTakeoff.KindOf(r.Id) == OspTakeoff.KindAnnotatedChunk && OspTakeoff.NOf(r.Id) == 1
             ? r with { PayloadHex = "00" + r.PayloadHex![2..] } : r).ToList();
-        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(tampered, 42));
+        var ex = Assert.Throws<BridgeFormatException>(() => OspTakeoff.ReadAnnotatedPdf(tampered, 42));
         Assert.Contains("checksum", ex.Message);
 
         var (badSha, _) = WithPdf(slot: 42, sha: new string('0', 64));
-        Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(badSha, 42));
+        Assert.Throws<BridgeFormatException>(() => OspTakeoff.ReadAnnotatedPdf(badSha, 42));
     }
 
     [Fact]
     public void A_drawing_with_no_annotated_pdf_says_so()
     {
-        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(RecordsFromFixture(slot: 7), 7));
+        var ex = Assert.Throws<BridgeFormatException>(() => OspTakeoff.ReadAnnotatedPdf(RecordsFromFixture(slot: 7), 7));
         Assert.Contains("no annotated drawing", ex.Message);
     }
 
@@ -390,11 +390,11 @@ public class ShilpiTakeoffTests
     public void Something_that_is_not_a_pdf_is_refused()
     {
         var notPdf = new byte[100];
-        var chunk = new ShilpiRecord(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindAnnotatedChunk, 9, 0), 0, 0, 0, 0, null, Convert.ToHexString(notPdf));
+        var chunk = new TakeoffRecord(OspTakeoff.MakeId(OspTakeoff.KindAnnotatedChunk, 9, 0), 0, 0, 0, 0, null, Convert.ToHexString(notPdf));
         var desc = new JsonObject { ["annotated_pdf"] = new JsonObject { ["sha256"] = Convert.ToHexString(SHA256.HashData(notPdf)), ["bytes"] = 100, ["chunks"] = 1, ["pages"] = 1 } };
         var recs = RecordsFromFixture(slot: 9, extraHeader: desc);
         recs.Add(chunk);
-        var ex = Assert.Throws<BridgeFormatException>(() => ShilpiTakeoff.ReadAnnotatedPdf(recs, 9));
+        var ex = Assert.Throws<BridgeFormatException>(() => OspTakeoff.ReadAnnotatedPdf(recs, 9));
         Assert.Contains("not a PDF", ex.Message);
     }
 }

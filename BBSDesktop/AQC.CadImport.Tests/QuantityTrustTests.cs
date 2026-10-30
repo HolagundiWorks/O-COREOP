@@ -9,7 +9,7 @@ namespace AQC.CadImport.Tests;
 
 /// <summary>
 /// Quantity-trust checklist: known wall/opening numbers that must survive
-/// bridge / ShilpiDB → CadImport without double-count, broken wall_ref, or thickness regressions.
+/// bridge / project take-off → CadImport without double-count, broken wall_ref, or thickness regressions.
 /// Fixture mirrors O-Draft <c>crates/engine/tests/fixtures/quantity-trust-checklist.json</c>.
 /// </summary>
 public class QuantityTrustTests
@@ -163,17 +163,17 @@ public class QuantityTrustTests
     }
 
     [Fact]
-    public void Shilpi_records_from_checklist_carry_project_ref_and_import()
+    public void Takeoff_records_from_checklist_carry_project_ref_and_import()
     {
-        var recs = ShilpiTakeoffTests.RecordsFromFixture(
+        var recs = OspTakeoffTests.RecordsFromFixture(
             "quantity-trust-checklist.json",
             projectRef: new JsonObject { ["v"] = 1, ["company_uuid"] = Company, ["project_id"] = ProjectId });
-        var d = Assert.Single(ShilpiTakeoff.ListDrawings(recs));
+        var d = Assert.Single(OspTakeoff.ListDrawings(recs));
         Assert.Equal(Company, d.ProjectRefCompany);
         Assert.Equal(ProjectId, d.ProjectRefId);
         Assert.True(d.IsComplete);
 
-        var read = ShilpiTakeoff.Read(recs, d.Slot);
+        var read = OspTakeoff.Read(recs, d.Slot);
         Assert.Equal(Company, read.File.ProjectRefCompany);
         Assert.Equal(ProjectId, read.File.ProjectRefId);
         Assert.Equal(2, read.File.Walls.Count);

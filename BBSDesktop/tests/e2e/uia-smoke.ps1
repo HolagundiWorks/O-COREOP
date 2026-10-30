@@ -74,11 +74,10 @@ function Alive() { $proc.Refresh(); if ($proc.HasExited) { "!!! APP CRASHED (exi
 [void](Open-FileMenu)
 $items = Names $root $TS::Descendants 200 | Where-Object { $_ -like "MenuItem*" }
 $items | ForEach-Object { "  $_" }
-Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+try { [System.Windows.Forms.SendKeys]::SendWait("{ESC}") } catch { }
 Start-Sleep -Milliseconds 400
 
-foreach ($step in @("Take-off from ShilpiDB", "Import from CAD", "Export for CAD")) {
+foreach ($step in @("Take-off (O-Draft)", "Import from CAD", "Export for CAD")) {
   "== $step =="
   $ok = Click-MenuItem ($items | Where-Object { $_ -like "*$step*" } | ForEach-Object { ($_ -split ': ', 2)[1] } | Select-Object -First 1)
   if ($ok) {
@@ -86,7 +85,7 @@ foreach ($step in @("Take-off from ShilpiDB", "Import from CAD", "Export for CAD
     $txt = Names $win $TS::Descendants 60
     ($txt | Where-Object { $_ -match "Take-off|Import|Export|CAD|Drawings|Cancel|Close|Refresh|Read|Start|Choose|shared|first|bridge" } | Select-Object -First 25) | ForEach-Object { "   $_" }
   }
-  [System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+  try { [System.Windows.Forms.SendKeys]::SendWait("{ESC}") } catch { Invoke-El (Find-Name $win "Close" 1500) | Out-Null }
   Start-Sleep -Milliseconds 500
   if (-not (Alive)) { break }
 }

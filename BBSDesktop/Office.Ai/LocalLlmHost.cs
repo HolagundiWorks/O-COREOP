@@ -4,8 +4,7 @@
 namespace Office.Ai;
 
 /// <summary>
-/// The one model per app process, started the first time anyone (the Ask bar or O-Draft through <see cref="AiCoreListener"/>)
-/// asks for it, and ended when the app ends.
+/// The one model per host process, started the first time the AI Core listener answers, and ended when the host stops.
 /// </summary>
 public static class LocalLlmHost
 {

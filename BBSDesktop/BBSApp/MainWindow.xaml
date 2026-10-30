@@ -67,7 +67,7 @@
                         <FontIcon Glyph="&#xE710;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Open ShilpiDB project…" Click="Open_Click" AccessKey="O">
+                <MenuFlyoutItem Text="Open project…" Click="Open_Click" AccessKey="O">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8E5;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -88,7 +88,7 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Take-off from ShilpiDB…" Click="NavMenu_Click" Tag="takeoff">
+                <MenuFlyoutItem Text="Take-off (O-Draft)…" Click="NavMenu_Click" Tag="takeoff">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE9F9;" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </MenuFlyoutItem.Icon>
@@ -195,82 +195,30 @@
                     </Frame.ContentTransitions>
                 </Frame>
 
-                <!-- Floating Ask bar (as in O-Draft): fixed bottom-centre over the page, solid pill, reply card above it. -->
-                <StackPanel x:Name="AiBar" Grid.Row="2" Spacing="6" Margin="0,0,0,24" Width="520"
-                            HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                            AutomationProperties.Name="Ask the assistant">
-                    <Border x:Name="AiReplyHost" Visibility="Collapsed" CornerRadius="12" Padding="12,8"
-                            Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="1">
-                        <Grid>
-                            <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
-                                <TextBlock x:Name="AssistantReply" FontSize="{StaticResource SuiteFontBody}" TextWrapping="Wrap"
-                                           Foreground="{ThemeResource HcwInkBrush}" IsTextSelectionEnabled="True"/>
-                            </ScrollViewer>
-                            <ProgressRing x:Name="AssistantBusy" IsActive="False" Visibility="Collapsed"
-                                          Width="20" Height="20" HorizontalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-                    <Border x:Name="AiPill" Height="40" CornerRadius="20" Padding="6,4"
-                            Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}" BorderThickness="1">
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Width="28" Height="28" CornerRadius="14" Background="{ThemeResource HcwSoftBrush}" VerticalAlignment="Center">
-                                <FontIcon Glyph="&#xE710;" FontSize="{StaticResource SuiteFontBody}" Foreground="{ThemeResource HcwMutedBrush}"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <TextBox x:Name="AiInput" Grid.Column="1" BorderThickness="0" CornerRadius="0" Background="Transparent"
-                                     FontSize="{StaticResource SuiteFontBody}" VerticalAlignment="Center"
-                                     PlaceholderText="Ask about this project…" AcceptsReturn="False" TextWrapping="NoWrap"
-                                     AutomationProperties.Name="Ask the assistant" KeyDown="AiInput_KeyDown">
-                                <TextBox.Resources>
-                                    <Thickness x:Key="TextControlBorderThemeThickness">0</Thickness>
-                                    <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
-                                    <CornerRadius x:Key="ControlCornerRadius">0</CornerRadius>
-                                    <SolidColorBrush x:Key="TextControlBackground" Color="Transparent"/>
-                                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent"/>
-                                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent"/>
-                                </TextBox.Resources>
-                            </TextBox>
-                            <Button Grid.Column="2" Width="32" Height="32" MinWidth="32" MinHeight="32" Padding="0" CornerRadius="16"
-                                    Background="{ThemeResource HcwInkBrush}" BorderThickness="0" VerticalAlignment="Center"
-                                    Click="AiSend_Click" AutomationProperties.Name="Send" ToolTipService.ToolTip="Send">
-                                <FontIcon Glyph="&#xE898;" FontSize="{StaticResource SuiteIconSize}" Foreground="{ThemeResource HcwWhiteBrush}"/>
-                            </Button>
-                        </Grid>
-                    </Border>
-                </StackPanel>
+                <!-- Floating Ask bar (O-Draft shell): reply card + pill -->
+                <Grid x:Name="AskHost" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
 
-                <!-- Status strip: calculator, theme, company chip -->
-                <Border x:Name="StatusStrip" Grid.Row="4" Margin="16,0,16,12" Padding="12,0" Height="{StaticResource SuiteStatusBarHeight}"
-                        Background="{ThemeResource HcwWhiteBrush}" BorderBrush="{ThemeResource HcwEdgeBrush}"
-                        BorderThickness="0" CornerRadius="{StaticResource SuiteCornerControl}" AutomationProperties.Name="Status">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
-                                Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
-                            <FontIcon Glyph="&#xE1D0;" FontSize="{StaticResource SuiteIconSize}" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                <!-- Full-bleed status row (O-Draft bottom bar) -->
+                <hcw:SuiteBottomStatusBar x:Name="StatusStrip" Grid.Row="4"/>
+
+                <!-- Wired into StatusStrip in code -->
+                <StackPanel x:Name="BottomShellParts" Visibility="Collapsed">
+                    <Button x:Name="NavCalcBtn" AutomationProperties.Name="Calculator and ask" Style="{StaticResource HcwGhostButton}" MinWidth="40"
+                            Click="CalcFab_Click" ToolTipService.ToolTip="Calculator · Ask" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE1D0;" FontSize="{StaticResource SuiteIconSize}" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
+                    </Button>
+                    <StackPanel x:Name="BottomShellRight" Orientation="Horizontal" Spacing="8">
+                        <hcw:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
+                        <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
+                                Click="CompanyBadge_Click"
+                                AutomationProperties.Name="Company file"
+                                ToolTipService.ToolTip="The company file shared with O-Studio — open its projects">
+                            <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
+                                       Foreground="{ThemeResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
+                                       Text="Company · not open"/>
                         </Button>
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <hcw:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
-                            <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
-                                    Click="CompanyBadge_Click"
-                                    AutomationProperties.Name="Company file"
-                                    ToolTipService.ToolTip="The company file shared with O-Studio — open its projects">
-                                <TextBlock x:Name="CompanyBadgeText" VerticalAlignment="Center" FontSize="{StaticResource SuiteFontBody}"
-                                           Foreground="{ThemeResource HcwInkBrush}" MaxWidth="190" TextTrimming="CharacterEllipsis"
-                                           Text="Company · not open"/>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    </StackPanel>
+                </StackPanel>
 
             <!-- Soft toast — clears taskbar + clock -->
             <Grid x:Name="ToastHost" Grid.Row="1" Margin="24,0,24,8" HorizontalAlignment="Stretch"

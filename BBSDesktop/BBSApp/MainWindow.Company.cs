@@ -3,6 +3,7 @@
 
 using BBSApp.Services;
 using BBSApp.Services.Company;
+using BBSApp.Services.Odp;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -68,10 +69,10 @@ public sealed partial class MainWindow
         if (companyUuid is null || projectId is null)
         {
             var path = ProjectStore.Current.FilePath;
-            if (!ProjectFiles.IsShilpi(path) || !File.Exists(path)) return;
-            Services.Shilpi.TakeoffSource source = new Services.Shilpi.TakeoffSource.Project(path!);
+            if (!ProjectFiles.IsOdp(path) || !File.Exists(path)) return;
+            TakeoffSource source = new TakeoffSource.Project(path!);
             (string? Company, long? ProjectId) head;
-            try { head = await Services.Shilpi.ShilpiTakeoffService.FirstProjectRefAsync(source); }
+            try { head = await OdpTakeoffService.FirstProjectRefAsync(source); }
             catch (Exception) { return; }
             (companyUuid, projectId) = (head.Company, head.ProjectId);
         }

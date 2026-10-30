@@ -5,9 +5,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+> **Naming (2026-10-30):** Older bullets below may say ShilpiDB or `.vdb`; the product now uses the **`.osp` project file** only. See [MIGRATION-OSP.md](MIGRATION-OSP.md).
+
 ### Changed (2026-10-29)
 - **The company file is Studio's.** O-CoreOp reads company and project details from it (read only, project named by the take-off header) and no longer saves to it: Save to company file, the project chooser, create client or project, polling, the reload dialog and the Share draft to Studio buttons (estimate, RA bill) are removed. Studio reads the project file instead.
-- **The project file is a ShilpiDB file.** A project is the `.vdb` beside the drawing, the one O-Draft records its take-off in; the estimate, running bills, tasks, quantities, purchase orders and the rest are stored in it as record kind `0x60` and every other record is kept on save. File > Open ShilpiDB project, File > Open O-Draft's project (O-Draft publishes its active drawing in `%LOCALAPPDATA%\OSASctive-project.json`; O-CoreOp follows it when nothing is unsaved). Open company, Company projects and Close company are gone from the File menu. The Take-off page reads the project's own file and no longer needs the shared server. Old `.bbsproj` files still open. **Live:** O-Draft runs `shilpid` and the gateway on the active drawing's file and says so in the pointer; O-CoreOp then reads and saves through the gateway and is told within two seconds when O-Draft records a take-off. See `docs/PROJECT-FILE.md`. Tests: `ShilpiProjectFileTests`, `ActiveProjectTests`.
+- **The project file is `.osp`.** One SQLite file holds the drawing, take-off (`takeoff_*` tables), and the O-CoreOp project record. File > Open/Save as `.osp`; the active-project pointer still links O-Draft and O-CoreOp. Old `.bbsproj` / `.json` still open; Save as writes `.osp`. See `docs/PROJECT-FILE.md` and `docs/MIGRATION-OSP.md`. Tests: `OdpFileTests`, `ActiveProjectTests`, `OspTakeoffTests`.
 
 ### Added (2026-10-29)
 - **Local assistant model.** The Ask bar now runs on Olmo 3 7B Instruct on this computer: `Office.Ai` starts llama.cpp's `llama-server` hidden on loopback (ends with the app) and `OlmoChat` builds the model's own prompt and reads its function calls. A stored Anthropic key is used only when the model is not installed. O-Draft reaches the same model through the suite's local AI Core contract on `127.0.0.1:8742` while this app is open. See `docs/LOCAL-MODEL.md`. Tests: `OlmoChatTests`.
@@ -47,7 +49,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The C++ engine now builds with clang/MinGW as well as MSVC.
 
 ### Added
-- **Take-off from ShilpiDB** — **Project > Take-off (O-Draft)** lists the drawings recorded on the shared take-off server (or in a `.vdb` file, read directly, versions 1 and 2), reads one into the import preview (idempotent, one undo, nothing deleted), and fetches, verifies (SHA-256) and stores the annotated drawing PDF O-Draft generated; the stored PDFs are embedded in the project report and the estimate PDF. Several drawings per project; a warning when two drawings measure the same floor. Contract: `docs/TAKEOFF-SHILPIDB.md`.
+- **Take-off from ShilpiDB** — **Project > Take-off (O-Draft)** lists the drawings recorded on the shared take-off server (or in a `.vdb` file, read directly, versions 1 and 2), reads one into the import preview (idempotent, one undo, nothing deleted), and fetches, verifies (SHA-256) and stores the annotated drawing PDF O-Draft generated; the stored PDFs are embedded in the project report and the estimate PDF. Several drawings per project; a warning when two drawings measure the same floor. Contract: `docs/PROJECT-FILE.md`, `docs/MIGRATION-OSP.md`.
 - **CAD import and export** — File > Import from CAD reads an `hcw-aqc-bridge` v1 file (millimetres) with a preview; File > Export for CAD writes levels, project details and beam depths. Contract: `docs/bridge/`.
 - **AI assistant (opt-in)** — a built-in copilot on the command bar that drives the same code
   paths a user would. It can navigate the app, summarise the project, run the deterministic C++

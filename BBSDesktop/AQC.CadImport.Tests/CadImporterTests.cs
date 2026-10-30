@@ -174,7 +174,7 @@ public class CadImporterTests
     }
 
     [Fact]
-    public void Bridge_source_project_ref_is_read_like_a_shilpidb_header()
+    public void Bridge_source_project_ref_is_read_like_a_takeoff_header()
     {
         Assert.Equal((null, null), (House().ProjectRefCompany, House().ProjectRefId));
 

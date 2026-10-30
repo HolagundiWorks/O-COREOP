@@ -48,8 +48,7 @@ powershell -File BBSDesktop\installer\sign.ps1 BBSDesktop\artifacts\installer\O-
 
 The OSAS launcher can install this Setup.exe via
 `installer/install-suite.ps1 -ArtifactsDir …` when the file is named
-`O-CoreOp-Setup-*.exe`. ShilpiDB binaries may be staged from
-`…/OSAS…/installer/suite-tools` or `%LOCALAPPDATA%\Programs\OSAS\shilpidb`.
+`O-CoreOp-Setup-*.exe`. The suite installer stages O-Studio, O-CoreOp, and O-Draft; see `docs/SUITE-PACKAGING.md`.
 
 ## Update channel (check-only)
 

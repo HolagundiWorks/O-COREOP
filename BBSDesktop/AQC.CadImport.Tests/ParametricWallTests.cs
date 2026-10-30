@@ -14,11 +14,11 @@ public class ParametricWallTests
     const string BrickFull = """{"ref":"W1A2","level":"Ground","length_mm":5000.0,"height_mm":2850.0,"layer":"MEASURE-FULLBRICK"}""";
     const string BrickHalf = """{"ref":"W1B0","level":"Ground","length_mm":2000.0,"height_mm":2850.0,"layer":"MEASURE-HALFBRICK"}""";
 
-    static ShilpiRecord Header() => new(ShilpiTakeoff.HeaderId(7), 0, 0, 0, 0,
+    static TakeoffRecord Header() => new(OspTakeoff.HeaderId(7), 0, 0, 0, 0,
         """{"format":"hcw-takeoff-shilpi","version":1,"units":"mm","state":"complete","source":{"app":"O-Draft","drawing":"p.dxf","drawing_id":"pp-1"},"levels":[{"name":"Ground","height_mm":3150,"slab_thickness_mm":150,"beam_depth_mm":450}]}""");
 
-    static ShilpiRecord Wall(uint n, string payload, double minX = 0, double minY = -115, double maxX = 5000, double maxY = 115) =>
-        new(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindWall, 7, n), minX, minY, maxX, maxY, payload);
+    static TakeoffRecord Wall(uint n, string payload, double minX = 0, double minY = -115, double maxX = 5000, double maxY = 115) =>
+        new(OspTakeoff.MakeId(OspTakeoff.KindWall, 7, n), minX, minY, maxX, maxY, payload);
 
     static ImportModel Empty()
     {
@@ -27,10 +27,10 @@ public class ParametricWallTests
         return m;
     }
 
-    static (ImportPlan plan, ImportModel model) Import(params ShilpiRecord[] walls)
+    static (ImportPlan plan, ImportModel model) Import(params TakeoffRecord[] walls)
     {
         var m = Empty();
-        var plan = CadImporter.Plan(ShilpiTakeoff.Read(new[] { Header() }.Concat(walls)).File, m);
+        var plan = CadImporter.Plan(OspTakeoff.Read(new[] { Header() }.Concat(walls)).File, m);
         CadImporter.Apply(plan, m);
         return (plan, m);
     }
@@ -90,7 +90,7 @@ public class ParametricWallTests
     {
         var (_, m) = Import(Wall(1, Parametric));
         var longer = Parametric.Replace("5000.0", "6500.0");
-        var plan = CadImporter.Plan(ShilpiTakeoff.Read(new[] { Header(), Wall(1, longer) }).File, m);
+        var plan = CadImporter.Plan(OspTakeoff.Read(new[] { Header(), Wall(1, longer) }).File, m);
         Assert.Equal(1, plan.Count(PlanAction.Update));
         CadImporter.Apply(plan, m);
         var row = Assert.Single(m.Sheet("masonry"));
@@ -101,7 +101,7 @@ public class ParametricWallTests
     public void A_parametric_wall_no_longer_recorded_is_reported_not_deleted()
     {
         var (_, m) = Import(Wall(1, Parametric), Wall(2, BrickFull));
-        var plan = CadImporter.Plan(ShilpiTakeoff.Read(new[] { Header(), Wall(2, BrickFull) }).File, m);   // the PW- wall went stale or was detached
+        var plan = CadImporter.Plan(OspTakeoff.Read(new[] { Header(), Wall(2, BrickFull) }).File, m);   // the PW- wall went stale or was detached
         Assert.Contains(plan.Items, i => i.Action == PlanAction.NoLongerInDrawing && i.Ref == "PW-wall-1");
         CadImporter.Apply(plan, m);
         Assert.Equal(2, m.Sheet("masonry").Count);
@@ -110,9 +110,9 @@ public class ParametricWallTests
     [Fact]
     public void An_opening_is_placed_in_a_parametric_wall_by_position_like_any_other()
     {
-        var door = new ShilpiRecord(ShilpiTakeoff.MakeId(ShilpiTakeoff.KindOpening, 7, 9), 1000, -115, 1900, 1015,
+        var door = new TakeoffRecord(OspTakeoff.MakeId(OspTakeoff.KindOpening, 7, 9), 1000, -115, 1900, 1015,
             """{"ref":"O1","kind":"Door","mark":"D2","level":"Ground","width_mm":900,"height_mm":2100}""");
-        var file = ShilpiTakeoff.Read(new[] { Header(), Wall(1, Parametric), door }).File;
+        var file = OspTakeoff.Read(new[] { Header(), Wall(1, Parametric), door }).File;
         Assert.Equal("PW-wall-1", (string)file.Openings[0]["wall_ref"]!);
     }
 

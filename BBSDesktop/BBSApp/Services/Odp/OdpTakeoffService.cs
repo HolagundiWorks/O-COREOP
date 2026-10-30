@@ -3,7 +3,7 @@
 
 using Aqc.CadImport;
 
-namespace BBSApp.Services.Shilpi;
+namespace BBSApp.Services.Odp;
 
 /// <summary>Where the take-off is read from: a project file (<c>.osp</c>), the one O-Draft records into.</summary>
 public abstract record TakeoffSource
@@ -13,15 +13,15 @@ public abstract record TakeoffSource
 }
 
 /// <summary>
-/// Reads the take-off O-Draft recorded in the project file. The records are read in the shape the importer takes (<see cref="ShilpiRecord"/>,
+/// Reads the take-off O-Draft recorded in the project file. The records are read in the shape the importer takes (<see cref="TakeoffRecord"/>,
 /// headers and rows with the id <c>kind &lt;&lt; 56 | slot &lt;&lt; 32 | n</c>, the annotated PDF in chunk records), so the importer, the preview and the
 /// annotated-PDF check are the ones that always read a take-off; only where the records come from is the project file (<see cref="OdpTakeoffAdapter"/>).
 /// </summary>
-public static class ShilpiTakeoffService
+public static class OdpTakeoffService
 {
     /// <summary>The drawings whose take-off is recorded in the project file.</summary>
-    public static async Task<List<ShilpiDrawing>> ListDrawingsAsync(TakeoffSource source, CancellationToken ct = default) =>
-        ShilpiTakeoff.ListDrawings(await ReadFileAsync(source, ct).ConfigureAwait(false));
+    public static async Task<List<TakeoffDrawing>> ListDrawingsAsync(TakeoffSource source, CancellationToken ct = default) =>
+        OspTakeoff.ListDrawings(await ReadFileAsync(source, ct).ConfigureAwait(false));
 
     /// <summary>The Studio project a take-off header names (company uuid and project id), from the first drawing that has one.</summary>
     public static async Task<(string? Company, long? ProjectId)> FirstProjectRefAsync(TakeoffSource source, CancellationToken ct = default)
@@ -31,14 +31,14 @@ public static class ShilpiTakeoffService
     }
 
     /// <summary>Reads one drawing's take-off (rows only, never the annotated PDF).</summary>
-    public static async Task<ShilpiTakeoff.Result> ReadDrawingAsync(TakeoffSource source, uint slot, IProgress<string>? status = null, CancellationToken ct = default) =>
-        ShilpiTakeoff.Read((await ReadFileAsync(source, ct).ConfigureAwait(false)).Where(r => ShilpiTakeoff.SlotOf(r.Id) == slot && ShilpiTakeoff.IsTakeoffRecord(r.Id)), slot);
+    public static async Task<OspTakeoff.Result> ReadDrawingAsync(TakeoffSource source, uint slot, IProgress<string>? status = null, CancellationToken ct = default) =>
+        OspTakeoff.Read((await ReadFileAsync(source, ct).ConfigureAwait(false)).Where(r => OspTakeoff.SlotOf(r.Id) == slot && OspTakeoff.IsTakeoffRecord(r.Id)), slot);
 
     /// <summary>Fetches and verifies the annotated PDF O-Draft recorded for a drawing.</summary>
     public static async Task<byte[]> FetchAnnotatedPdfAsync(TakeoffSource source, uint slot, IProgress<string>? status = null, CancellationToken ct = default) =>
-        ShilpiTakeoff.ReadAnnotatedPdf(await ReadFileAsync(source, ct).ConfigureAwait(false), slot);
+        OspTakeoff.ReadAnnotatedPdf(await ReadFileAsync(source, ct).ConfigureAwait(false), slot);
 
-    static Task<List<ShilpiRecord>> ReadFileAsync(TakeoffSource source, CancellationToken ct)
+    static Task<List<TakeoffRecord>> ReadFileAsync(TakeoffSource source, CancellationToken ct)
     {
         if (source is not TakeoffSource.Project f) throw new ArgumentException("Unknown take-off source.");
         return Task.Run(() =>

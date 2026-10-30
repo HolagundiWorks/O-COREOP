@@ -9,9 +9,9 @@ using System.Text.Json;
 namespace Office.Ai;
 
 /// <summary>
-/// Lets O-Draft use the model this app carries. It answers the suite's existing local contract (the one O-Draft's
-/// <c>osas_ai</c> client speaks) on 127.0.0.1 only: <c>GET /v1/health</c> and <c>POST /v1/chat</c>, behind the bearer token in
-/// <c>%LOCALAPPDATA%\OSAS\ai\auth.token</c>. The model loads on the first chat, whoever asks. It is up only while this app runs.
+/// Lets O-Draft and O-CoreOp use the model the host app carries. It answers the suite's local contract on 127.0.0.1 only:
+/// <c>GET /v1/health</c>, <c>POST /v1/chat</c>, and <c>POST /v1/completion</c> (Olmo prompt for CoreOp's Ask bar), behind the bearer
+/// token in <c>%LOCALAPPDATA%\OSAS\ai\auth.token</c>. The model loads on the first request. O-Studio keeps this open while a workspace is signed in.
 /// </summary>
 public sealed class AiCoreListener : IDisposable
 {
@@ -86,12 +86,38 @@ public sealed class AiCoreListener : IDisposable
                 string body = await reader.ReadToEndAsync().ConfigureAwait(false);
                 await Chat(ctx, body);
             }
+            else if (ctx.Request.HttpMethod == "POST" && path == "/v1/completion")
+            {
+                if (ctx.Request.ContentLength64 > MaxBody) { await Reply(ctx, 413, Error("request too large")); return; }
+                using var reader = new StreamReader(ctx.Request.InputStream, Encoding.UTF8);
+                string body = await reader.ReadToEndAsync().ConfigureAwait(false);
+                await Completion(ctx, body);
+            }
             else await Reply(ctx, 404, Error("not found"));
         }
         catch (Exception ex)
         {
             try { await Reply(ctx, 500, Error(ex.Message)); } catch { }
         }
+    }
+
+    async Task Completion(HttpListenerContext ctx, string body)
+    {
+        using var doc = JsonDocument.Parse(body);
+        var root = doc.RootElement;
+        string prompt = root.TryGetProperty("prompt", out var p) ? p.GetString() ?? "" : "";
+        int maxTokens = root.TryGetProperty("max_tokens", out var mt) && mt.TryGetInt32(out var n) ? Math.Clamp(n, 16, 2048) : 512;
+        if (prompt.Length == 0) { await Reply(ctx, 400, Error("prompt is required")); return; }
+        if (prompt.Length / 3 + LocalLlm.ReserveTokens > LocalLlm.ContextTokens) { await Reply(ctx, 413, Error("the prompt is too long for the model")); return; }
+
+        await _one.WaitAsync(_stop.Token).ConfigureAwait(false);
+        try
+        {
+            var llm = await LocalLlmHost.GetAsync(_stop.Token).ConfigureAwait(false);
+            string answer = await llm.CompleteAsync(prompt, maxTokens, null, _stop.Token).ConfigureAwait(false);
+            await Reply(ctx, 200, JsonSerializer.Serialize(new { status = "ok", content = answer }));
+        }
+        finally { _one.Release(); }
     }
 
     async Task Chat(HttpListenerContext ctx, string body)

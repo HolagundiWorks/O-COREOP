@@ -1,6 +1,6 @@
 # Share estimate / RA bill drafts to Studio
 
-**Status: superseded (2026-10-29).** O-CoreOp no longer writes to the company file: that file belongs to O-Studio, which reads the project (estimate, bills, everything) from the ShilpiDB project file; see PROJECT-FILE.md. The Share draft buttons are gone. What follows is the old contract. Was: Implemented in O-CoreOp (CoreOp → company file). Studio inbox / approve / lock / revise is **proposed** (Studio PR must consume this contract).  
+**Status: superseded (2026-10-29).** O-CoreOp no longer writes to the company file: that file belongs to O-Studio. Project working data lives in `.osp` files; see [PROJECT-FILE.md](PROJECT-FILE.md). The Share draft buttons are gone. What follows is the old contract. Was: Implemented in O-CoreOp (CoreOp → company file). Studio inbox / approve / lock / revise is **proposed** (Studio PR must consume this contract).  
 **Product rules:** Studio owns company identity and approval; CoreOp generates and shares drafts.
 
 ## 1. What CoreOp does

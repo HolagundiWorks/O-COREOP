@@ -12,7 +12,7 @@ Merged on 2026-10-19 (merge commit `a0aa37d`):
 - The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the public `HolagundiWorks/O-UI` repository (`..\..\..\o-ui` from the app folder). The build fails without it.
 - Accessibility fixes from the WCAG 2.2 AA audit: names on sheet cells and icon buttons, targets of 24 px or more, headings, a polite notice host, 1x scale.
 - The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run).
-- **AORMS Connect / Bridge removed (2026-10-28):** sign-in, Online projects, Push/Pull, Bind/Flush, sync badges, `Aorms.Connect` / `Aorms.Bridge`, FakeAorms e2e, and Bridge stub hosts are gone. Company-file / OSAS ticket flow, CAD import, and ShilpiDB take-off remain.
+- **AORMS Connect / Bridge removed (2026-10-28):** sign-in, Online projects, Push/Pull, Bind/Flush, sync badges, `Aorms.Connect` / `Aorms.Bridge`, FakeAorms e2e, and Bridge stub hosts are gone. Company-file / OSAS ticket flow, CAD import, and `.osp` take-off remain.
 - CI (`.github/workflows/ci.yml`): CadImport + Office.Shared tests, and a BBSApp build.
 
 Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/company-live-sync` was then deleted):
@@ -28,7 +28,7 @@ Also on `main` since 2026-10-19 (fast-forward to `b67710a`; the branch `feat/com
 | 2.1 | ~~Add the repository secret `HCW_UI_TOKEN`~~ done: CI clones the public `HolagundiWorks/O-UI` repo (no token). Confirm the first Windows build job on GitHub succeeds | Checked: workflow clones `HolagundiWorks/O-UI` to `o-ui`; first run after the retarget has not been looked at | `.github/workflows/ci.yml` |
 | 2.2 | ~~AORMS portal sign-in / pull~~ **removed** with Connect/Bridge (2026-10-28) | n/a | — |
 | 2.3 | ~~Portal migration `0113` for AORMS sessions~~ **obsolete** after Connect removal | n/a | — |
-| 2.4 | Click through File > Import from CAD, File > Export for CAD and Take-off from ShilpiDB with a real drawing export | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
+| 2.4 | Click through File > Import from CAD, File > Export for CAD and Take-off (O-Draft) with a real drawing export | Not tested | `BBSDesktop/AQC.CadImport`, `docs/bridge/`, `docs/PROJECT-FILE.md` |
 | 2.5 | Install on a **clean** machine with the Inno Setup installer and check the Start menu entry reads O-CoreOp. On the development machine (2026-10-19) the installer upgraded an existing copy in place: it still installs to `%LOCALAPPDATA%\Programs\AQC-Core`, not `O-CoreOp`, and the run was silent, so the Start menu text was not looked at | Partly checked | `BBSDesktop/installer/AQCCore.iss`, `build-installer.ps1` |
 | 2.6 | ~~Rebuild the installer~~ done (1.1.0, built and installed 2026-10-19 from `main`). `build-installer.ps1 -OfficeDllDir <folder with office.dll>` now bundles the company-file engine and fails the build if `office.dll` is missing. Reinstalled 2026-10-19 under the new name: the installer replaced the `AQC-Core` folder with `Programs\O-CoreOp`, and the app opened with the settings copied from `AQCCore` | Checked | `BBSDesktop/installer/build-installer.ps1` |
 
@@ -72,7 +72,7 @@ Connect/Bridge work from the former `docs/AORMS-CONNECT-HANDOFF.md` is **closed 
 | 6.2 | Code signing for the installer and an update path (roadmap 3.1) — `sign.ps1` + Help → Check for updates stubs exist; need org cert + hosted channel URL |
 | 6.3 | Automated UI tests with UI Automation for the main flows, run in CI (roadmap 3.2) |
 | 6.4 | Check quantities and purchase-order output against a real project and add the cases it exposes (roadmap 3.3) |
-| 6.5 | ~~Retire the PDF take-off canvas~~ done 2026-10-19: take-off moves to O-Draft and is read from ShilpiDB (`docs/TAKEOFF-SHILPIDB.md`) |
+| 6.5 | ~~Retire the PDF take-off canvas~~ done 2026-10-19: take-off moves to O-Draft and is read from the project file (`docs/PROJECT-FILE.md`) |
 | 6.6 | Pixel-level take-off pre-fill (deferred; needs reliable scale calibration) |
 | 6.7 | Narrow-width polish: cramped table columns and any page that was not looked at (3.2) |
 
@@ -102,7 +102,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 
 ## 10. Progress log
 
-**Historical (pre-removal):** entries below that mention `Aorms.Connect`, Online projects, Push/Pull, FakeAorms, or status chips like `AORMS · Studio` describe work that shipped and was **removed on 2026-10-28**. Keep for archaeology; do not treat as current product. Current path = company file + OSAS ticket + CAD/ShilpiDB take-off.
+**Historical (pre-removal):** entries below that mention `Aorms.Connect`, Online projects, Push/Pull, FakeAorms, or status chips like `AORMS · Studio` describe work that shipped and was **removed on 2026-10-28**. Keep for archaeology; do not treat as current product. Current path = company file + OSAS ticket + CAD / `.osp` take-off.
 
 **2026-10-19, started from this hand-off:**
 
@@ -114,7 +114,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 **2026-10-19 (later):**
 
 - **Engine builds with clang/MinGW as well as MSVC.** `src/api/bbs_c_api.cpp` includes `<cstdlib>`; `src/core/Project.cpp` opens files through `std::filesystem::path`; `CMakeLists.txt` sets `PREFIX ""` so MinGW names the library `bbs_engine.dll` (it was `libbbs_engine.dll`). Built with both compilers, `bbs_tests.exe` 0 failures on each. This **removes the need for Visual Studio** in `build-installer.ps1`'s engine step (item 2.6's first note is resolved). The `o-ui` win-x64 pre-build note still stands.
-- **Annotated drawings in reports.** The stored annotated PDFs (see `docs/TAKEOFF-SHILPIDB.md` section 6) are embedded in the project report and the estimate PDF. Run in a scratch program, not yet in the app with a real project.
+- **Annotated drawings in reports.** The stored annotated PDFs are embedded in the project report and the estimate PDF. Run in a scratch program, not yet in the app with a real project.
 - **Roadmap and docs brought up to date** (`docs/ROADMAP.md`: "Backlog" section; README take-off wording).
 - **Overlap warning.** Importing a drawing that adds rows on a floor and trade another drawing already supplies now lists "Check before importing" in the preview (once per drawing and floor; a warning, not a refusal). 5 tests; `AQC.CadImport.Tests` is 54 passed.
 
@@ -127,8 +127,8 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 
 **2026-10-19 (reading O-Draft's output):**
 
-- O-Draft implemented `takeoff.record` and `takeoff.annotate` (slots, `recording` to `complete`, shared server, chunked PDF) in its repository (committed in part; the slot and annotate work was uncommitted in its `.wt/slots` worktree when read). Its 11 tests pass, and its real-server test passed against an installed `shilpid` (both run here from a copy, so its repository was not touched).
-- **Read with this reader, and it agrees:** header, ids, slot (two independent `SlotFor` agree), 7 rows, nothing skipped. The **2026-10-19 fixture** still shows older gaps (rooms without level/length/breadth; openings without `wall_ref`; walls without thickness; schedule kind `Ventilator`); O-CoreOp fills those in the preview. Current O-Draft writes `wall_ref`, `thickness_mm` and room sides when measured — see [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md) section 8 and [TAKEOFF-SHILPIDB.md](TAKEOFF-SHILPIDB.md) section 10.
+- O-Draft implemented `takeoff.record` and `takeoff.annotate` (slots, `recording` to `complete`, chunked PDF) in its repository. O-CoreOp reads the same rows via `OspTakeoff` from the `.osp`.
+- **Read with this reader, and it agrees:** header, ids, slot (two independent `SlotFor` agree), 7 rows, nothing skipped. The **2026-10-19 fixture** still shows older gaps (rooms without level/length/breadth; openings without `wall_ref`; walls without thickness; schedule kind `Ventilator`); O-CoreOp fills those in the preview. Current O-Draft writes `wall_ref`, `thickness_mm` and room sides when measured — see `AQC.CadImport/OspTakeoff.cs` and `docs/PROJECT-FILE.md`.
 - Regression fixture `fixtures/odraft-takeoff-records.json` and `ODraftOutputTests` (10 tests); `AQC.CadImport.Tests` is 64 passed.
 - **Not checked:** O-Draft's real annotated PDF (its tests use a stand-in plotter), two drawings from O-Draft in one database, a linked project, several floors.
 
@@ -146,7 +146,7 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 | 6 | **Settings changed on another computer never came in** on a pull | code review | the catch-up returns the server's settings and `ApplyDelta` merges them (local paths kept) |
 | 7 | The catch-up **advanced the head before the rows were applied**, so a failure while applying lost them | code review | the head moves only when there is nothing to apply, or when the caller adopts it after applying |
 | 8 | The change check **ran every second while typing** and rebuilt the whole project each time (0.3 to 0.5 s of UI time on 10 000 rows) | measured | it waits for 1.5 s of quiet; `ToSync` no longer deep-clones every row only to empty it (181 to 59 ms) |
-| 9 | A drawing O-Draft recorded **without a name** showed an empty title and messages like ": no annotated drawing" | the Take-off page in the real app | `ShilpiDrawing.DisplayName` ("drawing <slot>") |
+| 9 | A drawing O-Draft recorded **without a name** showed an empty title and messages like ": no annotated drawing" | the Take-off page in the real app | `TakeoffDrawing.DisplayName` ("drawing <slot>") |
 | 10 | A compiler null warning in `ConnectClient` (the guard was a level up; made explicit) | build | none needed beyond `!` |
 
 **Checked in the real app (24 checks, all passing):** sign in (wrong password first, with its message), the chip naming the studio, a take-off imported through the UI, push online (54 rows, no local paths), the chip going to `synced`, a changed take-off reaching AORMS as exactly one row by itself, a catch-up applied (the wall then shows as changed locally) with nothing sent back, sign-out. Also on the Take-off page: the drawing list from the shared server, Read take-off and its preview, Fetch annotated drawing (PDF verified, stored, listed with Open).
@@ -155,12 +155,14 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 
 **Still not checked:** the real AORMS server (the fake follows the contract as the library understands it); two computers editing at once (lease contention); the Online projects list with a bound project; the home screen (not built); O-Draft's own annotated PDF.
 
-**2026-10-19 (parametric walls, O-Draft's second hand-off, and the `.vdb` format):**
+**2026-10-30 (`.osp` migration):** Take-off is read only from the open **`.osp`** (`OdpTakeoffAdapter`, `OspTakeoff`). Legacy docs removed; see [MIGRATION-OSP.md](MIGRATION-OSP.md). UIA e2e: `BBSDesktop/tests/e2e/uia-osp-takeoff.ps1` and `run-e2e.ps1` (9 checks on `small.osp`).
 
-- O-Draft's hand-off `HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md` is copied into `docs/`; the reply (answers to its four questions, one real mismatch) is section 9 of [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md).
+**2026-10-19 (parametric walls, O-Draft's second hand-off):**
+
+- O-Draft's hand-off `HANDOFF-O-COREOP-PARAMETRIC-TAKEOFF.md` is in `docs/`; answers to its questions are in that file's section 9 and in [PROJECT-FILE.md](PROJECT-FILE.md).
 - **Reader:** a wall row with `thickness_mm` (a parametric `PW-` wall) is used as given; a brick take-off wall with none takes its thickness from its layer (`MEASURE-FULLBRICK` 230, `MEASURE-HALFBRICK` 115); optional `material` accepted (`rcc` skipped, `block.concrete` as Cement Block). `ParametricWallTests` 11.
-- **Found by reading a file O-Draft's engine wrote:** its file mode writes `.vdb` **version 2** (and slot 0), which the installed `shilpid` 0.2.0 refuses. O-CoreOp now reads `.vdb` files directly (`VdbFile`, versions 1 and 2, no server; `VdbFileTests` 8), and the Take-off page's file option uses it. Checked in the real app with O-Draft's file (`tests/e2e/uia-vdbfile.ps1`, 9 checks). The file-option code that started `shilpid` was removed.
-- `AQC.CadImport.Tests` is now 83 passed.
+- **Historical:** O-Draft once wrote sidecar `.vdb` files; take-off now lives in `.osp`.
+- `AQC.CadImport.Tests` — run `dotnet test` for current count (88 at last check).
 - **Not checked:** two parametric walls meeting at a corner (O-Draft's slice has one wall), `material`/`finish` from a real O-Draft file (it does not write them yet), and the real annotated PDF.
 
 **2026-10-19 (hub merge and install):**
@@ -177,4 +179,4 @@ The app was driven through Windows UI Automation for the first time (`BBSDesktop
 **2026-10-20 (checked in the running app, and the take-off names its project):**
 
 - **Checked in the installed app** with a throw-away company (random password, nothing of the practice's data): OSAS signed in, O-CoreOp opened from its card already signed in as the same person (`Company · Demo Studio`), the Company projects list showed `Mehta residence · Mehta family · Plot 4, Hospet`, and after opening it the title read `O-CoreOp — Mehta residence`, the dashboard showed `Plot 4, Hospet · Client: Mehta family · Demo Studio`, and the report persona read `Project Manager · Demo Studio`. The company and project details therefore reach the app from OSAS and O-Studio. Still not looked at: a printed report or PDF, and a change made in OSAS while the project is open.
-- The Take-off page recognises a drawing as this project's when its header names the project by `source.project_ref` (the company file and project id) (`ShilpiDrawing.ProjectRefCompany` / `ProjectRefId`; 1 new test, `AQC.CadImport.Tests` 84). AORMS `project_office_id` grouping was removed with Connect. Needs O-Draft with the matching `project_ref` change.
+- The Take-off page recognises a drawing as this project's when its header names the project by `source.project_ref` (the company file and project id) (`TakeoffDrawing.ProjectRefCompany` / `ProjectRefId`; `AQC.CadImport.Tests`). AORMS `project_office_id` grouping was removed with Connect. Needs O-Draft with the matching `project_ref` change.

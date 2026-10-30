@@ -88,7 +88,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 | Civil BOQ | Masonry, plaster, PCC, earthwork, SSM, shuttering, flooring, paint, doors/windows, etc. |
 | Openings | Doors/windows **On wall** mark → deduct from that masonry wall (IS 1200 ignore-small) |
 | Take-off | Measured in O-Draft and recorded in the project file (`.osp`); read here, previewed, then imported. **Project > Take-off (O-Draft)** lists the drawings recorded in the open project (refreshes every 2 s), reads one into the import preview, and fetches and stores the annotated drawing PDF O-Draft generated; several drawings per project, with a warning when two measure the same floor |
-| CAD import / export | **File > Import from CAD** reads an `hcw-aqc-bridge` file (the offline path); **Export for CAD** writes levels, project details and beam depths back. Idempotent (`source = hcwcad:<drawing id>`), preview first, one undo step, `Lvl0` never touched. Contracts: `docs/bridge/`, `docs/TAKEOFF-SHILPIDB.md` |
+| CAD import / export | **File > Import from CAD** reads an `hcw-aqc-bridge` file (the offline path); **Export for CAD** writes levels, project details and beam depths back. Idempotent (`source = hcwcad:<drawing id>`), preview first, one undo step, `Lvl0` never touched. Contracts: `docs/bridge/`, `docs/PROJECT-FILE.md` |
 | Item links | Data-driven linked-item derivation (plaster from masonry, painting from plaster, skirting from flooring) — editable rules, chained preview, Apply-to-sheets into the BOQ/estimate |
 | Rate book | App-level versioned rates (`%LocalAppData%\O-CoreOp\`) |
 | Estimate | DSR abstract (L/B/H, area, volume) + % markups → grand total; PDF sketches appendix |

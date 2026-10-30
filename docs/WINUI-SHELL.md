@@ -26,7 +26,7 @@ Notice row and calculator row — docked above the status strip, they push the p
 
 | Region | Role |
 | --- | --- |
-| **File** | New · Open · Open company from OSAS · Company projects · Close company · Save · Save as · Save to company file · **Take-off from ShilpiDB** · Import / Export CAD · Undo last CAD import · Exit |
+| **File** | New · Open · Open company from OSAS · Company projects · Close company · Save · Save as · Save to company file · **Take-off (O-Draft)** · Import / Export CAD · Undo last CAD import · Exit |
 | **Edit** | Project / Engineering / Cost settings |
 | **Help** | About |
 | **Main ribbon** | One text tab per section (Project, RCC steel, Civil BOQ, Schedule, Contracts, Stores, Outputs; Office, Accounts and HR are in O-Studio). Ctrl+1 to Ctrl+7 jump to a section's first page. The open tab is the colour of the sub ribbon, so it joins it |

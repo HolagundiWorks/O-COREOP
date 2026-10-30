@@ -11,30 +11,30 @@ using System.Text.Json.Nodes;
 namespace Aqc.CadImport;
 
 /// <summary>One take-off record as the importer reads it: id, bounding box (millimetres), the payload as text (null when it is not UTF-8) and as hex.</summary>
-public sealed record ShilpiRecord(ulong Id, double MinX, double MinY, double MaxX, double MaxY, string? PayloadText, string? PayloadHex = null);
+public sealed record TakeoffRecord(ulong Id, double MinX, double MinY, double MaxX, double MaxY, string? PayloadText, string? PayloadHex = null);
 
-/// <summary>One drawing's take-off found in a ShilpiDB: what its header says, without reading its rows.</summary>
-public sealed record ShilpiDrawing(
+/// <summary>One drawing's take-off in a project file: what its header says, without reading its rows.</summary>
+public sealed record TakeoffDrawing(
     uint Slot, string DrawingId, string Drawing, string? ProjectOfficeId, string State, string? Exported, string? RevisionSha256,
     IReadOnlyDictionary<byte, int> Counts, AnnotatedPdfInfo? Annotated, string? Problem, string? ProjectRefCompany = null, long? ProjectRefId = null)
 {
     public bool IsComplete => State == "complete";
     /// <summary>The drawing's name, or "drawing &lt;slot&gt;" when O-Draft recorded an unsaved drawing that has no name.</summary>
     public string DisplayName => string.IsNullOrWhiteSpace(Drawing) ? $"drawing {Slot}" : Drawing;
-    public int Rows => Counts.Where(kv => kv.Key != ShilpiTakeoff.KindHeader && kv.Key != ShilpiTakeoff.KindAnnotatedChunk).Sum(kv => kv.Value);
+    public int Rows => Counts.Where(kv => kv.Key != OspTakeoff.KindHeader && kv.Key != OspTakeoff.KindAnnotatedChunk).Sum(kv => kv.Value);
 }
 
-/// <summary>The annotated drawing O-Draft generated once the take-off was complete: a PDF held in ShilpiDB as numbered chunks.</summary>
+/// <summary>The annotated drawing O-Draft generated once the take-off was complete: a PDF stored as numbered chunks in the project file.</summary>
 public sealed record AnnotatedPdfInfo(string Sha256, long Bytes, int Chunks, int Pages, string? Generated);
 
 /// <summary>
-/// The take-off recorded in ShilpiDB by O-Draft (docs/TAKEOFF-SHILPIDB.md, version 1). One shared database holds the take-offs of many drawings
-/// and projects, side by side. Each measured item is one record whose payload is the same JSON object the hcw-aqc-bridge v1 file uses for that
-/// row, so the import rules, the idempotence (source = hcwcad:&lt;drawing_id&gt;, source_ref = ref) and the preview are the file importer's.
+/// Take-off rows O-Draft records in a project file (`.osp` take-off tables), version 1. Each measured item is one record whose payload is the same JSON object
+/// the hcw-aqc-bridge v1 file uses for that row, so the import rules, idempotence (source = hcwcad:&lt;drawing_id&gt;, source_ref = ref) and preview match the file importer.
 /// </summary>
-public static class ShilpiTakeoff
+public static class OspTakeoff
 {
-    public const string HeaderFormat = "hcw-takeoff-shilpi";
+    /// <summary>JSON <c>format</c> in take-off headers (wire name from O-Draft; unchanged for compatibility).</summary>
+    public const string HeaderFormatWire = "hcw-takeoff-shilpi";
     public const int Version = 1;
 
     public const byte KindHeader = 1, KindWall = 3, KindOpening = 4, KindColumn = 5, KindLintel = 6, KindRoom = 7, KindSlab = 8, KindAnnotatedChunk = 9,
@@ -69,24 +69,24 @@ public static class ShilpiTakeoff
         [KindElectricalBoard] = "electrical", [KindElectricalCircuit] = "electrical_circuits",
     };
 
-    public sealed record Result(BridgeFile File, int Records, IReadOnlyList<string> Skipped, string BridgeJson, ShilpiDrawing Drawing, IReadOnlyList<string>? Notes = null);
+    public sealed record Result(BridgeFile File, int Records, IReadOnlyList<string> Skipped, string BridgeJson, TakeoffDrawing Drawing, IReadOnlyList<string>? Notes = null);
 
     /// <summary>True for the records a take-off read needs (everything except annotated-PDF chunks, which can be large).</summary>
     public static bool IsTakeoffRecord(ulong id) => KindOf(id) != KindAnnotatedChunk;
 
-    /// <summary>Every drawing that has a header in these records. A drawing with an unreadable header is listed with a <see cref="ShilpiDrawing.Problem"/>.</summary>
-    public static List<ShilpiDrawing> ListDrawings(IEnumerable<ShilpiRecord> records)
+    /// <summary>Every drawing that has a header in these records. A drawing with an unreadable header is listed with a <see cref="TakeoffDrawing.Problem"/>.</summary>
+    public static List<TakeoffDrawing> ListDrawings(IEnumerable<TakeoffRecord> records)
     {
         var all = records.ToList();
         return ListDrawings(all, all.Select(r => r.Id));
     }
 
     /// <summary>Lists drawings from their header records alone, with the counts taken from every id in the database (so no row payload is downloaded).</summary>
-    public static List<ShilpiDrawing> ListDrawings(IEnumerable<ShilpiRecord> headers, IEnumerable<ulong> allIds)
+    public static List<TakeoffDrawing> ListDrawings(IEnumerable<TakeoffRecord> headers, IEnumerable<ulong> allIds)
     {
         var counts = allIds.GroupBy(SlotOf).ToDictionary(g => g.Key,
             g => (IReadOnlyDictionary<byte, int>)g.GroupBy(KindOf).ToDictionary(k => k.Key, k => k.Count()));
-        var list = new List<ShilpiDrawing>();
+        var list = new List<TakeoffDrawing>();
         foreach (var h in headers.Where(r => KindOf(r.Id) == KindHeader && NOf(r.Id) == 0).OrderBy(r => r.Id))
         {
             var slot = SlotOf(h.Id);
@@ -97,31 +97,31 @@ public static class ShilpiTakeoff
                 CheckHeader(o);
                 var src = o["source"] as JsonObject;
                 var ann = o["annotated_pdf"] as JsonObject;
-                list.Add(new ShilpiDrawing(slot, Str(src, "drawing_id"), Str(src, "drawing"), NullIfEmpty(Str(src, "project_office_id")),
+                list.Add(new TakeoffDrawing(slot, Str(src, "drawing_id"), Str(src, "drawing"), NullIfEmpty(Str(src, "project_office_id")),
                     NullIfEmpty(Str(o, "state")) ?? "complete", NullIfEmpty(Str(src, "exported")), NullIfEmpty(Str(src, "revision_sha256")), c,
                     ann is null ? null : new AnnotatedPdfInfo(Str(ann, "sha256"), Num(ann, "bytes"), (int)Num(ann, "chunks"), (int)Num(ann, "pages"), NullIfEmpty(Str(ann, "generated"))),
                     null, NullIfEmpty(Str(src?["project_ref"] as JsonObject, "company_uuid")), (src?["project_ref"] as JsonObject)?["project_id"] is JsonValue pid && pid.TryGetValue<long>(out var pidValue) ? pidValue : null));
             }
             catch (BridgeFormatException e)
             {
-                list.Add(new ShilpiDrawing(slot, "", "", null, "invalid", null, null, c, null, e.Message));
+                list.Add(new TakeoffDrawing(slot, "", "", null, "invalid", null, null, c, null, e.Message));
             }
         }
         return list;
     }
 
     /// <summary>Reads the one drawing in these records. Throws when there are none or several (use <see cref="ListDrawings"/> and pass a slot).</summary>
-    public static Result Read(IEnumerable<ShilpiRecord> records)
+    public static Result Read(IEnumerable<TakeoffRecord> records)
     {
         var all = records.ToList();
         var drawings = ListDrawings(all);
-        if (drawings.Count == 0) throw new BridgeFormatException("This ShilpiDB has no take-off header record. Record the take-off in O-Draft first.");
-        if (drawings.Count > 1) throw new BridgeFormatException($"This ShilpiDB holds {drawings.Count} drawings; choose one.");
+        if (drawings.Count == 0) throw new BridgeFormatException("This project has no take-off header record. Record the take-off in O-Draft first.");
+        if (drawings.Count > 1) throw new BridgeFormatException($"This project holds {drawings.Count} drawings; choose one.");
         return Read(all, drawings[0].Slot);
     }
 
     /// <summary>Builds the bridge file for one drawing. Throws <see cref="BridgeFormatException"/> when its header is missing, not version 1 in millimetres, or still being recorded.</summary>
-    public static Result Read(IEnumerable<ShilpiRecord> records, uint slot)
+    public static Result Read(IEnumerable<TakeoffRecord> records, uint slot)
     {
         var mine = records.Where(r => SlotOf(r.Id) == slot).OrderBy(r => r.Id).ToList();
         var header = mine.FirstOrDefault(r => r.Id == HeaderId(slot))
@@ -143,7 +143,7 @@ public static class ShilpiTakeoff
         var skipped = new List<string>();
         var notes = new List<string>();
         var sections = Sections.Values.ToDictionary(s => s, _ => new JsonArray());
-        var boxes = new Dictionary<JsonObject, ShilpiRecord>(ReferenceEqualityComparer.Instance);
+        var boxes = new Dictionary<JsonObject, TakeoffRecord>(ReferenceEqualityComparer.Instance);
         int used = 0;
         foreach (var r in mine)
         {
@@ -168,14 +168,7 @@ public static class ShilpiTakeoff
         return new Result(BridgeFile.Parse(json), used, skipped, json, drawing, notes);
     }
 
-    // ---- gaps in what O-Draft records today, filled from the bounding boxes the records carry ----
-
-    /// <summary>
-    /// A room row from O-Draft has an area but no length and breadth, which the flooring row needs. The record's box is the room's drawn
-    /// outline in millimetres, so a rectangular room's length and breadth are its box. When the box is clearly larger than the area (an L-shaped
-    /// room), the area is kept exact and the shorter side of the box is used, so the length is the area divided by it; the row says so.
-    /// </summary>
-    static void FillRoomSizesFromBoxes(JsonArray rooms, Dictionary<JsonObject, ShilpiRecord> boxes, List<string> notes)
+    static void FillRoomSizesFromBoxes(JsonArray rooms, Dictionary<JsonObject, TakeoffRecord> boxes, List<string> notes)
     {
         foreach (var node in rooms)
         {
@@ -199,14 +192,7 @@ public static class ShilpiTakeoff
         }
     }
 
-    /// <summary>
-    /// Fallback only: when an opening has no <c>wall_ref</c> (legacy recordings, or an opening O-Draft could not
-    /// place), assign the nearest wall on the same level whose box, widened by 150 mm, meets the opening's box.
-    /// Current O-Draft writes <c>wall_ref</c> when the opening sits on a measured wall; those rows skip this path.
-    /// The row carries a note so the preview tells the user to check it. If no wall meets it the row is left
-    /// without a wall and the importer flags that.
-    /// </summary>
-    static void AssignOpeningsToWalls(JsonArray openings, JsonArray walls, Dictionary<JsonObject, ShilpiRecord> boxes, List<string> notes)
+    static void AssignOpeningsToWalls(JsonArray openings, JsonArray walls, Dictionary<JsonObject, TakeoffRecord> boxes, List<string> notes)
     {
         const double tol = 150;
         var candidates = walls.OfType<JsonObject>().Where(w => boxes.ContainsKey(w) && Str(w, "ref").Length > 0).ToList();
@@ -231,8 +217,7 @@ public static class ShilpiTakeoff
         }
     }
 
-    /// <summary>Assembles and verifies the annotated PDF of a drawing from its chunk records (SHA-256 and length must match the header).</summary>
-    public static byte[] ReadAnnotatedPdf(IEnumerable<ShilpiRecord> records, uint slot)
+    public static byte[] ReadAnnotatedPdf(IEnumerable<TakeoffRecord> records, uint slot)
     {
         var mine = records.Where(r => SlotOf(r.Id) == slot).ToList();
         var drawing = ListDrawings(mine).FirstOrDefault() ?? throw new BridgeFormatException($"Drawing slot {slot} has no header.");
@@ -256,7 +241,7 @@ public static class ShilpiTakeoff
 
     static void CheckHeader(JsonObject o)
     {
-        if (Str(o, "format") != HeaderFormat) throw new BridgeFormatException($"The header is not a {HeaderFormat} record.");
+        if (Str(o, "format") != HeaderFormatWire) throw new BridgeFormatException($"The header is not a {HeaderFormatWire} record.");
         if (!(o["version"] is JsonValue v && v.TryGetValue<int>(out var ver) && ver == Version))
             throw new BridgeFormatException($"Unsupported take-off version {o["version"]} (this O-CoreOp reads version {Version}).");
         if (!string.Equals(Str(o, "units"), "mm", StringComparison.OrdinalIgnoreCase))
@@ -265,7 +250,7 @@ public static class ShilpiTakeoff
             throw new BridgeFormatException("The header has no source.drawing_id.");
     }
 
-    static JsonObject ParseObject(ShilpiRecord r, string what)
+    static JsonObject ParseObject(TakeoffRecord r, string what)
     {
         if (string.IsNullOrWhiteSpace(r.PayloadText))
             throw new BridgeFormatException($"record {r.Id} ({what}): the payload is not text");

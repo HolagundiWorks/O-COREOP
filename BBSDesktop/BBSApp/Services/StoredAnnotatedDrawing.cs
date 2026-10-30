@@ -8,7 +8,7 @@ namespace BBSApp.Services;
 
 /// <summary>
 /// An annotated drawing PDF O-Draft generated once a take-off was complete (quantity lines, measurements, hatches) and recorded in
-/// ShilpiDB. O-CoreOp keeps a verified copy beside the project (docs/TAKEOFF-SHILPIDB.md, "The annotated drawing").
+/// the project file. O-CoreOp keeps a verified copy with the project.
 /// </summary>
 public sealed class StoredAnnotatedDrawing
 {

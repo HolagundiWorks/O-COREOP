@@ -24,7 +24,7 @@ public partial class App : Application
         MainWindow = new MainWindow();
         MainWindow.Activate();
         // A project file given on the command line (double-click on a .osp, "Open with O-CoreOp") is opened once the window is up.
-        var file = Environment.GetCommandLineArgs().Skip(1).FirstOrDefault(a => Services.ProjectFiles.IsShilpi(a) && System.IO.File.Exists(a));
+        var file = Environment.GetCommandLineArgs().Skip(1).FirstOrDefault(a => Services.ProjectFiles.IsOdp(a) && System.IO.File.Exists(a));
         if (file is not null)
             MainWindow.DispatcherQueue.TryEnqueue(() => MainWindow.OpenProjectFile(System.IO.Path.GetFullPath(file)));
     }

@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
 using Office.Shared;
-using BBSApp.Services.Shilpi;
+using BBSApp.Services.Odp;
 using BBSApp.Models;
 using BBSApp.Services;
 using BBSApp.Services.Ai;
@@ -37,11 +37,18 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private int _toastGeneration;
     private AssistantService? _assistant;
     private bool _assistantBusy;
-    private Office.Ai.AiCoreListener? _aiCore;   // lets O-Draft use the same local model
+    private Office.Ai.AiCoreListener? _aiCore;
+    private Hcw.Ui.Controls.SuiteAskBar? _askBar;
+
+    private TextBox AiInput => _askBar!.Input;
+    private Border AiReplyHost => _askBar!.ReplyHost;
+    private TextBlock AssistantReply => _askBar!.ReplyText;
+    private ProgressRing AssistantBusy => _askBar!.ReplyBusy;
 
     public MainWindow()
     {
         InitializeComponent();
+        WireBottomShell();
         App.MainWindow = this;
         // Opaque Fog canvas — no Mica/Acrylic (HCW pure neu; DESKTOP-WINUI-UX).
         SystemBackdrop = null;
@@ -74,13 +81,30 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
             _aiCore?.Dispose();
-            Office.Ai.LocalLlmHost.Shutdown();
+            if (Office.Ai.SuiteAiCoordinator.IsHost)
+                Office.Ai.SuiteAiCoordinator.StopHost();
+            else
+                Office.Ai.LocalLlmHost.Shutdown();
         };
-        _aiCore = Office.Ai.AiCoreListener.TryStart();
+        if (!Office.Ai.SuiteAiCoordinator.PreferClient)
+            _aiCore = Office.Ai.SuiteAiCoordinator.StartHostIfNeeded();
         ServedProject.Changed += () => DispatcherQueue.TryEnqueue(() => AppNotify.Info("Take-off", "O-Draft updated the take-off. Open Take-off to review and import it."));
         StartActiveProjectWatch();
         if (Content is FrameworkElement root)
             root.KeyDown += Window_KeyDown;
+    }
+
+    private void WireBottomShell()
+    {
+        _askBar = new Hcw.Ui.Controls.SuiteAskBar("Ask about this project…");
+        _askBar.Send.Click += AiSend_Click;
+        _askBar.Input.KeyDown += AiInput_KeyDown;
+        AskHost.Children.Add(_askBar);
+
+        StatusStrip.Left.Children.Add(NavCalcBtn);
+        foreach (var child in BottomShellRight.Children)
+            StatusStrip.Right.Children.Add(child);
+        BottomShellParts.Children.Clear();
     }
 
     private void OnSuiteThemeChanged(Microsoft.UI.Xaml.ElementTheme _)
@@ -95,6 +119,8 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             BuildRibbonModel();
             BuildNavigation();
             ApplyBrandingChrome();
+            _askBar?.Retheme();
+            StatusStrip.Retheme();
         });
     }
 
@@ -1108,7 +1134,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private string? _activePath;
 
     /// <summary>
-    /// Follow the drawing O-Draft has open: O-Draft keeps a pointer to it and its ShilpiDB file (<see cref="ActiveProject"/>). When the pointer
+    /// Follow the drawing O-Draft has open: O-Draft keeps a pointer to the project file (<see cref="ActiveProject"/>). When the pointer
     /// changes, the project here is switched to that file if it has no unsaved changes, else the user is told and can switch from the File menu.
     /// </summary>
     private void StartActiveProjectWatch()
@@ -1134,7 +1160,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         OpenActiveItem.IsEnabled = differs;
         if (!differs || active is null) return;
         if (!ProjectStore.Current.IsDirty) OpenProjectFile(_activePath!);
-        else AppNotify.Warning("O-Draft", $"O-Draft has {Path.GetFileName(active.Drawing)} open. Save this project, then File > Open O-Draft's project to work on the same ShilpiDB file.");
+        else AppNotify.Warning("O-Draft", $"O-Draft has {Path.GetFileName(active.Drawing)} open. Save this project, then File > Open O-Draft's project to work on the same .osp file.");
     }
 
     private void OpenActive_Click(object sender, RoutedEventArgs e)
@@ -1142,7 +1168,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         if (_activePath is not null) OpenProjectFile(_activePath);
     }
 
-    /// <summary>Make the project in a ShilpiDB file (or a project file from before) the open one.</summary>
+    /// <summary>Make the project in a project file the open one.</summary>
     internal void OpenProjectFile(string path)
     {
         if (!ProjectFiles.OpenInto(ProjectStore.Current, path, out var err))
@@ -1165,7 +1191,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             return;
         }
         // A project from before (.bbsproj) is saved into a project file, never back into the old format.
-        if (!ProjectFiles.IsShilpi(ProjectStore.Current.FilePath))
+        if (!ProjectFiles.IsOdp(ProjectStore.Current.FilePath))
         {
             SaveAs_Click(sender, e);
             return;
@@ -1201,7 +1227,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             return;
         }
         ProjectStore.Current.FilePath = file.Path;
-        ProjectStore.Current.Info.TakeoffVdbPath = file.Path;
+        ProjectStore.Current.Info.OspPath = file.Path;
         ProjectStore.Current.IsDirty = false;
         RefreshWindowTitle();
         AppNotify.Success("Saved", file.Name);

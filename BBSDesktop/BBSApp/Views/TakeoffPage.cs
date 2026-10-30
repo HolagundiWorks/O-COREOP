@@ -3,7 +3,7 @@
 
 using Aqc.CadImport;
 using BBSApp.Services;
-using BBSApp.Services.Shilpi;
+using BBSApp.Services.Odp;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -21,14 +21,15 @@ namespace BBSApp.Views;
 public sealed class TakeoffPage : Page
 {
     readonly TextBlock _file = new() { TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true };
-    readonly Button _refresh = new() { Content = "Refresh" };
+    readonly Button _sync = new() { Content = "Sync take-off" };
+    readonly Button _refresh = new() { Content = "Reload list" };
     readonly ListView _drawings = new() { SelectionMode = ListViewSelectionMode.Single, MaxHeight = 260, MinHeight = 60 };
     readonly Button _read = new() { Content = "Read take-off…" };
     readonly Button _annotated = new() { Content = "Fetch annotated drawing" };
     readonly StackPanel _stored = new() { Spacing = 6 };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
     readonly DispatcherTimer _poll = new() { Interval = TimeSpan.FromSeconds(5) };
-    List<ShilpiDrawing> _list = new();
+    List<TakeoffDrawing> _list = new();
     readonly HashSet<uint> _complete = new();
     bool _seenList;
     bool _busy;
@@ -67,7 +68,8 @@ public sealed class TakeoffPage : Page
             },
         };
 
-        _refresh.Click += async (_, _) => await RefreshAsync();
+        _sync.Click += async (_, _) => await SyncTakeoffAsync();
+        _refresh.Click += async (_, _) => await RefreshAsync(force: true);
         _read.Click += async (_, _) => await ReadAsync();
         _annotated.Click += async (_, _) => await FetchAnnotatedAsync();
         _drawings.SelectionChanged += (_, _) => UpdateButtons();
@@ -98,7 +100,7 @@ public sealed class TakeoffPage : Page
     {
         var bar = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         AutomationProperties.SetName(bar, "Take-off tools");
-        var groups = new[] { new[] { _refresh, _read }, new[] { _annotated } };
+        var groups = new[] { new[] { _sync, _refresh, _read }, new[] { _annotated } };
         for (int g = 0; g < groups.Length; g++)
         {
             if (g > 0) bar.Children.Add(BarDivider());
@@ -114,15 +116,25 @@ public sealed class TakeoffPage : Page
     static void StyleAsTextTool(Button b)
     {
         var label = b.Content as string ?? "";
-        b.Content = new TextBlock { Text = label, FontSize = Hcw.Ui.SuiteScale.FontBody, TextTrimming = TextTrimming.CharacterEllipsis };
+        AutomationProperties.SetName(b, label);
+        var ink = Application.Current.Resources.TryGetValue("HcwInkBrush", out var inkRes) && inkRes is Brush inkBr
+            ? inkBr
+            : new SolidColorBrush(Microsoft.UI.Colors.Black);
+        b.Content = new TextBlock
+        {
+            Text = label,
+            FontSize = Hcw.Ui.SuiteScale.FontBody,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Foreground = ink,
+        };
         b.MinHeight = Hcw.Ui.SuiteScale.ControlMinHeight;
         b.Padding = new Thickness(12, 0, 12, 0);
-        b.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-        b.BorderThickness = new Thickness(0);
         b.CornerRadius = Hcw.Ui.SuiteScale.CornerControl;
         b.VerticalAlignment = VerticalAlignment.Center;
-        if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var style) && style is Style s) b.Style = s;
-        AutomationProperties.SetName(b, label);
+        if (Application.Current.Resources.TryGetValue("HcwRibbonButton", out var style) && style is Style s)
+            b.Style = s;
+        else if (Application.Current.Resources.TryGetValue("HcwGhostButton", out var ghost) && ghost is Style gs)
+            b.Style = gs;
     }
 
     static Border BarDivider() => new()
@@ -145,14 +157,14 @@ public sealed class TakeoffPage : Page
     // O-Draft recorded something in the served file: read the list again now, not at the next poll.
     void OnServedChanged() => DispatcherQueue.TryEnqueue(async () => { if (!_busy) { UpdateMode(); await RefreshAsync(quiet: true); } });
 
-    ShilpiDrawing? Selected => (_drawings.SelectedItem as ListViewItem)?.Tag as ShilpiDrawing;
+    TakeoffDrawing? Selected => (_drawings.SelectedItem as ListViewItem)?.Tag as TakeoffDrawing;
 
     void UpdateMode()
     {
         var p = ProjectFile;
         _file.Text = p is null
             ? "No project is open. Use File > Open to open a project file (.osp), or open O-Draft's project, to read a take-off."
-            : File.Exists(p) ? "Reading the take-off from " + p + ". A take-off O-Draft records appears here at once." : p + " does not exist yet: record the take-off in O-Draft, then Refresh.";
+            : File.Exists(p) ? "Reading the take-off from " + p + ". A take-off O-Draft records appears here at once. Use Reload list after O-Draft records again." : p + " does not exist yet: record the take-off in O-Draft, then Reload list.";
         UpdateButtons();
     }
 
@@ -160,6 +172,7 @@ public sealed class TakeoffPage : Page
     {
         var d = Selected;
         _refresh.IsEnabled = !_busy && Source() is not null;
+        _sync.IsEnabled = !_busy && Source() is not null;
         _read.IsEnabled = !_busy && d is { IsComplete: true };
         _annotated.IsEnabled = !_busy && d?.Annotated is not null;
     }
@@ -170,9 +183,9 @@ public sealed class TakeoffPage : Page
         var shared = ProjectStore.Current.Shared;
         var companyUuid = BBSApp.Services.Company.CompanyService.Current?.Uuid;
         // A drawing belongs to the open project when it names the project in the company file.
-        bool Mine(ShilpiDrawing d) =>
+        bool Mine(TakeoffDrawing d) =>
             shared is not null && d.ProjectRefId == shared.ProjectId && !string.IsNullOrEmpty(companyUuid) && d.ProjectRefCompany == companyUuid;
-        bool Other(ShilpiDrawing d) =>
+        bool Other(TakeoffDrawing d) =>
             !Mine(d) && shared is not null && d.ProjectRefId is not null;
         _drawings.Items.Clear();
         // this project's drawings first, then the others
@@ -221,7 +234,15 @@ public sealed class TakeoffPage : Page
         }
     }
 
-    async Task RefreshAsync(bool quiet = false)
+    async Task SyncTakeoffAsync()
+    {
+        var path = ProjectFile;
+        if (path is null || !File.Exists(path)) { _status.Text = "Open a project file (.osp) to sync take-off from O-Draft."; return; }
+        await ServedProject.PollAsync(path);
+        await RefreshAsync(quiet: false, force: true);
+    }
+
+    async Task RefreshAsync(bool quiet = false, bool force = false)
     {
         var src = Source();
         if (src is null) { _list = new(); FillList(); if (!quiet) _status.Text = "No take-off yet: the project file does not exist or no project is open."; return; }
@@ -229,7 +250,7 @@ public sealed class TakeoffPage : Page
         _busy = true; UpdateButtons();
         try
         {
-            _list = await ShilpiTakeoffService.ListDrawingsAsync(src);
+            _list = await OdpTakeoffService.ListDrawingsAsync(src);
             var newly = _seenList
                 ? _list.Where(d => d.IsComplete && !_complete.Contains(d.Slot)).Select(d => d.DisplayName).ToList()
                 : new List<string>();
@@ -245,9 +266,11 @@ public sealed class TakeoffPage : Page
             {
                 var text = _list.Count == 0
                     ? "No take-off has been recorded yet. Record one in O-Draft."
-                    : $"{_list.Count} drawing(s) with a recorded take-off.";
+                    : force
+                        ? $"Reloaded: {_list.Count} drawing(s) with a recorded take-off."
+                        : $"{_list.Count} drawing(s) with a recorded take-off.";
                 if (_list.Count > 0 && ProjectStore.Current.Shared is null)
-                    text += "";
+                    text += " This project file is not linked to a Studio project yet; drawings from a linked take-off header will match once the company file link is set.";
                 _status.Text = text;
             }
         }
@@ -267,7 +290,7 @@ public sealed class TakeoffPage : Page
         _busy = true; UpdateButtons();
         try
         {
-            var result = await ShilpiTakeoffService.ReadDrawingAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
+            var result = await OdpTakeoffService.ReadDrawingAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
             var prep = CadImportService.Prepare(result.File);
             _status.Text = $"{result.Records} take-off records read from {d.DisplayName}"
                            + (result.Skipped.Count > 0 ? $" ({result.Skipped.Count} could not be used: {string.Join("; ", result.Skipped.Take(3))})" : "")
@@ -287,7 +310,7 @@ public sealed class TakeoffPage : Page
         _busy = true; UpdateButtons();
         try
         {
-            var pdf = await ShilpiTakeoffService.FetchAnnotatedPdfAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
+            var pdf = await OdpTakeoffService.FetchAnnotatedPdfAsync(src, d.Slot, new Progress<string>(s => _status.Text = s));
             var entry = AnnotatedStore.Save(ProjectStore.Current, d.DrawingId, d.DisplayName, pdf, d.Annotated.Generated, d.RevisionSha256);
             _status.Text = $"Annotated drawing for {d.DisplayName} stored: {entry.File}"
                            + (string.IsNullOrWhiteSpace(ProjectStore.Current.FilePath) ? " (save the project to keep it beside the project file)." : ".");

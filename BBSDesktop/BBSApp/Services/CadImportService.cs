@@ -7,7 +7,7 @@ namespace BBSApp.Services;
 
 /// <summary>
 /// Adapts <see cref="ProjectStore"/> to the CAD importer (AQC.CadImport). Take-off happens in
-/// hcwCAD-KIT; this reads its .aqcbridge.json and merges it into the open project.
+/// Reads hcw-aqc-bridge v1 JSON (from O-Draft take-off export or legacy CAD bridge files) and merges into the open project.
 /// </summary>
 public static class CadImportService
 {
@@ -31,7 +31,7 @@ public static class CadImportService
         return new Prepared(file, model, CadImporter.Plan(file, model, options));
     }
 
-    /// <summary>Same as <see cref="Prepare"/>, for a take-off already read from ShilpiDB.</summary>
+    /// <summary>Same as <see cref="Prepare"/>, for a take-off already read from the project file.</summary>
     public static Prepared Prepare(BridgeFile file, ImportOptions? options = null)
     {
         var model = BuildModel(ProjectStore.Current);

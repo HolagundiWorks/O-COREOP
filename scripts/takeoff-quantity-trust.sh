@@ -16,7 +16,7 @@ echo "== QuantityTrust (CadImport) =="
 dotnet test "$PROJ" --filter "FullyQualifiedName~QuantityTrust" --nologo
 
 echo "== CadImport neighbours =="
-dotnet test "$PROJ" --filter "FullyQualifiedName~CadImporter|FullyQualifiedName~ShilpiTakeoff|FullyQualifiedName~VdbFile|FullyQualifiedName~QuantityTrust" --nologo
+dotnet test "$PROJ" --filter "FullyQualifiedName~CadImporter|FullyQualifiedName~OspTakeoff|FullyQualifiedName~QuantityTrust" --nologo
 
 echo
 echo "CoreOp quantity-trust harness done."
