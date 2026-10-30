@@ -1,5 +1,7 @@
 # Take-off in ShilpiDB: the contract between O-Draft and O-CoreOp
 
+> **Retired (2026-10-30):** the ShilpiDB route (`.vdb`, `shilpid`, gateway) is no longer used for projects. A project is a `.osp` file; see the suite document [SUITE.md](SUITE.md). The record layout below is still what the `.osp` take-off tables hold.
+
 Written 2026-10-19 on the owner's instruction, revised the same day after the owner's answers (section 1). **Status: version 1.** O-CoreOp's reader side is built and checked (section 9). O-Draft's writer (`takeoff.record` / `takeoff.annotate`, trust fields, `project_ref`) is built in the O-DRAFT repo; remaining writer gaps and product E2E are listed in [HANDOFF-O-DRAFT-TAKEOFF.md](HANDOFF-O-DRAFT-TAKEOFF.md). Nothing was built on the first draft of this contract, so version 1 was revised in place instead of becoming version 2.
 
 > **Superseded in part (2026-10-29):** decision 3 below (one shared server, one database for all projects) is replaced by one ShilpiDB file per project, beside the drawing, read and written directly. See [PROJECT-FILE.md](PROJECT-FILE.md). The record layout in section 4 is unchanged.

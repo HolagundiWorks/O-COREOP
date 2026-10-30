@@ -2,6 +2,8 @@
 
 **O-CoreOp** is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The project file extension `.bbsproj` keeps its name because saved projects use it. Earlier versions installed as `AQCCore.exe`; the installer replaces them and the app copies the settings from `%LocalAppData%\AQCCore` on first run.
 
+> **The suite:** names, roles, file formats, toolbars of every app and how they link in real time are in [docs/SUITE.md](docs/SUITE.md).
+
 O-CoreOp does quantity take-off and costing. By **Human Centric Works, Hospet**.
 
 RCC bar bending schedules, civil BOQ, take-off read in from O-Draft (via ShilpiDB), rate books, DSR-style estimates (with electrical / plumbing / escalation / consulting %), and purchase orders — plus back-office modules for project scheduling, contracts, running-account billing, stores and HR.
