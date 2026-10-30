@@ -189,12 +189,17 @@ $LlamaUrl = "https://github.com/ggml-org/llama.cpp/releases/download/$LlamaRelea
 $cacheDir = Join-Path $DesktopDir 'artifacts\cache'
 New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
 $llamaZip = if ($env:LLAMA_RUNTIME_ZIP) { $env:LLAMA_RUNTIME_ZIP } else { Join-Path $cacheDir "llama-$LlamaRelease-vulkan-x64.zip" }
-if (-not (Test-Path -LiteralPath $llamaZip)) {
-    Write-Host "Downloading llama.cpp $LlamaRelease ..." -ForegroundColor Yellow
-    Invoke-WebRequest -Uri $LlamaUrl -OutFile $llamaZip -UseBasicParsing
+# A download that stops early (seen once: 10 of 37 MB) is thrown away and fetched again, up to three times.
+for ($try = 1; $try -le 3; $try++) {
+    if (-not (Test-Path -LiteralPath $llamaZip)) {
+        Write-Host "Downloading llama.cpp $LlamaRelease (try $try) ..." -ForegroundColor Yellow
+        Invoke-WebRequest -Uri $LlamaUrl -OutFile $llamaZip -UseBasicParsing
+    }
+    $got = (Get-FileHash -LiteralPath $llamaZip -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ($got -eq $LlamaSha256) { break }
+    if ($env:LLAMA_RUNTIME_ZIP -or $try -eq 3) { throw "llama.cpp runtime zip has SHA-256 $got, expected $LlamaSha256" }
+    Remove-Item -LiteralPath $llamaZip -Force
 }
-$got = (Get-FileHash -LiteralPath $llamaZip -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($got -ne $LlamaSha256) { throw "llama.cpp runtime zip has SHA-256 $got, expected $LlamaSha256" }
 $runtimeDir = Join-Path $PublishDir 'runtime'
 if (Test-Path -LiteralPath $runtimeDir) { Remove-Item -LiteralPath $runtimeDir -Recurse -Force }
 Expand-Archive -LiteralPath $llamaZip -DestinationPath $runtimeDir -Force
