@@ -1097,6 +1097,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         var picker = new FileOpenPicker();
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         picker.FileTypeFilter.Add(ProjectFiles.Extension);
+        picker.FileTypeFilter.Add(ProjectFiles.LegacyExtension);
         picker.FileTypeFilter.Add(".bbsproj");     // a project from before: opens, and Save as puts it in a ShilpiDB file
         picker.FileTypeFilter.Add(".json");
         var file = await picker.PickSingleFileAsync();
@@ -1193,7 +1194,22 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         // from the file this project came from, so the take-off stays with the project.
         if (ProjectFiles.IsShilpi(from) && !File.Exists(file.Path) && !string.Equals(from, file.Path, StringComparison.OrdinalIgnoreCase))
         {
-            try { File.Copy(from!, file.Path); } catch (Exception ex) { AppNotify.Error("Save failed", ex.Message); return; }
+            try
+            {
+                if (ProjectFiles.IsOdp(file.Path) && !ProjectFiles.IsOdp(from))
+                {
+                    // from a ShilpiDB file into a project file: the take-off and the project record come across, the drawing stays where it is
+                    using var created = OdpFile.Create(file.Path, Path.GetFileNameWithoutExtension(file.Path));
+                    created.ImportVdb(from!);
+                }
+                else if (!ProjectFiles.IsOdp(file.Path) && ProjectFiles.IsOdp(from))
+                {
+                    AppNotify.Warning("Save as", "A project file cannot be saved as a ShilpiDB file: save it as a project file.");
+                    return;
+                }
+                else File.Copy(from!, file.Path);
+            }
+            catch (Exception ex) { AppNotify.Error("Save failed", ex.Message); return; }
         }
         if (!ProjectFiles.Save(file.Path, ProjectStore.Current.ToJson(), out var err))
         {

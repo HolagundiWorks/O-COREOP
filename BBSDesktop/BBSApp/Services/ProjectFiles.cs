@@ -15,10 +15,17 @@ namespace BBSApp.Services;
 /// </summary>
 public static class ProjectFiles
 {
-    public const string Extension = ".vdb";
+    /// <summary>The project file: one SQLite file with the drawing, the take-off and the project (<see cref="OdpFile"/>).</summary>
+    public const string Extension = ".odp";
+    /// <summary>A ShilpiDB take-off file as used before the project file; it still opens and saves.</summary>
+    public const string LegacyExtension = ".vdb";
 
-    public static bool IsShilpi(string? path) =>
+    public static bool IsOdp(string? path) =>
         !string.IsNullOrEmpty(path) && path.EndsWith(Extension, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>True for a project file or a ShilpiDB file: a file that holds a take-off and the project.</summary>
+    public static bool IsShilpi(string? path) =>
+        IsOdp(path) || (!string.IsNullOrEmpty(path) && path.EndsWith(LegacyExtension, StringComparison.OrdinalIgnoreCase));
 
     public sealed record Opened(JsonObject? Project, bool FromDrawingOnly);
 
@@ -36,6 +43,14 @@ public static class ProjectFiles
         }
         try
         {
+            if (IsOdp(path))
+            {
+                if (!File.Exists(path)) return new Opened(null, true);
+                using var odp = OdpFile.Open(path);
+                var doc = odp.ProjectDoc();
+                if (doc is null) return new Opened(null, true);
+                return JsonNode.Parse(doc) is JsonObject proj ? new Opened(proj, false) : throw new InvalidDataException("The project in this file is not a JSON object.");
+            }
             // O-Draft serves the file: ask the server, the file on disk may be a few seconds behind it
             var gateway = ServedProject.GatewayFor(path);
             if (gateway is null && !File.Exists(path)) return new Opened(null, true);   // not recorded yet: a new project that Save creates the file for
@@ -45,7 +60,7 @@ public static class ProjectFiles
             if (json is null) return new Opened(null, true);
             return JsonNode.Parse(json) is JsonObject root ? new Opened(root, false) : throw new InvalidDataException("The project in this file is not a JSON object.");
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException or HttpRequestException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException or UnauthorizedAccessException or HttpRequestException or Microsoft.Data.Sqlite.SqliteException)
         {
             error = ex.Message;
             return null;
@@ -58,12 +73,18 @@ public static class ProjectFiles
         error = null;
         try
         {
+            if (IsOdp(path))
+            {
+                using var odp = File.Exists(path) ? OdpFile.Open(path) : OdpFile.Create(path, Path.GetFileNameWithoutExtension(path));
+                ServedProject.NoteOwnRevision(path, odp.SetProjectDoc(project.ToJsonString()));
+                return true;
+            }
             // While O-Draft serves the file the server owns it (a write to the file would be overwritten at its next autosave): save through it
             if (ServedProject.GatewayFor(path) is { } gateway) ServedProject.SaveProject(gateway, project.ToJsonString());
             else ShilpiProjectFile.SaveProject(path, project.ToJsonString());
             return true;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException or Microsoft.Data.Sqlite.SqliteException)
         {
             error = ex.Message;
             return false;

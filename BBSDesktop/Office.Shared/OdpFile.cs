@@ -172,6 +172,59 @@ CREATE INDEX IF NOT EXISTS change_revision ON change (revision);";
 
     // ---- writes (each one revision) ----
 
+    /// <summary>
+    /// Bring a ShilpiDB take-off file (<c>.vdb</c>) into this project as one revision: headers and rows keep their slot, kind and number, the
+    /// annotated PDF chunks of a drawing are joined into one asset, and O-CoreOp's project record becomes the project document.
+    /// </summary>
+    public long ImportVdb(string vdbPath)
+    {
+        var contents = ShilpiProjectFile.Parse(File.ReadAllBytes(vdbPath));
+        return Write(rev =>
+        {
+            var pdf = new SortedDictionary<uint, SortedDictionary<uint, byte[]>>();
+            foreach (var r in contents.Records)
+            {
+                var kind = r.Kind;
+                var slot = (uint)((r.Id >> 32) & 0x00FF_FFFF);
+                var n = (uint)(r.Id & 0xFFFF_FFFF);
+                if (kind == 1)
+                {
+                    var json = System.Text.Encoding.UTF8.GetString(r.Payload);
+                    var state = JsonNode.Parse(json)?["state"]?.GetValue<string>() ?? "complete";
+                    Exec("INSERT INTO takeoff_header (slot, state, json) VALUES ($s, $st, $j) ON CONFLICT(slot) DO UPDATE SET state = $st, json = $j",
+                        ("$s", (long)slot), ("$st", state), ("$j", json));
+                    Log(rev, "takeoff_header", slot.ToString(CultureInfo.InvariantCulture), "put");
+                }
+                else if (kind is 3 or 4 or 5 or 6 or 7 or 8 or 10 or 11)
+                {
+                    Exec("INSERT INTO takeoff_row (slot, kind, n, json) VALUES ($s, $k, $n, $j) ON CONFLICT(slot, kind, n) DO UPDATE SET json = $j",
+                        ("$s", (long)slot), ("$k", (long)kind), ("$n", (long)n), ("$j", System.Text.Encoding.UTF8.GetString(r.Payload)));
+                    Log(rev, "takeoff_row", $"{slot}/{kind}/{n}", "put");
+                }
+                else if (kind == 9)
+                {
+                    if (!pdf.TryGetValue(slot, out var chunks)) pdf[slot] = chunks = new SortedDictionary<uint, byte[]>();
+                    chunks[n] = r.Payload;
+                }
+            }
+            foreach (var (slot, chunks) in pdf)
+            {
+                var bytes = chunks.Values.SelectMany(c => c).ToArray();
+                var id = $"annotated-{slot}.pdf";
+                Exec("INSERT INTO asset (id, slot, name, mime, sha256, bytes) VALUES ($i, $s, $i, 'application/pdf', $h, $b) " +
+                     "ON CONFLICT(id) DO UPDATE SET slot = $s, sha256 = $h, bytes = $b",
+                    ("$i", id), ("$s", (long)slot), ("$h", Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant()), ("$b", bytes));
+                Log(rev, "asset", id, "put");
+            }
+            var project = ShilpiProjectFile.GetProject(contents);
+            if (project is not null)
+            {
+                Exec("INSERT INTO project_doc (id, json) VALUES (1, $j) ON CONFLICT(id) DO UPDATE SET json = $j", ("$j", project));
+                Log(rev, "project_doc", "1", "put");
+            }
+        });
+    }
+
     /// <summary>Replace the project document; returns the new revision. Everything else in the file (the drawing, the take-off) is untouched.</summary>
     public long SetProjectDoc(string json)
     {

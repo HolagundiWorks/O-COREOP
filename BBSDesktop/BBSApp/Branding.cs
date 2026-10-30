@@ -40,8 +40,8 @@ public static class Branding
     public const string PreviousAppDataFolder = "AQCCore";
     public const string LegacyAppDataFolder = "BOQCore";
 
-    public const string ProjectFileFilter = "ShilpiDB project";
-    public const string ProjectExtension = ".vdb";
+    public const string ProjectFileFilter = "O-Suite project";
+    public const string ProjectExtension = ".odp";
 
     public static string WindowTitle(string? projectName = null, bool dirty = false)
     {

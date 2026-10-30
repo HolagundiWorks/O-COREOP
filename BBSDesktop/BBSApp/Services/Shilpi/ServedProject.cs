@@ -61,6 +61,10 @@ public static class ServedProject
     public static event Action? Changed;
 
     static long _count = -1;
+    static readonly Dictionary<string, long> _ownRevisions = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Our own save made revision <paramref name="revision"/> of a project file: it is not "O-Draft changed something".</summary>
+    public static void NoteOwnRevision(string path, long revision) => _ownRevisions[Path.GetFullPath(path)] = revision;
 
     /// <summary>
     /// Look at the served file once (the main window calls this every two seconds). Nothing served, or the server not answering, resets it; a
@@ -69,6 +73,17 @@ public static class ServedProject
     public static async Task PollAsync(string? vdbPath)
     {
         long n = -1;
+        if (ProjectFiles.IsOdp(vdbPath))
+        {
+            // A project file has no server: the revision inside it says whether another program (O-Draft, the viewer) wrote since we looked.
+            try { n = await Task.Run(() => { using var odp = OdpFile.Open(vdbPath!); return odp.Revision(); }).ConfigureAwait(true); }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or Microsoft.Data.Sqlite.SqliteException) { n = -1; }
+            long own = _ownRevisions.TryGetValue(Path.GetFullPath(vdbPath!), out var o) ? o : -1;
+            bool outside = n >= 0 && _count >= 0 && n != _count && n != own;
+            _count = n;
+            if (outside) Changed?.Invoke();
+            return;
+        }
         try
         {
             var active = await Task.Run(ActiveProject.Read).ConfigureAwait(true);
