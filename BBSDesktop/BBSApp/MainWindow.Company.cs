@@ -12,8 +12,8 @@ using Office.Shared;
 namespace BBSApp;
 
 /// <summary>
-/// The company file belongs to O-Studio. Here it is only read: Studio signs the person in and opens O-CoreOp from its card (`OSTUDIO_COMPANY` and a one-time
-/// `OSTUDIO_TICKET`), and the company's and the project's details are taken from it for reports. Nothing is saved to it from this app.
+/// The company file belongs to O-Studio. O-CoreOp reads firm and project identity from it and mirrors estimate and
+/// running-bill abstracts back (<c>aqc.project</c>) when the open <c>.osp</c> is linked to a Studio project.
 /// </summary>
 public sealed partial class MainWindow
 {
@@ -55,7 +55,7 @@ public sealed partial class MainWindow
         CompanyBadgeText.Text = CompanyService.StatusText;
         AutomationProperties.SetName(CompanyBadge, CompanyService.StatusText);
         ToolTipService.SetToolTip(CompanyBadge, CompanyService.IsOpen
-            ? $"{CompanyService.Current!.Path}. Read from Studio; nothing is saved to it from here."
+            ? $"{CompanyService.Current!.Path}. Identity is read from Studio; estimate and RA abstracts are mirrored when this project is linked."
             : "Company details come from Studio: open O-CoreOp from its card after signing in.");
     }
 

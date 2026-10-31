@@ -171,6 +171,31 @@ public sealed partial class EstimatePage : Page
         ProjectStore.Current.IsDirty = true;
         ProjectStore.Current.Notify();
         ShowResult(result);
+        var companyErr = CompanyService.TryPushProjectSummary(ProjectStore.Current);
+        if (companyErr is not null)
+        {
+            Info.Title = "Company file";
+            Info.Message = companyErr;
+            Info.Severity = InfoBarSeverity.Warning;
+            Info.IsOpen = true;
+        }
+    }
+
+    private void ShareDraft_Click(object sender, RoutedEventArgs e)
+    {
+        var err = CompanyService.TryShareEstimateDraft(ProjectStore.Current);
+        if (err is not null)
+        {
+            Info.Title = "Share draft";
+            Info.Message = err;
+            Info.Severity = InfoBarSeverity.Warning;
+            Info.IsOpen = true;
+            return;
+        }
+        Info.Title = "Share draft";
+        Info.Message = "Estimate draft sent to O-Studio (Practice → Approvals). BOQ and estimate abstracts on the project dashboard were updated.";
+        Info.Severity = InfoBarSeverity.Success;
+        Info.IsOpen = true;
     }
 
     /// <summary>Two extra lines under the totals: the civil items by estimation phase and by running-bill phase. Empty when no item has a phase.</summary>
@@ -212,8 +237,8 @@ public sealed partial class EstimatePage : Page
             : $"{result.MissingCodes.Count} missing rate(s): {string.Join(", ", result.MissingCodes.Take(8))}"
               + (result.MissingCodes.Count > 8 ? "…" : "");
         var link = ProjectStore.Current.Shared is null
-            ? "not linked to a company-file project — open one from File → Company projects so O-Studio can use this total"
-            : "linked to the company file — save the project so O-Studio fee proposals can read this total";
+            ? "not linked to a Studio project — link via take-off from a Studio drawing or open from Studio"
+            : "linked — abstracts sync to the company file when you calculate or save the project file";
         Info.Message = $"{result.RateBookVersionName} · grand total ₹ {result.GrandTotal:N2} · {miss} · {link}";
         Info.Severity = result.MissingCodes.Count > 0 || ProjectStore.Current.Shared is null
             ? InfoBarSeverity.Warning
@@ -234,7 +259,7 @@ public sealed partial class EstimatePage : Page
         var rev = artifact?["revision"]?.GetValue<uint>() ?? 0;
         ProjectRefText.Text =
             $"Company project · {company.Name} · project id {link.ProjectId} · ProjectRef v1 · estimate ArtifactRef revision {rev}. " +
-            "O-Studio reads the grand total from the saved project file.";
+            "O-Studio reads BOQ, estimate and running-bill abstracts from the company file (updated on save or calculate).";
     }
 
     private async void ExportPdf_Click(object sender, RoutedEventArgs e)

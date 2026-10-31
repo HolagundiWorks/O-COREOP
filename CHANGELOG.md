@@ -8,7 +8,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 > **Naming (2026-10-30):** Older bullets below may say ShilpiDB or `.vdb`; the product now uses the **`.osp` project file** only. See [MIGRATION-OSP.md](MIGRATION-OSP.md).
 
 ### Changed (2026-10-29)
-- **The company file is Studio's.** O-CoreOp reads company and project details from it (read only, project named by the take-off header) and no longer saves to it: Save to company file, the project chooser, create client or project, polling, the reload dialog and the Share draft to Studio buttons (estimate, RA bill) are removed. Studio reads the project file instead.
+- **2026-10-31:** Restored company-file **`aqc.project`** summary mirror and **Share draft to O-Studio** (estimate + RA). Abstracts sync on save/calculate; approval drafts use `aqc.estimate.draft` / `aqc.ra.draft.*`.
+- **2026-10-29:** The company file is Studio's. O-CoreOp reads company and project details from it (read only, project named by the take-off header). *(Summary mirror and draft share were temporarily removed; restored 2026-10-31.)*
 - **The project file is `.osp`.** One SQLite file holds the drawing, take-off (`takeoff_*` tables), and the O-CoreOp project record. File > Open/Save as `.osp`; the active-project pointer still links O-Draft and O-CoreOp. Old `.bbsproj` / `.json` still open; Save as writes `.osp`. See `docs/PROJECT-FILE.md` and `docs/MIGRATION-OSP.md`. Tests: `OdpFileTests`, `ActiveProjectTests`, `OspTakeoffTests`.
 
 ### Added (2026-10-29)

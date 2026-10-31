@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
 using System.Text.Json.Nodes;
+using BBSApp.Services;
 using Office.Shared;
 
 namespace BBSApp.Services.Company;
@@ -179,9 +180,94 @@ public static class CompanyService
         var company = _company;
         if (company is null || string.IsNullOrEmpty(companyUuid) || company.Uuid != companyUuid) return false;
         var store = ProjectStore.Current;
-        if (store.Shared?.ProjectId == projectId) return true;
-        store.Shared = new SharedProjectLink(projectId, 0);
+        if (store.Shared?.ProjectId == projectId)
+        {
+            await RefreshDetailsAsync();
+            return true;
+        }
+        var revision = company.DocumentRevision(projectId, SharedCompany.DocumentKind);
+        store.Shared = new SharedProjectLink(projectId, revision);
         await RefreshDetailsAsync();
+        _ = TryPushProjectSummary(store);
         return true;
+    }
+
+    /// <summary>
+    /// Pushes BOQ / estimate / RA abstracts to the company file (<c>aqc.project</c>) when this project is linked.
+    /// Returns a message when the push failed; null when it succeeded or there was nothing to do.
+    /// </summary>
+    public static string? TryPushProjectSummary(ProjectStore store)
+    {
+        var company = _company;
+        var link = store.Shared;
+        if (company is null || link is null)
+            return null;
+        var revision = link.Revision;
+        var err = CompanyProjectShare.TryPushSummary(company, link.ProjectId, ref revision, store.ToJson());
+        link.Revision = revision;
+        if (err is not null)
+            link.ChangedElsewhere = true;
+        return err;
+    }
+
+    /// <summary>Shares the latest estimate as an approval draft in O-Studio (kind <c>aqc.estimate.draft</c>).</summary>
+    public static string? TryShareEstimateDraft(ProjectStore store)
+    {
+        var company = _company;
+        var link = store.Shared;
+        var estimate = store.LastEstimate;
+        if (company is null || link is null)
+            return "Open the company from O-Studio and link this project first.";
+        if (estimate is null)
+            return "Calculate an estimate first.";
+        var payload = EstimateCalculator.ToJson(estimate);
+        var envelope = StudioDraftShare.BuildEnvelope(
+            "estimate",
+            StudioDraftShare.StateDraft,
+            company.User,
+            DateTimeOffset.UtcNow,
+            estimate.ArtifactRef,
+            StudioDraftShare.EstimateSummary(estimate.GrandTotal, estimate.RateBookVersionName),
+            payload);
+        try
+        {
+            StudioDraftShare.PutDraft(company, link.ProjectId, StudioDraftShare.EstimateDraftKind, envelope);
+            _ = TryPushProjectSummary(store);
+            return null;
+        }
+        catch (OfficeException ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    /// <summary>Shares one running bill as an approval draft (kind <c>aqc.ra.draft.&lt;id&gt;</c>).</summary>
+    public static string? TryShareRaBillDraft(ProjectStore store, RunningBill bill)
+    {
+        var company = _company;
+        var link = store.Shared;
+        if (company is null || link is null)
+            return "Open the company from O-Studio and link this project first.";
+        var payload = bill.ToJson();
+        var kind = StudioDraftShare.RaDraftKind(bill.Id);
+        var title = string.IsNullOrWhiteSpace(bill.Number) ? "RA bill (draft)" : bill.Number;
+        var envelope = StudioDraftShare.BuildEnvelope(
+            "ra_bill",
+            StudioDraftShare.StateDraft,
+            company.User,
+            DateTimeOffset.UtcNow,
+            null,
+            StudioDraftShare.RaBillSummary(bill.Id, title, bill.Gross, bill.Net, bill.Party),
+            payload);
+        try
+        {
+            StudioDraftShare.PutDraft(company, link.ProjectId, kind, envelope);
+            _ = TryPushProjectSummary(store);
+            return null;
+        }
+        catch (OfficeException ex)
+        {
+            return ex.Message;
+        }
     }
 }

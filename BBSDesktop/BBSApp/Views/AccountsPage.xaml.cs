@@ -258,6 +258,20 @@ public sealed partial class AccountsPage : Page
         ProjectStore.Current.Notify();
         RefreshLedgerParties();
         AppNotify.Success("Saved", "RA bill");
+        var companyErr = CompanyService.TryPushProjectSummary(ProjectStore.Current);
+        if (companyErr is not null)
+            AppNotify.Warning("Company file", companyErr);
+    }
+
+    private void ShareDraft_Click(object sender, RoutedEventArgs e)
+    {
+        if (_current is null) { AppNotify.Info("Nothing to share", "Select an RA bill first."); return; }
+        SaveBill();
+        var err = CompanyService.TryShareRaBillDraft(ProjectStore.Current, _current);
+        if (err is not null)
+            AppNotify.Warning("Share draft", err);
+        else
+            AppNotify.Success("Share draft", "Running bill draft sent to O-Studio (Practice → Approvals).");
     }
 
     private async void CertifyBill_Click(object sender, RoutedEventArgs e)
@@ -268,8 +282,8 @@ public sealed partial class AccountsPage : Page
         var dlg = new ContentDialog
         {
             Title = "Certify RA bill locally",
-            Content = $"Assign local number {_book.PreviewBillNumber(_current, Company)} and lock this bill in CoreOp only? "
-                      + "Suite approval still happens in Studio, which reads the project file. Net payable Rs. {_current.Net:N2}.",
+            Content = $"Assign local number {_book.PreviewBillNumber(_current, Company)} and lock this bill in O-CoreOp only? "
+                      + $"Suite approval is in O-Studio (Practice → Approvals). Net payable ₹ {_current.Net:N2}.",
             PrimaryButtonText = "Certify locally",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Primary,

@@ -1,6 +1,6 @@
 # Share estimate / RA bill drafts to Studio
 
-**Status: superseded (2026-10-29).** O-CoreOp no longer writes to the company file: that file belongs to O-Studio. Project working data lives in `.osp` files; see [PROJECT-FILE.md](PROJECT-FILE.md). The Share draft buttons are gone. What follows is the old contract. Was: Implemented in O-CoreOp (CoreOp → company file). Studio inbox / approve / lock / revise is **proposed** (Studio PR must consume this contract).  
+**Status (2026-10-31):** Working quantities and money stay in the **`.osp`** (`project_doc`). When a project is linked to the company file, O-CoreOp mirrors **abstracts** into `project_documents` kind **`aqc.project`** (`project_ref`, `last_estimate`, `accounts.bills`) so O-Studio dashboards and fee screens can read them. **Approval drafts** use separate kinds (`aqc.estimate.draft`, `aqc.ra.draft.*`) via **Share draft to O-Studio**. Studio Practice → Approvals lists and locks those drafts.  
 **Product rules:** Studio owns company identity and approval; CoreOp generates and shares drafts.
 
 ## 1. What CoreOp does

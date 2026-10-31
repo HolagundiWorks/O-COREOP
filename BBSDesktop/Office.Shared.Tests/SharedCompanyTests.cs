@@ -98,16 +98,19 @@ public class SharedCompanyTests : IDisposable
         using var coreop = Open(path, "app-coreop");
         var project = studio.CreateProject("Villa", studio.CreateClient("Acme"));
         Assert.Null(coreop.GetDocument(project));
-        var first = coreop.SaveDocument(project, 0, "{\"levels\":2}");
+        const string Summary1 = """{"last_estimate":{"grand_total":2},"accounts":{"bills":[]}}""";
+        const string Summary2 = """{"last_estimate":{"grand_total":3},"accounts":{"bills":[]}}""";
+        const string Summary9 = """{"last_estimate":{"grand_total":9},"accounts":{"bills":[]}}""";
+        var first = coreop.SaveDocument(project, 0, Summary1);
         Assert.Equal(1, first.Revision);
         var loaded = coreop.GetDocument(project)!;
-        Assert.Equal((1L, "{\"levels\":2}"), (loaded.Revision, loaded.Body));
+        Assert.Equal((1L, Summary1), (loaded.Revision, loaded.Body));
         Assert.Equal(first.ChecksumSha256, loaded.ChecksumSha256);
         // a second window of the same app (or another app) saves on top of revision 1
-        Assert.Equal(2, studio.SaveDocument(project, 1, "{\"levels\":3}").Revision);
-        var stale = Assert.Throws<OfficeException>(() => coreop.SaveDocument(project, 1, "{\"levels\":9}"));
+        Assert.Equal(2, studio.SaveDocument(project, 1, Summary2).Revision);
+        var stale = Assert.Throws<OfficeException>(() => coreop.SaveDocument(project, 1, Summary9));
         Assert.Contains("changed in another app", stale.Message);
-        Assert.Equal("{\"levels\":3}", coreop.GetDocument(project)!.Body);
+        Assert.Equal(Summary2, coreop.GetDocument(project)!.Body);
     }
 
     [Fact]
@@ -137,7 +140,7 @@ public class SharedCompanyTests : IDisposable
         var before = coreop.Watch(project);
         Assert.Equal(0, before.Revision);
         Assert.True(before.SchemaOk);
-        studio.SaveDocument(project, 0, "{\"levels\":2}");
+        studio.SaveDocument(project, 0, """{"last_estimate":{"grand_total":2},"accounts":{"bills":[]}}""");
         var after = coreop.Watch(project);
         Assert.NotEqual(before.Version, after.Version);
         Assert.Equal(1, after.Revision);

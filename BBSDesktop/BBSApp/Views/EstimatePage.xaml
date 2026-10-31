@@ -25,6 +25,8 @@
                         HorizontalAlignment="Right" VerticalAlignment="Center">
                 <Button Content="Calculate" Style="{StaticResource PrimaryButtonStyle}"
                         Click="Calculate_Click" AutomationProperties.Name="Calculate estimate"/>
+                <Button Content="Share draft to O-Studio" Style="{StaticResource SecondaryButtonStyle}"
+                        Click="ShareDraft_Click" AutomationProperties.Name="Share estimate draft to O-Studio"/>
                 <Button Content="Export PDF" Style="{StaticResource SecondaryButtonStyle}"
                         Click="ExportPdf_Click" AutomationProperties.Name="Export estimate PDF"/>
                 <Button Content="CSV" Style="{StaticResource SecondaryButtonStyle}"

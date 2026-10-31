@@ -28,7 +28,8 @@
                         <Button Content="New RA bill" Click="NewBill_Click" AutomationProperties.Name="New running-account bill" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="Save" Click="SaveBill_Click" AutomationProperties.Name="Save running-account bill" Style="{StaticResource SecondaryButtonStyle}"/>
                         <Button Content="Certify locally" Click="CertifyBill_Click" AutomationProperties.Name="Certify and number bill locally" Style="{StaticResource SecondaryButtonStyle}"
-                                ToolTipService.ToolTip="Interim local lock and number only. Suite approval happens in Studio, which reads the project file."/>
+                                ToolTipService.ToolTip="Interim local lock and number only. Suite approval is in O-Studio (Practice → Approvals)."/>
+                        <Button Content="Share draft to O-Studio" Click="ShareDraft_Click" AutomationProperties.Name="Share RA bill draft to O-Studio" Style="{StaticResource SecondaryButtonStyle}"/>
                         <Button Content="Revise" Click="ReviseBill_Click" AutomationProperties.Name="Revise certified bill" Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTipService.ToolTip="Open a certified bill for correction as its next revision. It keeps its number and must be certified again."/>
                         <Button Content="Issue payment certificate" Click="IssueCertificate_Click" AutomationProperties.Name="Issue payment certificate" Style="{StaticResource SecondaryButtonStyle}"

@@ -8,6 +8,7 @@ An O-CoreOp project is a **project file, `.osp`**: one SQLite file that holds th
 |---|---|
 | File > Open | `.osp`; older `.bbsproj` / `.json` still open |
 | File > Save / Save as | Writes the project record into the `.osp`; Save as to a new name copies the file first so the drawing and take-off come with it. Older formats are saved as `.osp` |
+| Company file (suite-linked) | On save or calculate, mirrors **`aqc.project`** summaries (estimate + RA bills) into the company file so **O-Studio** project dashboards and fee proposals can read them; full JSON remains in the `.osp` |
 | Take-off page | Reads headers, rows and annotated PDFs from the `.osp` (`OdpTakeoffAdapter` feeds the same importer as before) |
 | Live | Every 2 s `ServedProject.PollAsync` reads `meta.revision`; a revision this app did not write raises "O-Draft updated the take-off". Own saves are ignored (`NoteOwnRevision`) |
 | Opening O-Draft's project | The active-project pointer `%LOCALAPPDATA%\O-Studio\active-project.json` names the `.osp` O-Draft has open |
