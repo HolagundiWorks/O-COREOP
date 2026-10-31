@@ -1203,7 +1203,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             ProjectStore.Current.IsDirty = false;
             RefreshWindowTitle();
             AppNotify.Success("Saved", Path.GetFileName(ProjectStore.Current.FilePath));
-            var companyErr = Company.CompanyService.TryPushProjectSummary(ProjectStore.Current);
+            var companyErr = BBSApp.Services.Company.CompanyService.TryPushProjectSummary(ProjectStore.Current);
             if (companyErr is not null)
                 AppNotify.Warning("Company file", companyErr);
         }
@@ -1234,7 +1234,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         ProjectStore.Current.IsDirty = false;
         RefreshWindowTitle();
         AppNotify.Success("Saved", file.Name);
-        var companyErr = Company.CompanyService.TryPushProjectSummary(ProjectStore.Current);
+        var companyErr = BBSApp.Services.Company.CompanyService.TryPushProjectSummary(ProjectStore.Current);
         if (companyErr is not null)
             AppNotify.Warning("Company file", companyErr);
     }
