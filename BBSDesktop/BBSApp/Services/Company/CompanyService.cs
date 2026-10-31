@@ -42,7 +42,7 @@ public static class CompanyService
 
     static string SuiteFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "suite.json");
 
-    /// <summary>The company file chosen in OSAS, the suite app, if there is one and it still exists. The company is chosen only there.</summary>
+    /// <summary>The company file chosen in O-Studio, if there is one and it still exists. The company is chosen only there.</summary>
     public static string? SuitePath()
     {
         try
@@ -58,11 +58,11 @@ public static class CompanyService
         }
     }
 
-    /// <summary>Starts OSAS, where the company is chosen, created and signed in to. False when OSAS is not installed.</summary>
-    public static bool StartOsas()
+    /// <summary>Starts O-Studio, where the company is chosen, created and signed in to. False when O-Studio is not installed.</summary>
+    public static bool StartStudio()
     {
-        var folder = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\OSAS", "InstallLocation", null) as string;
-        var exe = Path.Combine(string.IsNullOrWhiteSpace(folder) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "OSAS") : folder, "OSAS.exe");
+        var folder = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\O-Studio", "InstallLocation", null) as string;
+        var exe = Path.Combine(string.IsNullOrWhiteSpace(folder) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "O-Studio") : folder, "O-Studio.exe");
         if (!File.Exists(exe))
             return false;
         try
@@ -135,7 +135,7 @@ public static class CompanyService
             Changed?.Invoke();
         });
 
-    /// <summary>Opens a company file signed in by a one-time ticket from the suite app (OSAS).</summary>
+    /// <summary>Opens a company file signed in by a one-time ticket from O-Studio.</summary>
     public static Task OpenWithTicketAsync(string path, string ticket) =>
         Task.Run(() =>
         {
@@ -154,7 +154,7 @@ public static class CompanyService
     }
 
     /// <summary>
-    /// Takes the company's details (kept in OSAS) and the project's details (kept in O-Studio) from the company file for the open project,
+    /// Takes the company's details (kept in O-Studio) and the project's details (also in the company file) for the open project,
     /// so reports and title blocks print what those apps hold now. Does nothing when the project is not linked to the company file.
     /// </summary>
     public static async Task RefreshDetailsAsync()

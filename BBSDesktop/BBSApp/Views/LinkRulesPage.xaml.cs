@@ -412,7 +412,7 @@ public sealed partial class LinkRulesPage : Page
         try
         {
             string dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "AQC-Core");
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), Branding.AppDataFolder);
             string safe = string.Join("_",
                 (ProjectStore.Current.Name ?? "project").Split(Path.GetInvalidFileNameChars()));
             if (string.IsNullOrWhiteSpace(safe)) safe = "project";

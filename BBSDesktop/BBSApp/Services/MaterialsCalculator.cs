@@ -16,6 +16,7 @@ public sealed class LevelDef : INotifyPropertyChanged
     private double _heightMm = 3200;
     private double _slabThicknessMm = 150;
     private double _beamDepthMm = 450;
+    private bool _showMarker = true;
 
     public string Id { get => _id; set { if (_id == value) return; _id = value; OnPropertyChanged(); } }
     public string Name { get => _name; set { if (_name == value) return; _name = value; OnPropertyChanged(); } }
@@ -33,6 +34,13 @@ public sealed class LevelDef : INotifyPropertyChanged
     {
         get => _beamDepthMm;
         set { if (Math.Abs(_beamDepthMm - value) < 0.01) return; _beamDepthMm = value; OnPropertyChanged(); OnPropertyChanged(nameof(ColumnHeightMm)); }
+    }
+
+    /// <summary>When false, the storey is omitted from level markers and estimate level pickers.</summary>
+    public bool ShowMarker
+    {
+        get => _showMarker;
+        set { if (_showMarker == value) return; _showMarker = value; OnPropertyChanged(); }
     }
 
     /// <summary>Clear column shaft height for this storey.</summary>

@@ -18,7 +18,7 @@ public static class LocalModel
     public const string DownloadUrl =
         "https://huggingface.co/unsloth/Olmo-3-7B-Instruct-GGUF/resolve/a2a9ae53f5a95087616b3f45ca96e9d2631344ee/" + FileName;
     /// <summary>Environment variable naming a model file; it wins over every other place.</summary>
-    public const string Env = "OSAS_MODEL";
+    public const string Env = "OSTUDIO_MODEL";
 
     /// <summary>%LOCALAPPDATA%\HumanCentricWorks\models, the folder both apps use.</summary>
     public static string SharedDirectory => Path.Combine(
@@ -39,7 +39,7 @@ public static class LocalModel
     public const string RuntimeUrl = "https://github.com/ggml-org/llama.cpp/releases/download/" + RuntimeRelease + "/llama-" + RuntimeRelease + "-bin-win-vulkan-x64.zip";
     public const string RuntimeSha256 = "fd94feb540bb6dc3c95e2dac24ef5ced3bfeb7e09175db4d6291f898158b8c10";
     /// <summary>Environment variable naming llama-server.exe; it wins over every other place.</summary>
-    public const string ServerEnv = "OSAS_LLAMA_SERVER";
+    public const string ServerEnv = "OSTUDIO_LLAMA_SERVER";
 
     /// <summary>%LOCALAPPDATA%\HumanCentricWorks\runtime\llama-b11976-vulkan, shared by both apps like the model.</summary>
     public static string RuntimeDirectory => Path.Combine(
@@ -70,7 +70,7 @@ public static class LocalModel
             using (var f = info.OpenRead())
                 if (f.Read(head) != 4 || head[0] != 'G' || head[1] != 'G' || head[2] != 'U' || head[3] != 'F')
                     return $"{path} is not a GGUF model file.";
-            // The shipped file has a known size; a custom file through OSAS_MODEL is only checked for the magic.
+            // The shipped file has a known size; a custom file through OSTUDIO_MODEL is only checked for the magic.
             if (Path.GetFileName(path).Equals(FileName, StringComparison.OrdinalIgnoreCase) && info.Length != Bytes)
                 return $"{path} is {info.Length:N0} bytes, expected {Bytes:N0}: the download is incomplete.";
             return null;

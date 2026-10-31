@@ -38,7 +38,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     private AssistantService? _assistant;
     private bool _assistantBusy;
     private Office.Ai.AiCoreListener? _aiCore;
-    private Hcw.Ui.Controls.SuiteAskBar? _askBar;
+    private O.Ui.Controls.SuiteAskBar? _askBar;
 
     private TextBox AiInput => _askBar!.Input;
     private Border AiReplyHost => _askBar!.ReplyHost;
@@ -54,18 +54,18 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         SystemBackdrop = null;
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        Hcw.Ui.SuiteMotion.RespectSystemPreference("PageContentTransitions", "CardContentTransitions");
-        Hcw.Ui.SuiteMotion.ApplyToFrame(ContentFrame);
+        O.Ui.SuiteMotion.RespectSystemPreference("PageContentTransitions", "CardContentTransitions");
+        O.Ui.SuiteMotion.ApplyToFrame(ContentFrame);
         ThemeSwitch.Attach(this);
         AutomationProperties.SetName(ThemeSwitch, "Colour theme");
         AutomationProperties.SetLandmarkType(AppNav, AutomationLandmarkType.Navigation);
         AutomationProperties.SetLandmarkType(ContentFrame, AutomationLandmarkType.Main);
-        Hcw.Ui.SuiteAppearance.Changed += OnSuiteThemeChanged;
+        O.Ui.SuiteAppearance.Changed += OnSuiteThemeChanged;
         ApplyBrandingChrome();
         TrySetAppIcon();
         ProjectStore.Current.SeedDefaults();
         BuildRibbonModel();
-        Hcw.Ui.SuiteLandmarks.ApplyShell(AppNav, ContentFrame, StatusStrip,
+        O.Ui.SuiteLandmarks.ApplyShell(AppNav, ContentFrame, StatusStrip,
             navigationName: "Sections", mainName: "Main content");
         BuildNavigation();
         NavigateTo("dashboard");
@@ -77,7 +77,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         ProjectStore.Current.Changed += OnStoreChanged;
         Closed += (_, _) =>
         {
-            Hcw.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
+            O.Ui.SuiteAppearance.Changed -= OnSuiteThemeChanged;
             AppNotify.Raised -= OnAppNotify;
             ProjectStore.Current.Changed -= OnStoreChanged;
             _aiCore?.Dispose();
@@ -96,7 +96,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     private void WireBottomShell()
     {
-        _askBar = new Hcw.Ui.Controls.SuiteAskBar("Ask about this project…");
+        _askBar = new O.Ui.Controls.SuiteAskBar("Ask about this project…");
         _askBar.Send.Click += AiSend_Click;
         _askBar.Input.KeyDown += AiInput_KeyDown;
         AskHost.Children.Add(_askBar);
@@ -111,10 +111,10 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            Hcw.Ui.SuiteAppearance.Apply(this);
+            O.Ui.SuiteAppearance.Apply(this);
             if (Content is FrameworkElement root)
-                root.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
-            AppNav.RequestedTheme = Hcw.Ui.SuiteAppearance.Current;
+                root.RequestedTheme = O.Ui.SuiteAppearance.Current;
+            AppNav.RequestedTheme = O.Ui.SuiteAppearance.Current;
             // Rebuild the ribbon model so ImageIcon sources pick up the active theme dictionary (light/dark SVG).
             BuildRibbonModel();
             BuildNavigation();
@@ -358,13 +358,13 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
         return new ImageIcon { Source = (ImageSource)src, Width = SuiteIconPx, Height = SuiteIconPx };
     }
 
-    /// <summary>Suite icon glyph size (10) and tile hit (36) — matches Hcw.Ui / O-Draft.</summary>
+    /// <summary>Suite icon glyph size (10) and tile hit (36) — matches O.Ui / O-Draft.</summary>
     private const double SuiteIconPx = 15;
     private const double SuiteTilePx = 36;
 
     // Ribbon tabs are drawn in code. Heights: the open tab is one pixel taller than the others so that it covers the
     // line under its ribbon and so joins whatever lies below (the sub ribbon for a section, the canvas for a page).
-    private static double RibbonTabHeight => Hcw.Ui.SuiteScale.TabHeight;
+    private static double RibbonTabHeight => O.Ui.SuiteScale.TabHeight;
     private const double RibbonLine = 1;
 
     /// <summary>
@@ -410,7 +410,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Content = new TextBlock
             {
                 Text = text,
-                FontSize = Hcw.Ui.SuiteScale.FontBody,
+                FontSize = O.Ui.SuiteScale.FontBody,
                 FontWeight = open ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal,
                 Foreground = open ? ink : muted,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -423,7 +423,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
             Background = open ? joinsBrush : new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             BorderBrush = edge,
             BorderThickness = open ? new Thickness(1, 1, 1, 0) : new Thickness(0),
-            CornerRadius = new CornerRadius(Hcw.Ui.SuiteScale.CornerControl.TopLeft, Hcw.Ui.SuiteScale.CornerControl.TopLeft, 0, 0),
+            CornerRadius = new CornerRadius(O.Ui.SuiteScale.CornerControl.TopLeft, O.Ui.SuiteScale.CornerControl.TopLeft, 0, 0),
         };
         if (open)
         {
@@ -567,7 +567,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
 
     static Brush BrushRes(string key, Color fallback)
     {
-        var themed = Hcw.Ui.SuiteAppearance.TryBrush(key);
+        var themed = O.Ui.SuiteAppearance.TryBrush(key);
         if (themed != null)
             return themed;
         if (Application.Current.Resources.TryGetValue(key, out var v) && v is Brush b)
@@ -888,7 +888,7 @@ public sealed partial class MainWindow : Window, IAppCommandBus, IAssistantConfi
     {
         if (!Microsoft.UI.Windowing.AppWindowTitleBar.IsCustomizationSupported())
             return;
-        var dark = Hcw.Ui.SuiteAppearance.IsDark;
+        var dark = O.Ui.SuiteAppearance.IsDark;
         var bar = AppWindow.TitleBar;
         Windows.UI.Color Bg(byte r, byte g, byte b) => Windows.UI.Color.FromArgb(255, r, g, b);
         var background = dark ? Bg(0x1B, 0x1B, 0x1B) : Bg(0xE4, 0xEA, 0xF2);

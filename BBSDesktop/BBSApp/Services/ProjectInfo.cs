@@ -101,7 +101,7 @@ public sealed class ProjectInfo
 
     /// <summary>
     /// True while the project is linked to the shared company file: the company's name, address, contacts and registrations come from
-    /// OSAS, and the project's name, site and client come from O-Studio. They are read for every document and are not edited here.
+    /// The company name on documents comes from O-Studio; the project's name, site and client come from the company file. They are read for every document and are not edited here.
     /// Not saved with the project; it is true only after a read of the company file.
     /// </summary>
     public bool FromCompanyFile { get; private set; }

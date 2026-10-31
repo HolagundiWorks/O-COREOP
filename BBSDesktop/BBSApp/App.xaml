@@ -6,36 +6,36 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteColors.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteAccent.Blue.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteStyles.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Themes/HcwTheme.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Themes/HcwFluentBridge.xaml"/>
+                <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteColors.xaml"/>
+                <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteAccent.Blue.xaml"/>
+                <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteStyles.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Themes/OUiTheme.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Themes/OUiFluentBridge.xaml"/>
                 <ResourceDictionary Source="ms-appx:///Themes/FluentTokens.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteLight.Blue.xaml"/>
+                        <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteLight.Blue.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Default">
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteDark.Blue.xaml"/>
+                        <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteDark.Blue.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteDark.Blue.xaml"/>
+                        <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteDark.Blue.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="ms-appx:///Hcw.Ui/Themes/SuiteHighContrast.xaml"/>
+                        <ResourceDictionary Source="ms-appx:///O.Ui/Themes/SuiteHighContrast.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-            <!-- Scale comes from Hcw.Ui SuiteStyles. Do not redefine here. -->
+            <!-- Scale comes from O.Ui SuiteStyles. Do not redefine here. -->
             <CornerRadius x:Key="ComboBoxItemCornerRadius">4</CornerRadius>
             <CornerRadius x:Key="MenuFlyoutItemCornerRadius">4</CornerRadius>
         </ResourceDictionary>

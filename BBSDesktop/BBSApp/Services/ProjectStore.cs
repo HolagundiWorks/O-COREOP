@@ -270,7 +270,8 @@ public sealed class ProjectStore
                 ["name"] = l.Name,
                 ["height_mm"] = l.HeightMm,
                 ["slab_thickness_mm"] = l.SlabThicknessMm,
-                ["beam_depth_mm"] = l.BeamDepthMm
+                ["beam_depth_mm"] = l.BeamDepthMm,
+                ["show_marker"] = l.ShowMarker ? 1 : 0
             });
         }
         var root = new JsonObject
@@ -417,7 +418,8 @@ public sealed class ProjectStore
                     Name = o["name"]?.GetValue<string>() ?? "",
                     HeightMm = Num(o, "height_mm", 3000),
                     SlabThicknessMm = Num(o, "slab_thickness_mm", 150),
-                    BeamDepthMm = Num(o, "beam_depth_mm", 450)
+                    BeamDepthMm = Num(o, "beam_depth_mm", 450),
+                    ShowMarker = Num(o, "show_marker", 1) != 0
                 });
             }
         }

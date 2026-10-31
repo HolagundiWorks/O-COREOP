@@ -13,7 +13,7 @@ public sealed record OdpTakeoffHeader(uint Slot, string State, string Json);
 public sealed record OdpTakeoffRow(uint Slot, int Kind, uint N, string Json);
 
 /// <summary>
-/// A project file, <c>.osp</c> (format <c>osas-project</c>, version 1): one SQLite file with the drawing, the take-off O-Draft recorded, the O-CoreOp project,
+/// A project file, <c>.osp</c> (format <c>osp</c>, version 1): one SQLite file with the drawing, the take-off O-Draft recorded, the O-CoreOp project,
 /// attachments and markups. This is the .NET side of <c>aad-odp</c> (O-Draft's Rust crate); both read and write the same file. Every committed change raises
 /// <c>meta.revision</c> by one and leaves <c>change</c> rows (what sync sends). The file is in WAL mode: another program may have it open, one writes while
 /// the other reads, and a second writer waits up to five seconds.
@@ -21,7 +21,7 @@ public sealed record OdpTakeoffRow(uint Slot, int Kind, uint N, string Json);
 /// </summary>
 public sealed class OdpFile : IDisposable
 {
-    public const string Format = "osas-project";
+    public const string Format = SuiteWire.ProjectFileFormat;
     public const int Version = 1;
     public const string Extension = ".osp";
 
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS change_revision ON change (revision);";
             string? format;
             try { format = file.MetaValue("format"); }
             catch (SqliteException) { throw new InvalidDataException($"{Path.GetFileName(path)} is not a project file (no meta table)."); }
-            if (format != Format) throw new InvalidDataException($"{Path.GetFileName(path)} is not a project file (its format is {format ?? "missing"}).");
+            if (!SuiteWire.IsProjectFormat(format)) throw new InvalidDataException($"{Path.GetFileName(path)} is not a project file (its format is {format ?? "missing"}).");
             if (int.TryParse(file.MetaValue("version"), out var v) && v > Version)
                 throw new InvalidDataException($"{Path.GetFileName(path)} is project file version {v}; this program reads version {Version}.");
             file.Exec(Schema);                    // a file from an older version gets the tables it lacks

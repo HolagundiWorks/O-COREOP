@@ -9,13 +9,13 @@ The Ask bar runs on a language model that lives on this computer. Nothing about 
 | Model | `Olmo-3-7B-Instruct-Q4_K_M.gguf` (Allen AI, Apache-2.0, quantised by unsloth, revision `a2a9ae53…`) | `%LOCALAPPDATA%\HumanCentricWorks\models\` | 4 471 602 048 bytes, SHA-256 `0de0bc63…c5c4` |
 | Runtime | llama.cpp `llama-server.exe`, release b11976, Vulkan build for Windows x64 (MIT) | `%LOCALAPPDATA%\HumanCentricWorks\runtime\llama-b11976-vulkan\` | 37 MB zip, SHA-256 `fd94feb5…8c10` |
 
-Overrides: `OSAS_MODEL` names a model file, `OSAS_LLAMA_SERVER` names `llama-server.exe`. The app also looks in `models\` and `runtime\` beside its own exe. Weights are not in git. If either part is missing the Ask bar says which and where to put it; a stored Anthropic key is used only in that case.
+Overrides: `OSTUDIO_MODEL` names a model file, `OSTUDIO_LLAMA_SERVER` names `llama-server.exe`. The app also looks in `models\` and `runtime\` beside its own exe. Weights are not in git. If either part is missing the Ask bar says which and where to put it; a stored Anthropic key is used only in that case.
 
 ## How it runs
 
 **Host:** When you sign in to O-Studio, it starts `AiCoreListener` on `127.0.0.1:8742` and loads the model on the first question (`SuiteAiCoordinator` in `Office.Ai`). Closing the workspace or O-Studio stops the listener and unloads the model.
 
-**Clients:** O-CoreOp and O-Draft set `OSAS_AI_ROLE=client` when launched from Studio. They call the host over HTTP (`RemoteLlm`, `POST /v1/completion` for CoreOp's tool loop, `POST /v1/chat` for Draft and Studio's assistant). O-CoreOp opened alone still hosts on `:8742` when the port is free (solo use).
+**Clients:** O-CoreOp and O-Draft set `OSTUDIO_AI_ROLE=client` when launched from O-Studio. They call the host over HTTP (`RemoteLlm`, `POST /v1/completion` for O-CoreOp's tool loop, `POST /v1/chat` for O-Draft and O-Studio's assistant). O-CoreOp opened alone still hosts on `:8742` when the port is free (solo use).
 
 `Office.Ai` starts `llama-server` as a hidden child process the first time the host answers, on a free port of 127.0.0.1, behind a random key, 16384 tokens of context, one slot. A Windows job object ends it with the host app. The GPU is used as far as its memory allows; the rest runs on the CPU.
 
@@ -32,9 +32,9 @@ While **O-Studio** is signed in (or O-CoreOp runs alone with the port free), the
 - `GET /v1/health` — `ready` when the model and runtime are installed.
 - `POST /v1/chat` — `{messages:[{role,content}], max_tokens}` for O-Draft and O-Studio's assistant.
 - `POST /v1/completion` — `{prompt, max_tokens}` for O-CoreOp's Olmo tool loop.
-- `Authorization: Bearer <token>` — token in `%LOCALAPPDATA%\OSAS\ai\auth.token` (or `OSAS_AI_TOKEN`).
+- `Authorization: Bearer <token>` — token in `%LOCALAPPDATA%\O-Studio\ai\auth.token` (or `OSTUDIO_AI_TOKEN`).
 
-Apps launched from Studio get `OSAS_AI_ROLE=client` so they never load weights in-process.
+Apps launched from Studio get `OSTUDIO_AI_ROLE=client` so they never load weights in-process.
 
 ## Installer
 

@@ -2,7 +2,7 @@
     x:Class="BBSApp.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:hcw="using:Hcw.Ui.Controls"
+    xmlns:oui="using:O.Ui.Controls"
     Title="O-CoreOp">
 
     <!--
@@ -60,7 +60,7 @@
                  Foreground="{ThemeResource HcwInkBrush}"
                  FontSize="{StaticResource SuiteFontBody}"
                  AutomationProperties.Name="Menu bar">
-            <!-- Company first ? work ? Exit (same File shape as O-Studio / OSAS). -->
+            <!-- Company first · work · Exit (same File shape as O-Studio). -->
             <MenuBarItem Title="File" AccessKey="F">
                 <MenuFlyoutItem Text="New project" Click="New_Click" AccessKey="N">
                     <MenuFlyoutItem.Icon>
@@ -199,7 +199,7 @@
                 <Grid x:Name="AskHost" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
 
                 <!-- Full-bleed status row (O-Draft bottom bar) -->
-                <hcw:SuiteBottomStatusBar x:Name="StatusStrip" Grid.Row="4"/>
+                <oui:SuiteBottomStatusBar x:Name="StatusStrip" Grid.Row="4"/>
 
                 <!-- Wired into StatusStrip in code -->
                 <StackPanel x:Name="BottomShellParts" Visibility="Collapsed">
@@ -208,7 +208,7 @@
                         <FontIcon Glyph="&#xE1D0;" FontSize="{StaticResource SuiteIconSize}" FontFamily="{ThemeResource SymbolThemeFontFamily}"/>
                     </Button>
                     <StackPanel x:Name="BottomShellRight" Orientation="Horizontal" Spacing="8">
-                        <hcw:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
+                        <oui:SuiteThemeSwitch x:Name="ThemeSwitch" VerticalAlignment="Center"/>
                         <Button x:Name="CompanyBadge" Style="{StaticResource HcwGhostButton}" Padding="12,0"
                                 Click="CompanyBadge_Click"
                                 AutomationProperties.Name="Company file"

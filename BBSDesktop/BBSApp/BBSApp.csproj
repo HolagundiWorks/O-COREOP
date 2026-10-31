@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
@@ -12,7 +12,7 @@
     <Company>Human Centric Works</Company>
     <Product>O-CoreOp</Product>
     <Authors>Human Centric Works, Hospet</Authors>
-    <Description>O-CoreOp — quantities, estimates and billing. Part of OSAS, the Open Source Architecture Suit. By Human Centric Works, Hospet.</Description>
+    <Description>O-CoreOp — quantities, estimates and billing. Part of the O-Studio suite. By Human Centric Works, Hospet.</Description>
     <Copyright>Copyright © 2026 Human Centric Works, Hospet</Copyright>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
@@ -108,7 +108,7 @@
   </Target>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\o-ui\Hcw.Ui\Hcw.Ui.csproj" />
+    <ProjectReference Include="..\..\..\o-ui\O.Ui\O.Ui.csproj" />
     <ProjectReference Include="..\AQC.CadImport\AQC.CadImport.csproj" />
     <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
     <ProjectReference Include="..\Office.Ai\Office.Ai.csproj" />

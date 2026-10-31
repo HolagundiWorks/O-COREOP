@@ -43,7 +43,7 @@ public sealed class SharedCompany : IDisposable
     public string User { get; }
 
     /// <summary>
-    /// True when this session was opened with a suite ticket (<c>OSAS_TICKET</c>). Suite-linked sessions must not
+    /// True when this session was opened with a suite ticket (<c>OSTUDIO_TICKET</c>). Suite-linked sessions must not
     /// create clients or projects — that is Studio's job. Password open (tests/tools) leaves this false.
     /// </summary>
     public bool SuiteLinked { get; }

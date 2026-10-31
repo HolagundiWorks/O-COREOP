@@ -6,12 +6,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
+using Office.Shared;
+
 namespace Office.Ai;
 
 /// <summary>
 /// Lets O-Draft and O-CoreOp use the model the host app carries. It answers the suite's local contract on 127.0.0.1 only:
-/// <c>GET /v1/health</c>, <c>POST /v1/chat</c>, and <c>POST /v1/completion</c> (Olmo prompt for CoreOp's Ask bar), behind the bearer
-/// token in <c>%LOCALAPPDATA%\OSAS\ai\auth.token</c>. The model loads on the first request. O-Studio keeps this open while a workspace is signed in.
+/// <c>GET /v1/health</c>, <c>POST /v1/chat</c>, and <c>POST /v1/completion</c> (Olmo prompt for O-CoreOp's Ask bar), behind the bearer
+/// token in <c>%LOCALAPPDATA%\O-Studio\ai\auth.token</c>. The model loads on the first request. O-Studio keeps this open while a workspace is signed in.
 /// </summary>
 public sealed class AiCoreListener : IDisposable
 {
@@ -25,8 +27,7 @@ public sealed class AiCoreListener : IDisposable
 
     AiCoreListener(string token) { _token = token; }
 
-    public static string TokenPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "ai", "auth.token");
+    public static string TokenPath => SuiteWire.LocalPath(Path.Combine("ai", "auth.token"));
 
     /// <summary>Start listening, or return null when the port is taken (another AI Core is already serving) or cannot be opened.</summary>
     public static AiCoreListener? TryStart(int port = DefaultPort)
@@ -44,7 +45,7 @@ public sealed class AiCoreListener : IDisposable
 
     static string ReadOrCreateToken()
     {
-        var env = Environment.GetEnvironmentVariable("OSAS_AI_TOKEN")?.Trim();
+        var env = Environment.GetEnvironmentVariable(SuiteWire.EnvAiToken)?.Trim();
         if (!string.IsNullOrEmpty(env)) return env;
         try
         {

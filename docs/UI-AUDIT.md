@@ -32,7 +32,7 @@ Cross-check of stale chrome, placeholder behaviour, and intentional stubs after 
 |---|---|
 | `BBSApp.Services.Shilpi` | Historical name; reads `.osp` take-off via `OdpTakeoffAdapter` — rename is a large refactor, behaviour is correct |
 | `BridgeFile` / `.aqcbridge` | hcw-aqc-bridge v1 contract; still valid offline path |
-| `hcw*` theme keys | Shared `Hcw.Ui` bridge resources, not AORMS |
+| `hcw*` theme keys | Shared `O.Ui` bridge resources, not AORMS |
 
 ## Verified wired (sample)
 

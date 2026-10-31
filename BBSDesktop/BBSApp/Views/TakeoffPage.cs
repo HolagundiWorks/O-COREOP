@@ -123,13 +123,13 @@ public sealed class TakeoffPage : Page
         b.Content = new TextBlock
         {
             Text = label,
-            FontSize = Hcw.Ui.SuiteScale.FontBody,
+            FontSize = O.Ui.SuiteScale.FontBody,
             TextTrimming = TextTrimming.CharacterEllipsis,
             Foreground = ink,
         };
-        b.MinHeight = Hcw.Ui.SuiteScale.ControlMinHeight;
+        b.MinHeight = O.Ui.SuiteScale.ControlMinHeight;
         b.Padding = new Thickness(12, 0, 12, 0);
-        b.CornerRadius = Hcw.Ui.SuiteScale.CornerControl;
+        b.CornerRadius = O.Ui.SuiteScale.CornerControl;
         b.VerticalAlignment = VerticalAlignment.Center;
         if (Application.Current.Resources.TryGetValue("HcwRibbonButton", out var style) && style is Style s)
             b.Style = s;

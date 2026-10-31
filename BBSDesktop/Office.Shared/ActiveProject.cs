@@ -9,16 +9,15 @@ namespace Office.Shared;
 public sealed record ActiveProjectInfo(string App, string Drawing, string Project, DateTime UpdatedUtc);
 
 /// <summary>
-/// The pointer file O-Draft keeps current, <c>%LOCALAPPDATA%\OSAS\active-project.json</c>, so O-CoreOp can open the project file of the drawing
+/// The pointer file O-Draft keeps current under <c>%LOCALAPPDATA%\O-Studio\active-project.json</c>, so O-CoreOp can open the project file of the drawing
 /// on screen. O-Draft writes it when a drawing is opened, saved or closed (closed: the file is deleted or says <c>project: null</c>).
-/// <code>{ "format": "osas-active-project", "version": 1, "app": "O-Draft", "drawing": "C:\\p\\house.osp", "project": "C:\\p\\house.osp", "updated_utc": "2026-10-29T09:00:00Z" }</code>
+/// <code>{ "format": "studio-active-project", "version": 1, "app": "O-Draft", "drawing": "C:\\p\\house.osp", "project": "C:\\p\\house.osp", "updated_utc": "2026-10-29T09:00:00Z" }</code>
 /// </summary>
 public static class ActiveProject
 {
-    public const string Format = "osas-active-project";
+    public const string Format = SuiteWire.ActiveProjectFormat;
 
-    public static string PointerPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OSAS", "active-project.json");
+    public static string PointerPath => SuiteWire.LocalPath("active-project.json");
 
     /// <summary>Null when the text is not a pointer, names no project file, or names one that is not an absolute <c>.osp</c> path.</summary>
     public static ActiveProjectInfo? Parse(string? json)
@@ -29,7 +28,7 @@ public static class ActiveProject
             using var doc = JsonDocument.Parse(json);
             var r = doc.RootElement;
             if (r.ValueKind != JsonValueKind.Object) return null;
-            if (!r.TryGetProperty("format", out var f) || f.GetString() != Format) return null;
+            if (!r.TryGetProperty("format", out var f) || !SuiteWire.IsActiveProjectFormat(f.GetString())) return null;
             if (!r.TryGetProperty("version", out var v) || !v.TryGetInt32(out var ver) || ver < 1) return null;
             string? db = r.TryGetProperty("project", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString() : null;
             if (string.IsNullOrWhiteSpace(db) || !Path.IsPathRooted(db) || !db.EndsWith(".osp", StringComparison.OrdinalIgnoreCase)) return null;

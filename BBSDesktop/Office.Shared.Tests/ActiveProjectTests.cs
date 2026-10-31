@@ -7,7 +7,7 @@ namespace Office.Shared.Tests;
 
 public class ActiveProjectTests
 {
-    const string Good = "{\"format\":\"osas-active-project\",\"version\":1,\"app\":\"O-Draft\",\"drawing\":\"C:\\\\p\\\\house.dwg\",\"project\":\"C:\\\\p\\\\house.osp\",\"updated_utc\":\"2026-10-29T09:00:00Z\"}";
+    const string Good = "{\"format\":\"studio-active-project\",\"version\":1,\"app\":\"O-Draft\",\"drawing\":\"C:\\\\p\\\\house.dwg\",\"project\":\"C:\\\\p\\\\house.osp\",\"updated_utc\":\"2026-10-29T09:00:00Z\"}";
 
     [Fact]
     public void A_pointer_is_read()
@@ -24,10 +24,10 @@ public class ActiveProjectTests
     [InlineData("not json")]
     [InlineData("[]")]
     [InlineData("{\"format\":\"other\",\"version\":1,\"project\":\"C:\\\\a.osp\"}")]
-    [InlineData("{\"format\":\"osas-active-project\",\"version\":1,\"project\":null}")]            // O-Draft closed its drawing
-    [InlineData("{\"format\":\"osas-active-project\",\"version\":1,\"project\":\"a.vdb\"}")]         // not an absolute path
-    [InlineData("{\"format\":\"osas-active-project\",\"version\":1,\"project\":\"C:\\\\a.exe\"}")]   // not a project file
-    [InlineData("{\"format\":\"osas-active-project\",\"project\":\"C:\\\\a.osp\"}")]                // no version
+    [InlineData("{\"format\":\"studio-active-project\",\"version\":1,\"project\":null}")]            // O-Draft closed its drawing
+    [InlineData("{\"format\":\"studio-active-project\",\"version\":1,\"project\":\"a.vdb\"}")]         // not an absolute path
+    [InlineData("{\"format\":\"studio-active-project\",\"version\":1,\"project\":\"C:\\\\a.exe\"}")]   // not a project file
+    [InlineData("{\"format\":\"studio-active-project\",\"project\":\"C:\\\\a.osp\"}")]                // no version
     public void Anything_else_gives_no_project(string json) => Assert.Null(ActiveProject.Parse(json));
 
     [Fact]

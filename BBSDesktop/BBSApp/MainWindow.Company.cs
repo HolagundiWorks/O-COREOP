@@ -12,17 +12,17 @@ using Office.Shared;
 namespace BBSApp;
 
 /// <summary>
-/// The company file belongs to O-Studio. Here it is only read: Studio signs the person in and opens O-CoreOp from its card (OSAS_COMPANY and a one-time
-/// OSAS_TICKET), and the company's and the project's details are taken from it for reports. Nothing is saved to it from this app.
+/// The company file belongs to O-Studio. Here it is only read: Studio signs the person in and opens O-CoreOp from its card (`OSTUDIO_COMPANY` and a one-time
+/// `OSTUDIO_TICKET`), and the company's and the project's details are taken from it for reports. Nothing is saved to it from this app.
 /// </summary>
 public sealed partial class MainWindow
 {
     /// <summary>Opens the company file read-only when Studio launched this app with a ticket. O-CoreOp never asks for a company password.</summary>
     async Task StartFromSuiteAsync()
     {
-        var path = Environment.GetEnvironmentVariable("OSAS_COMPANY");
-        var ticket = Environment.GetEnvironmentVariable("OSAS_TICKET");
-        Environment.SetEnvironmentVariable("OSAS_TICKET", null);
+        var path = Environment.GetEnvironmentVariable(SuiteWire.EnvCompany);
+        var ticket = Environment.GetEnvironmentVariable(SuiteWire.EnvTicket);
+        Environment.SetEnvironmentVariable(SuiteWire.EnvTicket, null);
         if (string.IsNullOrWhiteSpace(path) || !File.Exists(path) || !CompanyService.EngineAvailable)
             return;
         if (string.IsNullOrWhiteSpace(ticket))

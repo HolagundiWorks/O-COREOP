@@ -9,4 +9,7 @@
     <Company>Human Centric Works</Company>
     <Version>0.1.0</Version>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Office.Shared\Office.Shared.csproj" />
+  </ItemGroup>
 </Project>

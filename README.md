@@ -1,6 +1,6 @@
 # O-CoreOp
 
-**O-CoreOp** is the quantities, estimates and billing app of **OSAS, the Open Source Architecture Suit**. The project file extension `.bbsproj` keeps its name because saved projects use it. Earlier versions installed as `AQCCore.exe`; the installer replaces them and the app copies the settings from `%LocalAppData%\AQCCore` on first run.
+**O-CoreOp** is the quantities, estimates and billing app in the **O-Studio suite**. The project file extension `.bbsproj` keeps its name because saved projects use it. Earlier versions installed as `AQCCore.exe`; the installer replaces them and the app copies the settings from `%LocalAppData%\AQCCore` on first run.
 
 > **The suite:** names, roles, file formats, toolbars of every app and how they link in real time are in [docs/SUITE.md](docs/SUITE.md).
 
@@ -62,7 +62,7 @@ Installs to `%LocalAppData%\Programs\O-CoreOp\`
 
 The version comes from `<Version>` in `BBSApp.csproj`; the script passes it to Inno Setup, so the output filename tracks it automatically. Pass `-SkipEngineBuild` when `BBSDesktop\build\bbs_engine.dll` already exists.
 
-Setup.exe is **unsigned** unless `WINDOWS_CERTIFICATE` / Azure Trusted Signing / `SIGN_SELF_SIGNED=1` is set (`installer\sign.ps1`). Help → **Check for updates…** is a channel stub (`OSAS_UPDATE_CHANNEL_URL`). Details: [docs/PACKAGING.md](docs/PACKAGING.md).
+Setup.exe is **unsigned** unless `WINDOWS_CERTIFICATE` / Azure Trusted Signing / `SIGN_SELF_SIGNED=1` is set (`installer\sign.ps1`). Help → **Check for updates…** is a channel stub (`OSTUDIO_UPDATE_CHANNEL_URL`). Details: [docs/PACKAGING.md](docs/PACKAGING.md).
 
 ## MSIX (Store / sideload)
 
@@ -114,7 +114,7 @@ Output: `BBSDesktop\artifacts\msix\*.msix`
 
 ## Branding
 
-- Product: **O-CoreOp**, part of OSAS  
+- Product: **O-CoreOp**, part of the O-Studio suite  
 - Developer: **Human Centric Works, Hospet**  
 - Logo: `BBSDesktop/BBSApp/Assets/logo.png`
 

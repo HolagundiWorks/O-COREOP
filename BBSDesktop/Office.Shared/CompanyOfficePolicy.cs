@@ -4,7 +4,7 @@
 namespace Office.Shared;
 
 /// <summary>
-/// When CoreOp is opened from the suite (OSAS_COMPANY + OSAS_TICKET), Studio owns company and
+/// When CoreOp is opened from the suite (`OSTUDIO_COMPANY` + `OSTUDIO_TICKET`), Studio owns company and
 /// office-record identity. CoreOp may still save project quantity documents (<c>aqc.project</c>)
 /// and share estimate/RA drafts; it must not create or edit clients/projects in the company file.
 /// </summary>

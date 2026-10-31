@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 Human Centric Works, Hospet
 
+using Office.Shared;
+
 namespace Office.Ai;
 
 /// <summary>
 /// One Olmo host per machine on loopback :8742. O-Studio starts it when a company workspace is open; sibling apps use <see cref="RemoteLlm"/>.
-/// O-CoreOp alone may still host when the port is free (legacy solo use).
+/// O-CoreOp alone may still host when the port is free (solo use).
 /// </summary>
 public static class SuiteAiCoordinator
 {
@@ -14,10 +16,10 @@ public static class SuiteAiCoordinator
     public static bool IsHost => _host is not null;
 
     public static bool PreferClient =>
-        string.Equals(Environment.GetEnvironmentVariable("OSAS_AI_ROLE"), "client", StringComparison.OrdinalIgnoreCase);
+        string.Equals(Environment.GetEnvironmentVariable(SuiteWire.EnvAiRole), "client", StringComparison.OrdinalIgnoreCase);
 
     public static bool PreferHost =>
-        string.Equals(Environment.GetEnvironmentVariable("OSAS_AI_ROLE"), "host", StringComparison.OrdinalIgnoreCase);
+        string.Equals(Environment.GetEnvironmentVariable(SuiteWire.EnvAiRole), "host", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Start listening when this process should own the model (O-Studio workspace, or solo CoreOp).</summary>
     public static AiCoreListener? StartHostIfNeeded(int port = AiCoreListener.DefaultPort)

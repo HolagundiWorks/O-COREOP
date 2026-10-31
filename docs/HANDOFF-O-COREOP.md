@@ -1,6 +1,6 @@
 # Hand-off: what is left in O-CoreOp
 
-Written 2026-10-19 for whoever picks up O-CoreOp next. O-CoreOp is the quantities, estimates and billing app of OSAS, the Open Source Architecture Suit. It is this repository (`BBSDesktop/BBSApp`, WinUI 3, with the C++ `bbs_engine.dll`).
+Written 2026-10-19 for whoever picks up O-CoreOp next. O-CoreOp is the quantities, estimates and billing app in the **O-Studio suite**. It is this repository (`BBSDesktop/BBSApp`, WinUI 3, with the C++ `bbs_engine.dll`).
 
 Each item says how it is known. **Checked** means it was read in the code or run. **Not tested** means nobody has tried it. Where an item is also on the suite roadmap, the number is from `docs/roadmap.md` in the O-STUDIO repository.
 
@@ -9,7 +9,7 @@ Each item says how it is known. **Checked** means it was read in the code or run
 Merged on 2026-10-19 (merge commit `a0aa37d`):
 
 - The OSAS shell: menu bar, grouped left navigation pane, work area, status strip. The pane is open from 900 px, an icon rail from 560 px, and a menu button below that. See `docs/WINUI-SHELL.md`.
-- The shared `Hcw.Ui` design (blue accent), referenced from a sibling checkout of the public `HolagundiWorks/O-UI` repository (`..\..\..\o-ui` from the app folder). The build fails without it.
+- The shared `O.Ui` design (blue accent), referenced from a sibling checkout of the public `HolagundiWorks/O-UI` repository (`..\..\..\o-ui` from the app folder). The build fails without it.
 - Accessibility fixes from the WCAG 2.2 AA audit: names on sheet cells and icon buttons, targets of 24 px or more, headings, a polite notice host, 1x scale.
 - The rename to O-CoreOp. The program is now `O-CoreOp.exe` and keeps its settings in `%LocalAppData%\O-CoreOp` (copied from `AQCCore` on first run).
 - **AORMS Connect / Bridge removed (2026-10-28):** sign-in, Online projects, Push/Pull, Bind/Flush, sync badges, `Aorms.Connect` / `Aorms.Bridge`, FakeAorms e2e, and Bridge stub hosts are gone. Company-file / OSAS ticket flow, CAD import, and `.osp` take-off remain.
@@ -109,7 +109,7 @@ Close the running app before rebuilding to the same folder; Windows keeps `O-Cor
 - **4.1 done.** `Aorms.Connect/FileOutboxStore.cs`: a file-backed `IOutboxStore`. A save writes a temporary file and swaps it in; an unreadable file is moved aside (`.corrupt-<time>`), never deleted, and `QuarantinedPath` says where. 8 new tests (`FileOutboxStoreTests`); `Aorms.Connect.Tests` (removed) is 88 passed. **Not wired yet:** nothing in `BBSApp` creates one (that is 4.3, with the `ProjectStore` hooks); the intended path is `%LocalAppData%\AQCCore\outbox\<aqc project id>.json`.
 - **2.6 done.** The release installer builds: `BBSDesktop/artifacts/installer/O-CoreOp-Setup-1.1.0.exe` (51 MB). Not installed or run (2.5 is still open). Two things the script does not tell you:
   - **The engine must be built with MSVC.** On this machine the only compiler on `PATH` was LLVM-MinGW, and `build-installer.ps1` tried it and failed (`std::malloc` / `std::free` without `<cstdlib>` in `src/api/bbs_c_api.cpp`, wide-path `ofstream` in `src/core/Project.cpp`). Built instead with Visual Studio 2022 Build Tools (`vcvars64`, CMake, Ninja, outside the repo) and copied `bbs_engine.dll` to `BBSDesktop/build/`. `bbs_tests.exe`: 0 failures. Fixing the two clang errors would let the script work without Visual Studio.
-  - **`o-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: Hcw.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `o-ui/Hcw.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `o-ui` (build its own RID output) or have the script pre-build it.
+  - **`o-ui` must be built for `win-x64` first.** `dotnet publish -r win-x64` of the app fails with `PRI252: O.Ui.pri not found` until `dotnet build -c Release -p:Platform=x64 -r win-x64` has been run in `o-ui/O.Ui`. CI (Release build, no `-r`) does not hit this; the installer script does. Fix in `o-ui` (build its own RID output) or have the script pre-build it.
 
 **2026-10-19 (later):**
 

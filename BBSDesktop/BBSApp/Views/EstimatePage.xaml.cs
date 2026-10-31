@@ -107,7 +107,7 @@ public sealed partial class EstimatePage : Page
             {
                 Content = string.IsNullOrWhiteSpace(lv.Name) ? lv.Id : $"{lv.Id} · {lv.Name}",
                 Tag = lv.Id,
-                IsChecked = selectAll
+                IsChecked = selectAll ? true : lv.ShowMarker
             };
             cb.Checked += (_, _) => { if (!_buildingLevels) { /* levels only used on Calculate */ } };
             cb.Unchecked += (_, _) => { };

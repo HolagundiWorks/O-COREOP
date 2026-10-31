@@ -1,6 +1,6 @@
 # UI sizing
 
-O-CoreOp follows the suite's compact density, set in the shared UI library **O-UI** (`Hcw.Ui`, `Themes/SuiteStyles.xaml` and `SuiteScale`) and taken from O-Draft's shell. O-Studio, O-Draft and O-CoreOp use the same numbers. This page lists them and says where O-CoreOp reads them from. When the library changes, change these lists to match; do not set a size in a page when a token exists.
+O-CoreOp follows the suite's compact density, set in the shared UI library **O-UI** (`O.Ui`, `Themes/SuiteStyles.xaml` and `SuiteScale`) and taken from O-Draft's shell. O-Studio, O-Draft and O-CoreOp use the same numbers. This page lists them and says where O-CoreOp reads them from. When the library changes, change these lists to match; do not set a size in a page when a token exists.
 
 ## The scale
 
@@ -28,9 +28,9 @@ All values are DIPs.
 
 | What | How |
 |---|---|
-| Resources | `App.xaml` merges `Hcw.Ui/Themes/SuiteStyles.xaml`, then the app's `HcwTheme.xaml`, `HcwFluentBridge.xaml` and `FluentTokens.xaml`. The last two re-state the suite values under the app's older key names (`ControlMinHeight`, `ControlFontSize`, `BodyFontSize`, `TitleFontSize`, `SectionFontSize`, `Radius*`, `PagePadding`, `CardPadding`, `HitTaskbar`, `HitDock` and so on) so pages written against them follow the scale. They must hold the same numbers as the table above |
-| Styles | Implicit `Button`, `TextBox`, `ComboBox`, `NumberBox`, `MenuFlyoutItem`, `MenuBar`, `NavigationViewItem` and `ComboBoxItem` styles in `FluentTokens.xaml`; the `Hcw*` button, input and card styles in `HcwTheme.xaml` |
-| Code-built UI | `Hcw.Ui.SuiteScale` (`FontBody`, `FontCaption`, `FontSection`, `ControlMinHeight`, `TabHeight`, `PropertyRowHeight`, `CornerControl`). Used by the ribbons (`MainWindow.xaml.cs`), the take-off bar (`TakeoffPage.cs`), the tables (`ResultTable.cs`) and the data-model screen (`DataModelPage.cs`) |
+| Resources | `App.xaml` merges `O.Ui/Themes/SuiteStyles.xaml`, then the app's `OUiTheme.xaml`, `OUiFluentBridge.xaml` and `FluentTokens.xaml`. The last two re-state the suite values under the app's older key names (`ControlMinHeight`, `ControlFontSize`, `BodyFontSize`, `TitleFontSize`, `SectionFontSize`, `Radius*`, `PagePadding`, `CardPadding`, `HitTaskbar`, `HitDock` and so on) so pages written against them follow the scale. They must hold the same numbers as the table above |
+| Styles | Implicit `Button`, `TextBox`, `ComboBox`, `NumberBox`, `MenuFlyoutItem`, `MenuBar`, `NavigationViewItem` and `ComboBoxItem` styles in `FluentTokens.xaml`; the legacy `Hcw*` button, input and card styles in `OUiTheme.xaml` (brush keys kept for compatibility) |
+| Code-built UI | `O.Ui.SuiteScale` (`FontBody`, `FontCaption`, `FontSection`, `ControlMinHeight`, `TabHeight`, `PropertyRowHeight`, `CornerControl`). Used by the ribbons (`MainWindow.xaml.cs`), the take-off bar (`TakeoffPage.cs`), the tables (`ResultTable.cs`) and the data-model screen (`DataModelPage.cs`) |
 | Shell | `MainWindow.xaml` uses `SuiteMenuBarHeight`, `SuiteFontBody`, `SuiteFontSection` and `SuiteStatusBarHeight` |
 
 ## What changed from the earlier O-CoreOp sizes

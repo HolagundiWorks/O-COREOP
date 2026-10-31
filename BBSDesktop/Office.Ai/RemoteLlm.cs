@@ -5,6 +5,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
+using Office.Shared;
+
 namespace Office.Ai;
 
 /// <summary>
@@ -17,16 +19,16 @@ public sealed class RemoteLlm : IDisposable
     RemoteLlm(HttpClient http) => _http = http;
 
     public static string Host =>
-        string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OSAS_AI_HOST"))
+        string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(SuiteWire.EnvAiHost))
             ? "127.0.0.1"
-            : Environment.GetEnvironmentVariable("OSAS_AI_HOST")!.Trim();
+            : Environment.GetEnvironmentVariable(SuiteWire.EnvAiHost)!.Trim();
 
     public static int Port =>
-        int.TryParse(Environment.GetEnvironmentVariable("OSAS_AI_PORT"), out var p) ? p : AiCoreListener.DefaultPort;
+        int.TryParse(Environment.GetEnvironmentVariable(SuiteWire.EnvAiPort), out var p) ? p : AiCoreListener.DefaultPort;
 
     static string ReadToken()
     {
-        var env = Environment.GetEnvironmentVariable("OSAS_AI_TOKEN")?.Trim();
+        var env = Environment.GetEnvironmentVariable(SuiteWire.EnvAiToken)?.Trim();
         if (!string.IsNullOrEmpty(env)) return env;
         try
         {
